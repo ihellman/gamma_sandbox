@@ -105,31 +105,31 @@ mapModuleServer <- function(id, combined_data, selected_points) {
     })
     
     # # Update map when data or selection changes
-    # observeEvent(c(combined_data(), selected_points()), {
-    #   print("Proxy map rendering")
-    #   print(paste("observeEvent triggered - rows:", nrow(combined_data()), "selected:", length(selected_points())))
-    #   #req(nrow(combined_data()) > 0)
-    #   data_eval_map_gbif_proxy(mapID = "dataEvalMap", 
-    #                            allPoints = combined_data(), 
-    #                            selected = selected_points())
-    #   
-    # })
-    # 
+    observeEvent(c(combined_data(), selected_points()), {
+      print("Proxy map rendering")
+      print(paste("observeEvent triggered - rows:", nrow(combined_data()), "selected:", length(selected_points())))
+      #req(nrow(combined_data()) > 0)
+      data_eval_map_gbif_proxy(mapID = "dataEvalMap", 
+                               allPoints = combined_data(), 
+                               selected = selected_points())
+      
+    }, ignoreInit = TRUE )
+    
     
     
     
     
     
     # Update map when data or selection changes - use observe() instead
-    observe({
-      co <- combined_data()
-      se <- selected_points()
-      print(paste("observe triggered - rows:", nrow(co), "selected:", length(se)))
+    # observe({
+    #   co <- combined_data()
+    #   se <- selected_points()
+    #   print(paste("observe triggered - rows:", nrow(co), "selected:", length(se)))
       
-      data_eval_map_gbif_proxy(mapID = "dataEvalMap", 
-                               allPoints = co, 
-                               selected = se)
-    })
+    #   data_eval_map_gbif_proxy(mapID = "dataEvalMap", 
+    #                            allPoints = co, 
+    #                            selected = se)
+    # })
     
     
     
