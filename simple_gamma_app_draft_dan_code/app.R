@@ -311,5 +311,5 @@ server <- function(input, output, session) {
   aboutServer("about_page")
 }
 
-# Run the application
+# Run the app
 shinyApp(ui = ui, server = server)
