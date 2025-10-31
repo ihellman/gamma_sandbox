@@ -1,6 +1,14 @@
 # Load the Shiny and bslib libraries
 library(shiny)
 library(bslib)
+library(readr)
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+library(dplyr)
+library(shiny)
+library(reactable)
+
 
 # ---- Landing Page Module ----
 landingUI <- function(id) {
@@ -113,7 +121,7 @@ dataAnalysisServer <- function(id, combined_data, selected_points) {
     # Initialize nested modules
     #controlsModuleServer("controls", combined_data, selected_points)
     mapModuleServer("map", combined_data, selected_points)
-    tableModuleServer("table", combined_data, selected_points)
+    #tableModuleServer("table", combined_data, selected_points)
   })
 }
 

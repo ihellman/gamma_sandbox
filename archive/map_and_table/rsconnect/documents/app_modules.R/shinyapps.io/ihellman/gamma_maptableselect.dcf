@@ -1,0 +1,13 @@
+name: gamma_maptableselect
+title: gamma_maptableselect
+username: ihellman
+account: ihellman
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15850002
+bundleId: 11075754
+url: https://ihellman.shinyapps.io/gamma_maptableselect/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app.R

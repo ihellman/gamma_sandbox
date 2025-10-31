@@ -1,10 +1,10 @@
-library(readr)
-library(leaflet)
-library(leaflet.extras)
-library(sf)
-library(dplyr)
-library(shiny)
-library(reactable)
+# library(readr)
+# library(leaflet)
+# library(leaflet.extras)
+# library(sf)
+# library(dplyr)
+# library(shiny)
+# library(reactable)
 
 #source("leaflet_maps.R")
 
@@ -66,6 +66,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
     
     # Delete selected points
     observeEvent(input$deleteSelection, {
+      req(nrow(combined_data()) > 0)
       current_data <- combined_data()
       current_selection <- selected_points()
       
@@ -126,6 +127,7 @@ mapModuleServer <- function(id, combined_data, selected_points) {
     
     # Handle polygon selection
     observeEvent(input$dataEvalMap_draw_new_feature, {
+      req(nrow(combined_data()) > 0)
       currentData <- combined_data()
       
       # Extract polygon feature
