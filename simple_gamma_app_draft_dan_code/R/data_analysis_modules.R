@@ -1,14 +1,3 @@
-# library(readr)
-# library(leaflet)
-# library(leaflet.extras)
-# library(sf)
-# library(dplyr)
-# library(shiny)
-# library(reactable)
-
-#source("leaflet_maps.R")
-
-
 # CONTROLS MODULE (buttons) -------------------------------------------------------------
 
 controlsModuleUI <- function(id) {

@@ -1,6 +1,201 @@
-Accession Number,Taxon Name,Current Germplasm Type,Collection Date,Latitude,Longitude,Locality,Collector,issues,source,index
-574755918,Magnolia acuminata (L.) L.,G,2011,35.3715,-83.1304,Highline Rd.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",GBIF,20005
-574781040,Magnolia acuminata (L.) L.,G,2011,35.6949,-82.4001,Blue Ridge Parkway. Craggy Gardens Picnic Site turn off.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",GBIF,20006
-574714005,Magnolia acuminata (L.) L.,G,2010,37.0105,-81.1408,Seven Sisiters Trail off Rt 717,South East USA Expedition (2010),"cdc,gass84,ambcol,inmafu",GBIF,20007
-574733699,Magnolia acuminata (L.) L.,G,NA,42.75,-80.4333,Charlotteville Tp.,NA,"cdc,gass84,ambcol,inmafu",GBIF,20011
-2561516334,Magnolia acuminata (L.) L.,G,NA,49.2541,-123.2508,UBC Botanical Garden,NA,inmano,GBIF,20012
+"Accession Number","Taxon Name","Current Germplasm Type","Collection Date","Latitude","Longitude","Locality","Collector","issues","source","index"
+"1883356841","Magnolia acuminata (L.) L.","G","2018",43.766,39.7427,"Sochi Dendrarium",NA,"cdc,cdround,cudc","GBIF",20000
+"3045019568","Magnolia acuminata (L.) L.","G","2013",63.434,10.671,NA,"Stephen Barstow","cdc","GBIF",20001
+"3045016114","Magnolia acuminata (L.) L.","G","2012",63.434,10.671,NA,"Stephen Barstow","cdc","GBIF",20002
+"3045017509","Magnolia acuminata (L.) L.","G","2012",63.434,10.671,NA,"Stephen Barstow","cdc","GBIF",20003
+"574677867","Magnolia acuminata (L.) L.","G","2011",35.3715,-83.1304,"Highline Rd.","Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu","GBIF",20004
+"574755918","Magnolia acuminata (L.) L.","G","2011",35.3715,-83.1304,"Highline Rd.","Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu","GBIF",20005
+"574781040","Magnolia acuminata (L.) L.","G","2011",35.6949,-82.4001,"Blue Ridge Parkway. Craggy Gardens Picnic Site turn off.","Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu","GBIF",20006
+"574714005","Magnolia acuminata (L.) L.","G","2010",37.0105,-81.1408,"Seven Sisiters Trail off Rt 717","South East USA Expedition (2010)","cdc,gass84,ambcol,inmafu","GBIF",20007
+"574733850","Magnolia acuminata (L.) L.","G","2010",36.998,-81.1805,"Seven Sisiters Trail off Rt 717","South East USA Expedition (2010)","cdc,gass84,ambcol,inmafu","GBIF",20008
+"3045022993","Magnolia acuminata (L.) L.","G","2008",63.434,10.671,NA,"Stephen Barstow","cdc","GBIF",20009
+"3045025680","Magnolia acuminata (L.) L.","G","2007",63.434,10.671,NA,"Stephen Barstow","cdc","GBIF",20010
+"574733699","Magnolia acuminata (L.) L.","G",NA,42.75,-80.4333,"Charlotteville Tp.",NA,"cdc,gass84,ambcol,inmafu","GBIF",20011
+"2561516334","Magnolia acuminata (L.) L.","G",NA,49.2541,-123.2508,"UBC Botanical Garden",NA,"inmano","GBIF",20012
+"2561517990","Magnolia acuminata (L.) L.","G",NA,49.2541,-123.2508,"UBC Botanical Garden",NA,"inmano","GBIF",20013
+"3407144887","Magnolia acuminata (L.) L.","G",NA,51.6559,5.3023,NA,"Bomenstichting","cdc","GBIF",20014
+"3407146280","Magnolia acuminata (L.) L.","G",NA,51.9967,5.4589,NA,"Bomenstichting","cdc","GBIF",20015
+"3407146768","Magnolia acuminata (L.) L.","G",NA,52.1945,5.1221,NA,"Bomenstichting","cdc","GBIF",20016
+"3407147563","Magnolia acuminata (L.) L.","G",NA,52.0342,5.3125,NA,"Bomenstichting","cdc","GBIF",20017
+"3407150433","Magnolia acuminata (L.) L.","G",NA,52.9361,5.9623,NA,"Bomenstichting","cdc","GBIF",20018
+"3407150449","Magnolia acuminata (L.) L.","G",NA,52.9356,5.9632,NA,"Bomenstichting","cdc","GBIF",20019
+"3407151968","Magnolia acuminata (L.) L.","G",NA,52.1205,5.251,NA,"Bomenstichting","cdc","GBIF",20020
+"3407152298","Magnolia acuminata (L.) L.","G",NA,51.8447,5.8406,NA,"Bomenstichting","cdc","GBIF",20021
+"5064029416","Magnolia acuminata (L.) L.","H","2025",39.473,-79.7885,NA,"Kyle Aldinger","cdc,cdround","GBIF",20022
+"5077139427","Magnolia acuminata (L.) L.","H","2025",36.2184,-84.0911,NA,"Matt Moore","cdc,cdround","GBIF",20023
+"5087366343","Magnolia acuminata (L.) L.","H","2025",35.9383,-93.3821,NA,"Cheryl Hall","cdc,cdround","GBIF",20024
+"5088022430","Magnolia acuminata (L.) L.","H","2025",39.7786,-78.936,NA,"Annie","cdc,cdround","GBIF",20025
+"5088071992","Magnolia acuminata (L.) L.","H","2025",32.7435,-83.422,NA,"kgrieshop","cdc,cdround","GBIF",20026
+"5167126774","Magnolia acuminata (L.) L.","H","2025",40.2282,-78.8625,NA,"cm2025","cdc,cdround","GBIF",20027
+"5134211119","Magnolia acuminata (L.) L.","H","2025",36.0619,-85.6097,NA,"Eli S. Harris","cdc,cdround","GBIF",20028
+"5134543805","Magnolia acuminata (L.) L.","H","2025",40.4334,-79.9238,NA,"evaelyse","cdc,cdround","GBIF",20029
+"5134766826","Magnolia acuminata (L.) L.","H","2025",35.0074,-85.3683,NA,"emmie_e","cdc,cdround","GBIF",20030
+"5135549333","Magnolia acuminata (L.) L.","H","2025",49.074,8.2907,"TK25 Blatt 6915/2 - Wörth am Rhein / Jockgrim","2047627890","cdc,cdround,gass84","GBIF",20031
+"5140147429","Magnolia acuminata (L.) L.","H","2025",35.6992,-83.5095,NA,"Janet Wright","cdc,cdround","GBIF",20032
+"5140509005","Magnolia acuminata (L.) L.","H","2025",40.6018,-73.7608,NA,"Misha Zitser","cdc,cdround","GBIF",20033
+"5140592201","Magnolia acuminata (L.) L.","H","2025",37.315,-89.369,NA,"Pete Kozich","cdc,cdround","GBIF",20034
+"5140651166","Magnolia acuminata (L.) L.","H","2025",37.5122,-89.3581,NA,"abelkinser","cdc,cdround","GBIF",20035
+"5140739984","Magnolia acuminata (L.) L.","H","2025",37.5303,-89.2018,NA,"Christopher David Benda","cdc,cdround","GBIF",20036
+"5140751061","Magnolia acuminata (L.) L.","H","2025",37.5484,-89.3093,NA,"Christopher David Benda","cdc,cdround","GBIF",20037
+"5140806950","Magnolia acuminata (L.) L.","H","2025",36.8841,-81.5089,NA,"rinner_v_","cdc,cdround","GBIF",20038
+"5141059861","Magnolia acuminata (L.) L.","H","2025",37.5144,-89.2294,NA,"Christopher David Benda","cdc,cdround","GBIF",20039
+"5153164613","Magnolia acuminata (L.) L.","H","2025",40.201,-74.9182,NA,"conservationkate","cdc,cdround","GBIF",20040
+"5231300597","Magnolia acuminata (L.) L.","H","2025",33.052,-83.7255,NA,"Brandon Reid Fountain","cdc,cdround","GBIF",20041
+"5292396916","Magnolia acuminata (L.) L.","H","2025",35.0432,-86.0224,NA,"Jonathon ""Jonno"" Osborne","cdc,cdround","GBIF",20042
+"5837959952","Magnolia acuminata (L.) L.","H","2025",39.1659,-84.5617,NA,"Brendan Bogosian","cdc,cdround","GBIF",20043
+"5153092209","Magnolia acuminata (L.) L.","H","2025",37.4835,-89.3436,NA,"cmidden","cdc","GBIF",20044
+"5153411941","Magnolia acuminata (L.) L.","H","2025",41.0266,-81.4961,NA,"Summit Metro Parks","cdc,cdround","GBIF",20045
+"5153616360","Magnolia acuminata (L.) L.","H","2025",37.5756,-89.3435,NA,"abelkinser","cdc,cdround","GBIF",20046
+"5154506035","Magnolia acuminata (L.) L.","H","2025",41.0403,-81.5326,NA,"Summit Metro Parks","cdc,cdround","GBIF",20047
+"5154748864","Magnolia acuminata (L.) L.","H","2025",36.6732,-81.6117,NA,"pdh","cdc,cdround","GBIF",20048
+"5166880599","Magnolia acuminata (L.) L.","H","2025",34.6888,-94.5562,NA,"cactuscooper20","cdc,cdround","GBIF",20049
+"5167099156","Magnolia acuminata (L.) L.","H","2025",42.346,-79.4296,NA,"Presley James Riggs","cdc,cdround","GBIF",20050
+"5167308154","Magnolia acuminata (L.) L.","H","2025",41.2083,-81.3675,NA,"Andrew Gray","cdc,cdround","GBIF",20051
+"5167419708","Magnolia acuminata (L.) L.","H","2025",41.6912,-79.2521,NA,"Darren Johnson","cdc,cdround","GBIF",20052
+"5167527468","Magnolia acuminata (L.) L.","H","2025",34.9324,-86.2235,NA,"M'Kayla Motley","cdc,cdround","GBIF",20053
+"5167563680","Magnolia acuminata (L.) L.","H","2025",37.2387,-89.2271,NA,"Christopher David Benda","cdc,cdround","GBIF",20054
+"5167630935","Magnolia acuminata (L.) L.","H","2025",39.6493,-79.4053,NA,"Tom Field","cdc,cdround","GBIF",20055
+"5168064613","Magnolia acuminata (L.) L.","H","2025",41.3116,-81.4057,NA,"Summit Metro Parks","cdc,cdround","GBIF",20056
+"5168327071","Magnolia acuminata (L.) L.","H","2025",38.0596,-81.0489,NA,"Dominic Gerardi","cdc,cdround","GBIF",20057
+"5168408406","Magnolia acuminata (L.) L.","H","2025",39.5925,-79.1086,NA,"gilbertj","cdc,cdround","GBIF",20058
+"5176453845","Magnolia acuminata (L.) L.","H","2025",36.0449,-92.4227,NA,"Evan J. Walden","cdc","GBIF",20059
+"5176558251","Magnolia acuminata (L.) L.","H","2025",42.7429,-80.4275,NA,"Kalvin Chan","cdc,cdround","GBIF",20060
+"5176574543","Magnolia acuminata (L.) L.","H","2025",31.6109,-87.8148,NA,"David","cdc,cdround","GBIF",20061
+"5176576684","Magnolia acuminata (L.) L.","H","2025",41.0642,-81.5197,NA,"Summit Metro Parks","cdc,cdround","GBIF",20062
+"5176614332","Magnolia acuminata (L.) L.","H","2025",41.1216,-81.5857,NA,"Summit Metro Parks","cdc,cdround","GBIF",20063
+"5177047715","Magnolia acuminata (L.) L.","H","2025",36.2256,-82.1053,NA,"Audrey Lux","cdc,cdround","GBIF",20064
+"5187681769","Magnolia acuminata (L.) L.","H","2025",39.256,-77.2886,NA,"Stacy Small-Lorenz","cdc,cdround","GBIF",20065
+"5198767098","Magnolia acuminata (L.) L.","H","2025",39.6515,-79.4074,NA,"Tom Field","cdc,cdround","GBIF",20066
+"5217066687","Magnolia acuminata (L.) L.","H","2025",42.8393,-80.3039,NA,"soda","cdc,cdround","GBIF",20067
+"5229981706","Magnolia acuminata (L.) L.","H","2025",34.8719,-83.8105,NA,"sblumen","cdc,cdround","GBIF",20068
+"5230851663","Magnolia acuminata (L.) L.","H","2025",33.0494,-83.7326,NA,"Brandon Reid Fountain","cdc,cdround","GBIF",20069
+"5231258683","Magnolia acuminata (L.) L.","H","2025",43.0957,-79.3615,NA,"Shanze Yoell","cdc,cdround","GBIF",20070
+"5231283717","Magnolia acuminata (L.) L.","H","2025",37.604,-79.4013,NA,"Henry","cdc,cdround","GBIF",20071
+"5281915681","Magnolia acuminata (L.) L.","H","2025",36.1942,-82.0038,NA,"Audrey Lux","cdc,cdround","GBIF",20072
+"5828113155","Magnolia acuminata (L.) L.","H","2025",40.0103,-79.2487,NA,"Nana M","cdc,cdround","GBIF",20073
+"5844485746","Magnolia acuminata (L.) L.","H","2025",42.0163,-80.372,NA,"Bonnie Isaac","cdc,cdround","GBIF",20074
+"5176506072","Magnolia acuminata (L.) L.","H","2025",41.3711,-81.4243,NA,"Summit Metro Parks","cdc,cdround","GBIF",20075
+"5176673621","Magnolia acuminata (L.) L.","H","2025",41.122,-80.1999,NA,"smartinbiologist","cdc,cdround","GBIF",20076
+"5176853952","Magnolia acuminata (L.) L.","H","2025",41.5919,-80.3577,NA,"Lacee Adams","cdc,cdround","GBIF",20077
+"5177044144","Magnolia acuminata (L.) L.","H","2025",40.3053,-79.6518,NA,"dlatusek12","cdc,cdround","GBIF",20078
+"5177188174","Magnolia acuminata (L.) L.","H","2025",40.5081,-80.3579,NA,"Cherie Cornmesser","cdc,cdround","GBIF",20079
+"5177353795","Magnolia acuminata (L.) L.","H","2025",41.5923,-80.3568,NA,"gward95","cdc,cdround","GBIF",20080
+"5187760195","Magnolia acuminata (L.) L.","H","2025",39.6042,-79.5265,NA,"Todd Kaufmann","cdc,cdround","GBIF",20081
+"5187946404","Magnolia acuminata (L.) L.","H","2025",41.243,-81.5724,NA,"Summit Metro Parks","cdc,cdround","GBIF",20082
+"5188078076","Magnolia acuminata (L.) L.","H","2025",36.211,-81.889,NA,"AylaWolf8","cdc,cdround","GBIF",20083
+"5188241516","Magnolia acuminata (L.) L.","H","2025",35.6812,-83.649,NA,"benjismom","cdc,cdround","GBIF",20084
+"5188268731","Magnolia acuminata (L.) L.","H","2025",39.8567,-79.4932,NA,"wanderwoman2024","cdc,cdround","GBIF",20085
+"5188365350","Magnolia acuminata (L.) L.","H","2025",41.1623,-81.4249,NA,"Summit Metro Parks","cdc,cdround","GBIF",20086
+"5198401614","Magnolia acuminata (L.) L.","H","2025",42.6975,-80.4211,NA,"Kalvin Chan","cdc,cdround","GBIF",20087
+"5198493640","Magnolia acuminata (L.) L.","H","2025",42.6979,-80.4154,NA,"Kalvin Chan","cdc,cdround","GBIF",20088
+"5198595686","Magnolia acuminata (L.) L.","H","2025",42.6975,-80.4211,NA,"Kalvin Chan","cdc,cdround","GBIF",20089
+"5198613628","Magnolia acuminata (L.) L.","H","2025",41.4853,-78.6982,NA,"kindle_73","cdc,cdround","GBIF",20090
+"5198760651","Magnolia acuminata (L.) L.","H","2025",42.6978,-80.4208,NA,"Kalvin Chan","cdc,cdround","GBIF",20091
+"5198890743","Magnolia acuminata (L.) L.","H","2025",41.5729,-80.2808,NA,"Yianni Laskaris","cdc,cdround","GBIF",20092
+"5198903841","Magnolia acuminata (L.) L.","H","2025",41.2723,-81.4825,NA,"Summit Metro Parks","cdc,cdround","GBIF",20093
+"5198915600","Magnolia acuminata (L.) L.","H","2025",42.6975,-80.4211,NA,"Kalvin Chan","cdc,cdround","GBIF",20094
+"5199077761","Magnolia acuminata (L.) L.","H","2025",41.7486,-79.8659,NA,"Yianni Laskaris","cdc,cdround","GBIF",20095
+"5199193676","Magnolia acuminata (L.) L.","H","2025",42.6975,-80.4211,NA,"Kalvin Chan","cdc,cdround","GBIF",20096
+"5199226673","Magnolia acuminata (L.) L.","H","2025",42.6975,-80.4211,NA,"Kalvin Chan","cdc,cdround","GBIF",20097
+"5205860894","Magnolia acuminata (L.) L.","H","2025",41.3866,-81.5266,NA,"Summit Metro Parks","cdc,cdround","GBIF",20098
+"5206043043","Magnolia acuminata (L.) L.","H","2025",41.0087,-80.0038,NA,"Pete Kozich","cdc,cdround","GBIF",20099
+"5206084844","Magnolia acuminata (L.) L.","H","2025",37.4136,-80.5184,NA,"birds_and_wasps","cdc,cdround","GBIF",20100
+"5206111565","Magnolia acuminata (L.) L.","H","2025",41.1197,-81.4149,NA,"Summit Metro Parks","cdc,cdround","GBIF",20101
+"5206164460","Magnolia acuminata (L.) L.","H","2025",39.6343,-78.1094,NA,"antjil","cdc,cdround","GBIF",20102
+"5206319203","Magnolia acuminata (L.) L.","H","2025",39.9698,-79.4483,NA,"Loree Speedy","cdc,cdround","GBIF",20103
+"5206321889","Magnolia acuminata (L.) L.","H","2025",39.7612,-79.5459,NA,"Jennifer Clevinger","cdc,cdround","GBIF",20104
+"5206325991","Magnolia acuminata (L.) L.","H","2025",41.0451,-81.517,NA,"Summit Metro Parks","cdc,cdround","GBIF",20105
+"5206387390","Magnolia acuminata (L.) L.","H","2025",39.0571,-79.5185,NA,"Izabella Farr","cdc,cdround","GBIF",20106
+"5206685523","Magnolia acuminata (L.) L.","H","2025",38.5165,-79.5788,NA,"Caleb Swecker","cdc,cdround","GBIF",20107
+"5206800625","Magnolia acuminata (L.) L.","H","2025",35.153,-85.394,NA,"Hill Craddock","cdc,cdround","GBIF",20108
+"5215721713","Magnolia acuminata (L.) L.","H","2025",35.7481,-83.2004,NA,"pinus_taeda","cdc,cdround","GBIF",20109
+"5215997888","Magnolia acuminata (L.) L.","H","2025",40.2601,-77.4663,NA,"Brant Portner","cdc,cdround","GBIF",20110
+"5216329973","Magnolia acuminata (L.) L.","H","2025",39.014,-78.6643,NA,"Randy Bodkins","cdc,cdround","GBIF",20111
+"5216505584","Magnolia acuminata (L.) L.","H","2025",35.8355,-93.4421,NA,"Evan J. Walden","cdc,cdround","GBIF",20112
+"5216927322","Magnolia acuminata (L.) L.","H","2025",41.3607,-81.586,NA,"Summit Metro Parks","cdc,cdround","GBIF",20113
+"5217002072","Magnolia acuminata (L.) L.","H","2025",38.3394,-81.65,NA,"H. Klandorf","cdc,cdround","GBIF",20114
+"5217108973","Magnolia acuminata (L.) L.","H","2025",39.7,-78.9464,NA,"Bob Schwartz","cdc,cdround","GBIF",20115
+"5217332951","Magnolia acuminata (L.) L.","H","2025",41.2489,-81.5501,NA,"Summit Metro Parks","cdc,cdround","GBIF",20116
+"5217433686","Magnolia acuminata (L.) L.","H","2025",40.5672,-79.9069,NA,"Thomas Connor","cdc,cdround","GBIF",20117
+"5217576872","Magnolia acuminata (L.) L.","H","2025",35.7544,-82.5438,NA,"sonjaputnam","cdc,cdround","GBIF",20118
+"5230385890","Magnolia acuminata (L.) L.","H","2025",43.2827,-79.9119,NA,"aargon","cdc,cdround","GBIF",20119
+"5230572711","Magnolia acuminata (L.) L.","H","2025",43.1306,-79.0593,NA,"Jakob Mueller","cdc,cdround","GBIF",20120
+"5231459847","Magnolia acuminata (L.) L.","H","2025",43.2793,-79.9137,NA,"aargon","cdc,cdround","GBIF",20121
+"5231684572","Magnolia acuminata (L.) L.","H","2025",43.0921,-79.0682,NA,"Dona Chang","cdc,cdround","GBIF",20122
+"5760737773","Magnolia acuminata (L.) L.","H","2025",36.1703,-82.1004,NA,"Baystorm","cdc,cdround","GBIF",20123
+"5760782206","Magnolia acuminata (L.) L.","H","2025",36.1674,-82.0975,NA,"minervamom","cdc,cdround","GBIF",20124
+"5827394250","Magnolia acuminata (L.) L.","H","2025",36.5418,-79.9879,NA,"Carol Ann McCormick","cdc,cdround","GBIF",20125
+"5828407464","Magnolia acuminata (L.) L.","H","2025",38.9193,-77.1509,NA,"chepko","cdc,cdround","GBIF",20126
+"5868399121","Magnolia acuminata (L.) L.","H","2025",39.6443,-77.4462,NA,"Nate","cdc,cdround","GBIF",20127
+"5868435324","Magnolia acuminata var. acuminata","H","2025",36.5418,-79.9879,"Mayo River State Park, Deshazo Mill Access, N of the confluence of Falls Creek and Mayo River, near Byrds Ledge & Virginia line","McCormick, Carol Ann; Peifer, Mark","cdc,colmafu,inmafu","GBIF",20128
+"5215858589","Magnolia acuminata (L.) L.","H","2025",36.3556,-81.5629,NA,"lrowe","cdc,cdround","GBIF",20129
+"5216420517","Magnolia acuminata (L.) L.","H","2025",39.8914,-79.5046,NA,"Bonnie Isaac","cdc,cdround","GBIF",20130
+"5216701787","Magnolia acuminata (L.) L.","H","2025",35.0979,-83.648,NA,"Jedda","cdc,cdround","GBIF",20131
+"5229955211","Magnolia acuminata (L.) L.","H","2025",39.7133,-78.6523,NA,"Frode Jacobsen","cdc,cdround","GBIF",20132
+"5230064915","Magnolia acuminata (L.) L.","H","2025",42.7428,-80.4279,NA,"Kalvin Chan","cdc,cdround","GBIF",20133
+"5230073922","Magnolia acuminata (L.) L.","H","2025",42.7426,-80.4282,NA,"Kalvin Chan","cdc,cdround","GBIF",20134
+"5230081678","Magnolia acuminata (L.) L.","H","2025",40.4207,-79.0682,NA,"redneckgeek","cdc,cdround","GBIF",20135
+"5230386490","Magnolia acuminata (L.) L.","H","2025",40.4545,-78.4844,NA,"Andrew Kaehler","cdc,cdround","GBIF",20136
+"5230453870","Magnolia acuminata (L.) L.","H","2025",34.7214,-86.5337,NA,"Caleb George","cdc,cdround","GBIF",20137
+"5230513540","Magnolia acuminata (L.) L.","H","2025",35.5134,-83.3058,NA,"Janet Wright","cdc,cdround","GBIF",20138
+"5230637957","Magnolia acuminata (L.) L.","H","2025",37.3854,-89.2855,NA,"Christopher David Benda","cdc,cdround","GBIF",20139
+"5230661920","Magnolia acuminata (L.) L.","H","2025",42.7428,-80.4279,NA,"Kalvin Chan","cdc,cdround","GBIF",20140
+"5231067477","Magnolia acuminata (L.) L.","H","2025",41.3876,-81.4328,NA,"Summit Metro Parks","cdc,cdround","GBIF",20141
+"5231254968","Magnolia acuminata (L.) L.","H","2025",37.8849,-85.6123,NA,"jbrum","cdc,cdround","GBIF",20142
+"5231295727","Magnolia acuminata (L.) L.","H","2025",39.5125,-79.302,NA,"kadenschreib","cdc,cdround","GBIF",20143
+"5231392814","Magnolia acuminata (L.) L.","H","2025",42.7428,-80.4279,NA,"Kalvin Chan","cdc,cdround","GBIF",20144
+"5231588165","Magnolia acuminata (L.) L.","H","2025",41.3819,-81.4201,NA,"Summit Metro Parks","cdc,cdround","GBIF",20145
+"5231742746","Magnolia acuminata (L.) L.","H","2025",35.3124,-90.0536,NA,"Bart Jones","cdc,cdround","GBIF",20146
+"5231768920","Magnolia acuminata (L.) L.","H","2025",39.9815,-78.5092,NA,"Michael Longfoot","cdc,cdround","GBIF",20147
+"5231808013","Magnolia acuminata (L.) L.","H","2025",41.3064,-81.7938,NA,"Ben Meredyk","cdc,cdround","GBIF",20148
+"5231853914","Magnolia acuminata (L.) L.","H","2025",37.3436,-89.2939,NA,"abelkinser","cdc,cdround","GBIF",20149
+"5231925314","Magnolia acuminata (L.) L.","H","2025",39.7848,-79.3919,NA,"ariella_malfaro","cdc,cdround","GBIF",20150
+"5237526682","Magnolia acuminata (L.) L.","H","2025",41.6034,-79.8302,NA,"Yianni Laskaris","cdc,cdround","GBIF",20151
+"5237677963","Magnolia acuminata (L.) L.","H","2025",39.7,-78.9464,NA,"jmole","cdc,cdround","GBIF",20152
+"5237767765","Magnolia acuminata (L.) L.","H","2025",39.5815,-79.1981,NA,"jmole","cdc,cdround","GBIF",20153
+"5237809955","Magnolia acuminata (L.) L.","H","2025",39.582,-79.1974,NA,"jmole","cdc,cdround","GBIF",20154
+"5238293643","Magnolia acuminata (L.) L.","H","2025",34.9815,-83.6727,NA,"jessriddle","cdc","GBIF",20155
+"5238320259","Magnolia acuminata (L.) L.","H","2025",33.7638,-84.2775,NA,"Drake Burress","cdc,cdround","GBIF",20156
+"5281820668","Magnolia acuminata (L.) L.","H","2025",36.1568,-81.8112,NA,"Anthony J. Mills","cdc,cdround","GBIF",20157
+"5282017118","Magnolia acuminata (L.) L.","H","2025",42.172,-80.0865,NA,"smartinbiologist","cdc,cdround","GBIF",20158
+"5282109332","Magnolia acuminata (L.) L.","H","2025",37.3632,-80.5361,NA,"Cy Stavros","cdc,cdround","GBIF",20159
+"5282442673","Magnolia acuminata (L.) L.","H","2025",40.5212,-80.4697,NA,"Tony DeSantis","cdc,cdround","GBIF",20160
+"5292049073","Magnolia acuminata (L.) L.","H","2025",39.679,-82.2919,NA,"Alex Abram","cdc,cdround","GBIF",20161
+"5292258555","Magnolia acuminata (L.) L.","H","2025",34.6633,-80.5063,NA,"Keith Bradley","cdc,cdround","GBIF",20162
+"5759541580","Magnolia acuminata (L.) L.","H","2025",36.1587,-82.0997,NA,"Hannah Parry","cdc","GBIF",20163
+"5827455077","Magnolia acuminata (L.) L.","H","2025",42.277,-76.4884,NA,"Drew Weber","cdc,cdround","GBIF",20164
+"5828226826","Magnolia acuminata (L.) L.","H","2025",42.0431,-78.7014,NA,"sschelble","cdc,cdround","GBIF",20165
+"5830753304","Magnolia acuminata (L.) L.","H","2025",41.2276,-81.5124,NA,"phusiologos","cdc,cdround","GBIF",20166
+"5840217511","Magnolia acuminata (L.) L.","H","2025",41.6083,-81.3055,NA,"Andrew Gray","cdc,cdround","GBIF",20167
+"5840269154","Magnolia acuminata (L.) L.","H","2025",42.1089,-79.5068,NA,"sschelble","cdc,cdround","GBIF",20168
+"5843969473","Magnolia acuminata (L.) L.","H","2025",39.6572,-78.3992,NA,"gilbertj","cdc,cdround","GBIF",20169
+"5281896297","Magnolia acuminata (L.) L.","H","2025",41.0861,-81.6167,NA,"Summit Metro Parks","cdc,cdround","GBIF",20170
+"5281904763","Magnolia acuminata (L.) L.","H","2025",41.304,-79.0599,NA,"Christopher Tracey","cdc,cdround","GBIF",20171
+"5282260103","Magnolia acuminata (L.) L.","H","2025",41.0859,-81.6172,NA,"Summit Metro Parks","cdc,cdround","GBIF",20172
+"5282391497","Magnolia acuminata (L.) L.","H","2025",37.3733,-89.325,NA,"abelkinser","cdc,cdround","GBIF",20173
+"5282425321","Magnolia acuminata (L.) L.","H","2025",41.0841,-81.6175,NA,"Summit Metro Parks","cdc,cdround","GBIF",20174
+"5282615913","Magnolia acuminata (L.) L.","H","2025",35.9147,-93.5588,NA,"Evan J. Walden","cdc,cdround","GBIF",20175
+"5291798258","Magnolia acuminata (L.) L.","H","2025",37.4096,-89.5051,NA,"joe_cesolini","cdc,cdround","GBIF",20176
+"5291815265","Magnolia acuminata (L.) L.","H","2025",40.5865,-79.9858,NA,"Thomas Connor","cdc,cdround","GBIF",20177
+"5291920002","Magnolia acuminata (L.) L.","H","2025",41.3159,-81.4298,NA,"Summit Metro Parks","cdc,cdround","GBIF",20178
+"5291988530","Magnolia acuminata (L.) L.","H","2025",33.6443,-80.988,NA,"E.D. Cook","cdc,cdround","GBIF",20179
+"5292127885","Magnolia acuminata (L.) L.","H","2025",40.329,-74.9454,NA,"lxlmurdoclxl","cdc,cdround","GBIF",20180
+"5292211509","Magnolia acuminata (L.) L.","H","2025",41.2093,-81.5547,NA,"Summit Metro Parks","cdc,cdround","GBIF",20181
+"5292229051","Magnolia acuminata (L.) L.","H","2025",41.3678,-81.5806,NA,"Chuck Slusarczyk Jr.","cdc,cdround","GBIF",20182
+"5292390908","Magnolia acuminata (L.) L.","H","2025",35.7315,-92.9373,NA,"tallpaultheforester","cdc,cdround","GBIF",20183
+"5292480841","Magnolia acuminata (L.) L.","H","2025",39.1295,-79.4448,NA,"Frode Jacobsen","cdc,cdround","GBIF",20184
+"5292579868","Magnolia acuminata (L.) L.","H","2025",36.7199,-81.4621,NA,"Jedda","cdc","GBIF",20185
+"5292684635","Magnolia acuminata (L.) L.","H","2025",40.1613,-79.2729,NA,"ellac444","cdc,cdround","GBIF",20186
+"5292697178","Magnolia acuminata (L.) L.","H","2025",42.1886,-79.9634,NA,"Tyler Brooks","cdc,cdround","GBIF",20187
+"5292924313","Magnolia acuminata (L.) L.","H","2025",41.0862,-81.6168,NA,"Summit Metro Parks","cdc,cdround","GBIF",20188
+"5292952308","Magnolia acuminata (L.) L.","H","2025",40.1528,-79.1794,NA,"Matthew StClair","cdc,cdround","GBIF",20189
+"5292966028","Magnolia acuminata (L.) L.","H","2025",38.7687,-78.8808,NA,"Megan Good","cdc,cdround","GBIF",20190
+"5293313754","Magnolia acuminata (L.) L.","H","2025",42.1643,-79.9851,NA,"kstolar","cdc,cdround","GBIF",20191
+"5759568329","Magnolia acuminata (L.) L.","H","2025",35.712,-94.1117,NA,"Samantha Heller","cdc,cdround","GBIF",20192
+"5759744912","Magnolia acuminata (L.) L.","H","2025",37.1353,-80.1829,NA,"tab500","cdc,cdround","GBIF",20193
+"5759747815","Magnolia acuminata (L.) L.","H","2025",42.0705,-79.4852,NA,"Heritage Seed Bank","cdc,cdround","GBIF",20194
+"5759841131","Magnolia acuminata (L.) L.","H","2025",40.6129,-81.4264,NA,"eseckel","cdc,cdround","GBIF",20195
+"5759899256","Magnolia acuminata (L.) L.","H","2025",35.6876,-83.4999,NA,"Pete Kozich","cdc,cdround","GBIF",20196
+"5760015835","Magnolia acuminata (L.) L.","H","2025",37.325,-89.2032,NA,"Christopher David Benda","cdc,cdround","GBIF",20197
+"5760042271","Magnolia acuminata (L.) L.","H","2025",41.1895,-81.5001,NA,"Summit Metro Parks","cdc,cdround","GBIF",20198
+"5760046083","Magnolia acuminata (L.) L.","H","2025",39.9659,-79.3608,NA,"Clifton Ladd, C.W.B.","cdc,cdround","GBIF",20199
