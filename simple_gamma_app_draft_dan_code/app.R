@@ -121,7 +121,7 @@ dataAnalysisServer <- function(id, combined_data, selected_points) {
     # Initialize nested modules
     #controlsModuleServer("controls", combined_data, selected_points)
     mapModuleServer("map", combined_data, selected_points)
-    #tableModuleServer("table", combined_data, selected_points)
+    tableModuleServer("table", combined_data, selected_points)
   })
 }
 
@@ -129,21 +129,12 @@ dataAnalysisServer <- function(id, combined_data, selected_points) {
 # ---- Gap Analysis Module ----
 gapAnalysisUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    h2("Gap Analysis"),
-    p("This section is dedicated to performing gap analysis. You can add specific modules, tables, and charts here related to identifying gaps in data or performance."),
-    hr(),
-    h4("Dataset Table"),
-    tableOutput(ns("view")) # To display a table of the data
-  )
+  tagList()
 }
 
-gapAnalysisServer <- function(id, dataset, obs) {
+gapAnalysisServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    output$view <- renderTable({
-      req(dataset(), obs())
-      head(dataset(), n = obs())
-    })
+
   })
 }
 
@@ -206,18 +197,12 @@ ui <- fluidPage(
           # Conditional controls now depend on output.page
           conditionalPanel(
             condition = "output.page === 'data_analysis'",
-            # h4("Data Analysis Controls"),
-            # selectInput("dataset_da", "Choose a dataset:",
-            #             choices = c("iris", "mtcars", "trees"))
             h5("Data Evaluation Page"),
             controlsModuleUI("controls")
           ),
           conditionalPanel(
             condition = "output.page === 'gap_analysis'",
-            h4("Gap Analysis Controls"),
-            selectInput("dataset_ga", "Choose a dataset:",
-                        choices = c("iris", "mtcars", "trees")),
-            numericInput("obs_ga", "Number of observations to view:", 10)
+            h4("Gap Analysis Controls")
           ),
           conditionalPanel(
             condition = "output.page === 'about'",
@@ -285,37 +270,11 @@ server <- function(input, output, session) {
     currentPage("about")
   })
   
-  # --- Shared State for Dataset Selection ---
-  sharedDatasetName <- reactiveVal("iris") # Default dataset
-  
-  # Observer to update shared state from Data Analysis page
-  observeEvent(input$dataset_da, {
-    sharedDatasetName(input$dataset_da)
-  }, ignoreNULL = TRUE, ignoreInit = TRUE)
-  
-  # Observer to update shared state from Gap Analysis page
-  observeEvent(input$dataset_ga, {
-    sharedDatasetName(input$dataset_ga)
-  }, ignoreNULL = TRUE, ignoreInit = TRUE)
-  
-  # Observer to keep the two selectInput controls in sync
-  observe({
-    current_dataset <- sharedDatasetName()
-    updateSelectInput(session, "dataset_da", selected = current_dataset)
-    updateSelectInput(session, "dataset_ga", selected = current_dataset)
-  })
-  
-  # --- Reactive Inputs for Modules ---
-  sharedDataset <- reactive({
-    switch(sharedDatasetName(), "iris" = iris, "mtcars" = mtcars, "trees" = trees)
-  })
-  
-  obsInput_ga <- reactive(input$obs_ga)
   
   # --- Initialize Module Servers ---
   dataAnalysisServer("data_analysis_page", combined_data, selected_points)
   controlsModuleServer("controls", combined_data, selected_points)
-  gapAnalysisServer("gap_analysis_page", dataset = sharedDataset, obs = obsInput_ga)
+  gapAnalysisServer("gap_analysis_page")
   aboutServer("about_page")
 }
 
