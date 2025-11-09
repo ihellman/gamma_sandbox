@@ -9,78 +9,11 @@ library(dplyr)
 library(shiny)
 library(reactable)
 
-
 # ---- Landing Page Module ----
 landingUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    tags$style(HTML("
-      /* ## MODIFIED: Hero section is now taller and has a wavy bottom clip-path */
-      .hero-section {
-        position: relative;
-        /* Calculate height to fill space between header and footer */
-        height: calc(100vh - 125px); 
-        min-height: 500px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        text-align: center;
-        overflow: hidden;
-        /* This creates the curved/wavy bottom effect */
-        clip-path: ellipse(80% 40% at 50% 50%);
-      }
-      .hero-image {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: -2;
-      }
-      .hero-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: -1;
-      }
-      .hero-content {
-        max-width: 800px;
-        padding: 20px;
-      }
-      
-      /* Original CSS for other elements */
-      .top-nav-banner {
-        background-color: #f8f9fa;
-        padding: 10px 20px;
-        border-bottom: 1px solid #dee2e6;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-      .top-nav-banner .brand {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-right: auto;
-      }
-      .footer-banner {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-top: 1px solid #dee2e6;
-        text-align: center;
-      }
-      .footer-banner img {
-        height: 50px; /* Logo height */
-        margin: 0 20px;
-        vertical-align: middle;
-      }
-    ")),
-    
-    # Only the first hero section remains
+  # No tagList or tags$style here anymore. Just return the UI.
+  div(
     div(class = "hero-section",
         tags$img(class = "hero-image", src="https://plus.unsplash.com/premium_photo-1690031000842-1ac0508f18b7?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
         div(class = "hero-overlay"),
@@ -88,19 +21,50 @@ landingUI <- function(id) {
             h1("GAMMA"),
             p("Observing the meta collection.", style="font-size: 1.2rem;")
         )
+    ),
+    div(class="container content-section",
+        # Feature Boxes
+        div(class="features-container",
+            div(class="feature-box",
+                tags$img(src="https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
+                h4("Gather your Data"),
+                p("Upload your datasets, compare against public data, and prepare them for analysis.")
+            ),
+            div(class="feature-arrow", HTML("&#8594;")),
+            div(class="feature-box",
+                tags$img(src="https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"),
+                h4("Find the gaps"),
+                p("Geographic gap analysis to locations to priortize collections.")
+            ),
+            div(class="feature-arrow", HTML("&#8594;")),
+            div(class="feature-box",
+                tags$img(src="https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
+                h4("Share the results"),
+                p("Export and share your findings")
+            )
+        ),
+        
+        # Navigation Buttons
+        div(class="nav-buttons",
+            actionButton(ns("go_da"), "Get Started", class="btn-primary btn-lg"),
+            actionButton(ns("go_about"), "Learn More", class="btn-info btn-lg")
+        )
     )
-    
-    ## MODIFICATION: The 'info-section' and 'feature-section' divs have been removed.
   )
 }
 
-# No changes below this line
-# ... (rest of the code is unchanged) ...
 
-# ---- Landing Page Server (simplified) ----
+
 landingServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    # No server logic needed
+    # Return a list of reactive expressions that fire on button clicks
+    return(
+      list(
+        go_da = reactive(input$go_da),
+        go_ga = reactive(input$go_ga),
+        go_about = reactive(input$go_about)
+      )
+    )
   })
 }
 
@@ -109,17 +73,13 @@ landingServer <- function(id) {
 dataAnalysisUI <- function(id) {
   ns <- NS(id)
   tagList(
-    #controlsModuleUI(ns("controls")),
     mapModuleUI(ns("map")),
     tableModuleUI(ns("table"))
   )
-  
 }
 
 dataAnalysisServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    # Initialize nested modules
-    #controlsModuleServer("controls", combined_data, selected_points)
     mapModuleServer("map", combined_data, selected_points)
     tableModuleServer("table", combined_data, selected_points)
   })
@@ -129,10 +89,12 @@ dataAnalysisServer <- function(id, combined_data, selected_points) {
 # ---- Gap Analysis Module ----
 gapAnalysisUI <- function(id) {
   ns <- NS(id)
-  tagList()
+  tagList(
+    h3("Gap Analysis Page")
+  )
 }
 
-gapAnalysisServer <- function(id) {
+gapAnalysisServer <- function(id, dataset, obs) {
   moduleServer(id, function(input, output, session) {
 
   })
@@ -169,19 +131,120 @@ ui <- fluidPage(
   title = "GAMMA Shiny App",
   theme = bs_theme(version = 4, bootswatch = "litera"),
   
-  # Top navigation banner is ALWAYS visible
-  div(class="top-nav-banner",
-      div(class="brand", "GAMMA"),
-      actionButton("nav_da", "Data Analysis", class="btn-light"),
-      actionButton("nav_ga", "Gap Analysis", class="btn-light"),
-      actionButton("nav_about", "About", class="btn-light"),
-      conditionalPanel(
-        condition = "output.page !== 'landing'",
-        actionButton("go_home", "Home", class="btn-secondary")
-      )
+  # --- GLOBAL STYLES ---
+  # Styles moved here from landingUI to load immediately
+  tags$head(
+    tags$style(HTML("
+      /* Hide non-landing content on initial load to prevent flicker.
+       * This rule is loaded in the <head> so it applies before the
+       * page body is rendered.
+      */
+      .conditional-content {
+        display: none;
+      }
+      
+      .hero-section {
+        position: relative;
+        height: 60vh;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        overflow: hidden;
+        clip-path: ellipse(120% 100% at 50% 0%);
+      }
+      .hero-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -2;
+      }
+      .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+      }
+      .hero-content {
+        max-width: 800px;
+        padding: 20px;
+      }
+      .content-section {
+        padding: 60px 20px;
+        text-align: center;
+      }
+      .features-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 40px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .feature-box {
+        flex-basis: 280px;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+      .feature-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      }
+      .feature-box img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .feature-arrow {
+        font-size: 2.5rem;
+        color: #cccccc;
+      }
+      .nav-buttons .btn {
+        margin: 0 10px;
+      }
+      .top-nav-banner {
+        background-color: #f8f9fa;
+        padding: 10px 20px;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .top-nav-banner .brand {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-right: auto;
+      }
+      .footer-banner {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+        margin-top: 50px;
+      }
+      .footer-banner img {
+        height: 50px; /* Logo height */
+        margin: 0 20px;
+        vertical-align: middle;
+      }
+    "))
   ),
   
-  # A container for the main page content
+  # A container for all UI
   div(
     # Conditional panel for the landing page (no sidebar)
     conditionalPanel(
@@ -189,15 +252,31 @@ ui <- fluidPage(
       landingUI("landing_page")
     ),
     
-    # Conditional panel for all other pages (with sidebar layout)
+    # Conditional panel for all other pages (with top nav banner and sidebar)
+    # Add class to enable CSS-based hiding on initial load
     conditionalPanel(
-      condition = "output.page !== 'landing'",
+      # Need to not return null (e.g. "output.page !== 'landing'").  Otherwise, page may flicker navbar on initial load. 
+      condition = "output.page === 'data_analysis' || 
+                   output.page === 'gap_analysis' || 
+                   output.page === 'about'",
+      class = "conditional-content",
+      style = "display: none;",
+      
+      # Top navigation banner
+      div(class="top-nav-banner",
+          div(class="brand", "GAMMA"),
+          actionButton("nav_da", "Data Analysis", class="btn-light"),
+          actionButton("nav_ga", "Gap Analysis", class="btn-light"),
+          actionButton("nav_about", "About", class="btn-light"),
+          actionButton("go_home", "Home", class="btn-secondary")
+      ),
+      
       sidebarLayout(
         sidebarPanel(
           # Conditional controls now depend on output.page
           conditionalPanel(
             condition = "output.page === 'data_analysis'",
-            h5("Data Evaluation Page"),
+            h4("Data Analysis Controls"),
             controlsModuleUI("controls")
           ),
           conditionalPanel(
@@ -246,7 +325,7 @@ server <- function(input, output, session) {
   # Shared reactive values accessible by all pages
   combined_data <- reactiveVal(data.frame())
   selected_points <- reactiveVal(numeric(0))
-  
+
   # --- Page Navigation State ---
   currentPage <- reactiveVal("landing")
   
@@ -255,8 +334,20 @@ server <- function(input, output, session) {
   outputOptions(output, "page", suspendWhenHidden = FALSE)
   
   # --- Navigation Event Handling ---
-  landingServer("landing_page") # Call the module server
+  # 1. From Landing Page Buttons
+  landing_nav <- landingServer("landing_page")
   
+  observeEvent(landing_nav$go_da(), {
+    currentPage("data_analysis")
+  })
+  observeEvent(landing_nav$go_ga(), {
+    currentPage("gap_analysis")
+  })
+  observeEvent(landing_nav$go_about(), {
+    currentPage("about")
+  })
+  
+  # 2. From Top Nav Banner Buttons
   observeEvent(input$go_home, {
     currentPage("landing")
   })
@@ -270,13 +361,15 @@ server <- function(input, output, session) {
     currentPage("about")
   })
   
+
   
   # --- Initialize Module Servers ---
+  # Pass the single shared dataset reactive to both modules
   dataAnalysisServer("data_analysis_page", combined_data, selected_points)
   controlsModuleServer("controls", combined_data, selected_points)
   gapAnalysisServer("gap_analysis_page")
   aboutServer("about_page")
 }
 
-# Run the app
+# Run the application
 shinyApp(ui = ui, server = server)
