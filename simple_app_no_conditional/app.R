@@ -1,0 +1,407 @@
+# app.R
+library(shiny)
+library(bslib)
+library(leaflet)
+library(shinyjs)
+
+# Custom CSS for navbar styling and landing page
+custom_css <- "
+/* Hide navbar initially */
+.navbar {
+  display: none;
+}
+
+/* Show navbar when app is launched */
+body.app-launched .navbar {
+  display: block !important;
+}
+
+/* Hide landing page when app is launched */
+body.app-launched .landing-page {
+  display: none !important;
+}
+
+/* Show landing page when on home */
+body.on-home .landing-page {
+  display: flex !important;
+}
+
+/* Hide navbar when on home */
+body.on-home .navbar {
+  display: none !important;
+}
+
+/* Landing page styles */
+.landing-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+.hero-section {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+  clip-path: ellipse(120% 100% at 50% 0%);
+}
+
+.hero-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.hero-content {
+  max-width: 800px;
+  padding: 20px;
+}
+
+.hero-content h1 {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.content-section {
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+}
+
+.features-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+  margin-bottom: 50px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.feature-box {
+  flex-basis: 280px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.feature-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.feature-box img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.feature-box h4 {
+  margin: 15px 0 10px 0;
+}
+
+.feature-arrow {
+  font-size: 2.5rem;
+  color: #cccccc;
+}
+
+.nav-buttons {
+  margin-top: 30px;
+}
+
+.nav-buttons .btn {
+  margin: 0 10px;
+}
+
+.footer-banner {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-banner img {
+  height: 50px;
+  margin: 0 20px;
+  vertical-align: middle;
+}
+
+/* Custom navbar styling */
+.navbar {
+  background-color: #f8f9fa !important;
+  box-shadow: none;
+  padding: 10px 20px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529 !important;
+}
+
+.navbar-nav .nav-link {
+  color: #495057 !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  background-color: #f8f9fa;
+  border: 1px solid transparent;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: #e9ecef;
+  color: #212529 !important;
+}
+
+.navbar-nav .nav-link.active {
+  background-color: #e9ecef !important;
+  color: #212529 !important;
+  border: 1px solid #dee2e6;
+}
+"
+
+# Landing Page Module
+landingUI <- function(id) {
+  ns <- NS(id)
+  div(
+    class = "landing-page",
+    div(
+      class = "hero-section",
+      tags$img(class = "hero-image", src = "https://plus.unsplash.com/premium_photo-1690031000842-1ac0508f18b7?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
+      div(class = "hero-overlay"),
+      div(
+        class = "hero-content",
+        h1("GAMMA"),
+        p("Observing the meta collection.", style = "font-size: 1.2rem;")
+      )
+    ),
+    div(
+      class = "container content-section",
+      div(
+        class = "features-container",
+        div(
+          class = "feature-box",
+          tags$img(src = "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
+          h4("Gather your Data"),
+          p("Upload your datasets, compare against public data, and prepare them for analysis.")
+        ),
+        div(class = "feature-arrow", HTML("&#8594;")),
+        div(
+          class = "feature-box",
+          tags$img(src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"),
+          h4("Find the gaps"),
+          p("Geographic gap analysis to locations to priortize collections.")
+        ),
+        div(class = "feature-arrow", HTML("&#8594;")),
+        div(
+          class = "feature-box",
+          tags$img(src = "https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"),
+          h4("Share the results"),
+          p("Export and share your findings")
+        )
+      ),
+      div(
+        class = "nav-buttons",
+        actionButton(ns("launch"), "Get Started", class = "btn-primary btn-lg"),
+        actionButton(ns("learn_more"), "Learn More", class = "btn-info btn-lg")
+      )
+    ),
+    div(
+      class = "footer-banner",
+      tags$a(
+        href = "https://www.bgci.org/", target = "_blank",
+        tags$img(src = "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Botanic_Gardens_Conservation_International_logo.svg/320px-Botanic_Gardens_Conservation_International_logo.svg.png", 
+                 alt = "Botanic Gardens Conservation International Logo")
+      ),
+      tags$a(
+        href = "https://www.usbg.gov/", target = "_blank",
+        tags$img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/US_Botanic_Garden_logo.svg/320px-US_Botanic_Garden_logo.svg.png", 
+                 alt = "US Botanic Garden Logo")
+      )
+    )
+  )
+}
+
+landingServer <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    return(
+      list(
+        launch = reactive(input$launch),
+        learn_more = reactive(input$learn_more)
+      )
+    )
+  })
+}
+
+# Data Analysis Module
+dataAnalysisUI <- function(id) {
+  ns <- NS(id)
+  div(
+    h2("Data Analysis"),
+    p("This is the Data Analysis page with a Leaflet map below."),
+    leafletMapUI(ns("map"))
+  )
+}
+
+dataAnalysisServer <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    leafletMapServer("map")
+  })
+}
+
+# Leaflet Map Module
+leafletMapUI <- function(id) {
+  ns <- NS(id)
+  div(
+    style = "margin-top: 20px;",
+    leafletOutput(ns("map"), height = "500px")
+  )
+}
+
+leafletMapServer <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    output$map <- renderLeaflet({
+      leaflet() %>%
+        addTiles() %>%
+        setView(lng = -93.65, lat = 42.0285, zoom = 4) %>%
+        addMarkers(lng = -93.65, lat = 42.0285, popup = "Iowa State University")
+    })
+  })
+}
+
+# GAP Analysis Module
+gapAnalysisUI <- function(id) {
+  ns <- NS(id)
+  div(
+    h2("GAP Analysis"),
+    p("This is the GAP Analysis page."),
+    plotOutput(ns("plot"))
+  )
+}
+
+gapAnalysisServer <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    output$plot <- renderPlot({
+      plot(1:10, 1:10, main = "Sample GAP Analysis Plot", 
+           xlab = "X", ylab = "Y", col = "purple", pch = 19, cex = 2)
+    })
+  })
+}
+
+# About Module
+aboutUI <- function(id) {
+  ns <- NS(id)
+  div(
+    h2("About"),
+    p("This application demonstrates a modular Shiny app with:"),
+    tags$ul(
+      tags$li("A landing page with custom styling"),
+      tags$li("Modular page structure"),
+      tags$li("Custom navbar styling"),
+      tags$li("Persistent Leaflet map state"),
+      tags$li("No navbar flicker on load")
+    )
+  )
+}
+
+aboutServer <- function(id) {
+  moduleServer(id, function(input, output, session) {
+    # No server logic needed
+  })
+}
+
+# UI
+ui <- page_navbar(
+  title = "Data Explorer",
+  id = "navbar",
+  theme = bs_theme(version = 5),
+  header = tags$head(
+    tags$style(HTML(custom_css))
+  ),
+  nav_spacer(),
+  
+  # Initialize shinyjs
+  useShinyjs(),
+  
+  # Landing page overlay
+  landingUI("landing"),
+  
+  # Navigation pages
+  nav_panel("Home", value = "home", div()),
+  nav_panel("Data Analysis", value = "data", dataAnalysisUI("data_analysis")),
+  nav_panel("GAP Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
+  nav_panel("About", value = "about", aboutUI("about"))
+)
+
+# Server
+server <- function(input, output, session) {
+  
+  # Landing page module
+  launch_actions <- landingServer("landing")
+  
+  # Observe launch button (Get Started)
+  observeEvent(launch_actions$launch(), {
+    req(launch_actions$launch() > 0)
+    shinyjs::addClass(selector = "body", class = "app-launched")
+    shinyjs::removeClass(selector = "body", class = "on-home")
+    updateNavbarPage(session, "navbar", selected = "data")
+  })
+  
+  # Observe learn more button
+  observeEvent(launch_actions$learn_more(), {
+    req(launch_actions$learn_more() > 0)
+    shinyjs::addClass(selector = "body", class = "app-launched")
+    shinyjs::removeClass(selector = "body", class = "on-home")
+    updateNavbarPage(session, "navbar", selected = "about")
+  })
+  
+  # Observe navbar changes - if user clicks Home, show landing page
+  observe({
+    if(!is.null(input$navbar) && input$navbar == "home") {
+      shinyjs::addClass(selector = "body", class = "on-home")
+    } else if(!is.null(input$navbar)) {
+      shinyjs::removeClass(selector = "body", class = "on-home")
+    }
+  })
+  
+  # Initialize other modules
+  dataAnalysisServer("data_analysis")
+  gapAnalysisServer("gap_analysis")
+  aboutServer("about")
+}
+
+# Run the application
+shinyApp(ui, server)
