@@ -3,10 +3,10 @@
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
-    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"),
-    actionButton(inputId = ns("loadupload"), label = "Load Upload"),
-    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"),
-    actionButton(inputId = ns("deleteSelection"), label = "Delete Selection", class = "btn-danger")
+    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"), br(), br(),
+    actionButton(inputId = ns("loadupload"), label = "Load Upload"), br(), br(),
+    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"), br(), br(),
+    actionButton(inputId = ns("deleteSelection"), label = "Delete Selection", class = "btn-danger"), br()
   )
 }
 
@@ -81,7 +81,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
 mapModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
-    leafletOutput(ns("dataEvalMap"))
+    leafletOutput(ns("dataEvalMap"), height = "50vh") # vh = viewport height. 50% doesnt work.
   )
 }
 
@@ -90,7 +90,6 @@ mapModuleServer <- function(id, combined_data, selected_points) {
     
     # Initial map render
     output$dataEvalMap <- renderLeaflet({
-      print("Base map rendering")
       data_eval_base_map()
     })
     

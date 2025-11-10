@@ -273,11 +273,12 @@ ui <- fluidPage(
       
       sidebarLayout(
         sidebarPanel(
+          width = 3,
           # Conditional controls now depend on output.page
           conditionalPanel(
             condition = "output.page === 'data_analysis'",
             h4("Data Analysis Controls"),
-            controlsModuleUI("controls")
+            controlsModuleUI("controls"),
           ),
           conditionalPanel(
             condition = "output.page === 'gap_analysis'",

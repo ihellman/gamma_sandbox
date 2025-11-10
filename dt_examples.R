@@ -17,37 +17,37 @@ library(readr)
 
 data <- read_csv("sample_data/Magnolia_acuminata_data.csv")
 
-# Create DT table with CSS-based dynamic ellipsis
-datatable(
-  data,
-  extensions = 'Select',
-  rownames = FALSE,
-  options = list(
-    columnDefs = list(
-      list(
-        targets = '_all',  # Description column
-        className = 'dt-ellipsis',
-        createdCell = JS(
-          "function(td, cellData, rowData, row, col) {",
-          "  $(td).attr('title', cellData);",  # Add tooltip with full text
-          "}"
-        )
-      )
-    ),
-    select = list(style = 'multi', items = 'row'),
-    pageLength = 10,
-    autoWidth = FALSE,
-    scrollX = TRUE
-  ),
-  class = 'display'
-) %>%
-  formatStyle(
-    columns = 1:ncol(data),
-    `max-width` = '300px',  # Set max width for the column
-    `white-space` = 'nowrap',
-    `overflow` = 'hidden',
-    `text-overflow` = 'ellipsis'
-  )
+# # Create DT table with CSS-based dynamic ellipsis
+# datatable(
+#   data,
+#   extensions = 'Select',
+#   rownames = FALSE,
+#   options = list(
+#     columnDefs = list(
+#       list(
+#         targets = '_all',  # Description column
+#         className = 'dt-ellipsis',
+#         createdCell = JS(
+#           "function(td, cellData, rowData, row, col) {",
+#           "  $(td).attr('title', cellData);",  # Add tooltip with full text
+#           "}"
+#         )
+#       )
+#     ),
+#     select = list(style = 'multi', items = 'row'),
+#     pageLength = 10,
+#     autoWidth = FALSE,
+#     scrollX = TRUE
+#   ),
+#   class = 'display'
+# ) %>%
+#   formatStyle(
+#     columns = 1:ncol(data),
+#     `max-width` = '300px',  # Set max width for the column
+#     `white-space` = 'nowrap',
+#     `overflow` = 'hidden',
+#     `text-overflow` = 'ellipsis'
+#   )
 
 
 # Fancy tables
@@ -59,8 +59,10 @@ data_display <- data[, c("Taxon Name", "Collection Date", "Locality",
                          "issues", "source", "index")]
 
 datatable(
+  
   data_display,
   extensions = c('Select', 'Buttons'),
+  selection = 'none', #turn of DT native select in order to use Select Extension
   rownames = FALSE,
   filter = 'top',
   options = list(
