@@ -1,8 +1,17 @@
 # app.R
 library(shiny)
 library(bslib)
-library(leaflet)
 library(shinyjs)
+library(shiny)
+library(bslib)
+library(readr)
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+library(dplyr)
+library(shiny)
+library(reactable)
+
 
 # Custom CSS for navbar styling and landing page
 custom_css <- "
@@ -193,7 +202,7 @@ body.on-home .navbar {
 }
 "
 
-# Landing Page Module
+# LANDING PAGE MODULE -------------------------------------------------------------------
 landingUI <- function(id) {
   ns <- NS(id)
   div(
@@ -266,43 +275,217 @@ landingServer <- function(id) {
   })
 }
 
-# Data Analysis Module
+# DATA ANALYSIS MODULE ------------------------------------------------------------------
 dataAnalysisUI <- function(id) {
   ns <- NS(id)
   div(
-    h2("Data Analysis"),
-    p("This is the Data Analysis page with a Leaflet map below."),
-    leafletMapUI(ns("map"))
+    controlsModuleUI("controls"),
+    mapModuleUI(ns("map")),
+    tableModuleUI(ns("table"))
   )
 }
 
-dataAnalysisServer <- function(id) {
+dataAnalysisServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    leafletMapServer("map")
+    controlsModuleServer("controls")
+    mapModuleServer("map", combined_data, selected_points)
+    tableModuleServer("table", combined_data, selected_points)
   })
 }
-
-# Leaflet Map Module
-leafletMapUI <- function(id) {
+# Controls Module 
+controlsModuleUI <- function(id) {
   ns <- NS(id)
-  div(
-    style = "margin-top: 20px;",
-    leafletOutput(ns("map"), height = "500px")
+  tagList(
+    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"), br(), br(),
+    actionButton(inputId = ns("loadupload"), label = "Load Upload"), br(), br(),
+    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"), br(), br(),
+    actionButton(inputId = ns("deleteSelection"), label = "Delete Selection", class = "btn-danger"), br()
   )
 }
 
-leafletMapServer <- function(id) {
+controlsModuleServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    output$map <- renderLeaflet({
-      leaflet() %>%
-        addTiles() %>%
-        setView(lng = -93.65, lat = 42.0285, zoom = 4) %>%
-        addMarkers(lng = -93.65, lat = 42.0285, popup = "Iowa State University")
+    
+    # Load sample data (for testing)
+    gbifPoints <- read_csv("appData/Magnolia_acuminata_data.csv", col_types = cols(.default = "c")) %>%
+      sf::st_as_sf(coords = c("Longitude","Latitude"), crs = 4326, remove = FALSE) %>%
+      mutate(index = dplyr::row_number())
+    
+    uploadPoints <- read_csv("appData/upload_sample.csv", col_types = cols(.default = "c")) %>%
+      sf::st_as_sf(coords = c("Longitude","Latitude"), crs = 4326, remove = FALSE) %>%
+      mutate(index = dplyr::row_number())
+    
+    # Load GBIF data
+    observeEvent(input$loadGBIF, {
+      current <- combined_data()
+      
+      if (nrow(current) == 0) {
+        combined_data(gbifPoints)
+      } else {
+        new_dat <- bind_rows(current, gbifPoints) %>%
+          mutate(index = row_number())
+        combined_data(new_dat)
+      }
+    })
+    
+    # Load upload data
+    observeEvent(input$loadupload, {
+      current <- combined_data()
+      
+      if (nrow(current) == 0) {
+        combined_data(uploadPoints)
+      } else {
+        new_dat <- bind_rows(current, uploadPoints) %>%
+          mutate(index = row_number())
+        combined_data(new_dat)
+      }
+    })
+    
+    # Clear selection
+    observeEvent(input$clearSelection, {
+      selected_points(numeric(0))
+    })
+    
+    # Delete selected points
+    observeEvent(input$deleteSelection, {
+      req(nrow(combined_data()) > 0)
+      current_data <- combined_data()
+      current_selection <- selected_points()
+      
+      # Only proceed if there are selected points
+      #if (length(current_selection) > 0 && nrow(current_data) > 0) {
+        # Remove selected rows
+        updated_data <- current_data %>%
+          filter(!index %in% current_selection) %>%
+          mutate(index = row_number())  # Re-index after deletion
+
+        # Update the data
+        combined_data(updated_data)
+
+        # Clear the selection
+        selected_points(numeric(0))
+      #}
     })
   })
 }
 
-# GAP Analysis Module
+
+
+
+
+
+
+# MAP MODULE -----------------------------------------------------------------------------
+
+mapModuleUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    leafletOutput(ns("dataEvalMap"), height = "50vh") # vh = viewport height. 50% doesnt work.
+  )
+}
+
+mapModuleServer <- function(id, combined_data, selected_points) {
+  moduleServer(id, function(input, output, session) {
+    
+    # Initial map render
+    output$dataEvalMap <- renderLeaflet({
+      data_eval_base_map()
+    })
+    
+    
+    # Update map when data or selection changes
+    observe({
+      data_eval_map_gbif_proxy(mapID = "dataEvalMap", 
+                               allPoints = combined_data(), 
+                               selected = selected_points())
+    })
+    
+    # Handle marker clicks
+    observeEvent(input$dataEvalMap_marker_click, {
+      click <- input$dataEvalMap_marker_click
+      current_selected <- selected_points()
+      
+      if (click$id %in% current_selected) {
+        selected_points(setdiff(current_selected, click$id))
+      } else {
+        selected_points(c(current_selected, click$id))
+      }
+    })
+    
+    # Handle polygon selection
+    observeEvent(input$dataEvalMap_draw_new_feature, {
+      req(nrow(combined_data()) > 0)
+      currentData <- combined_data()
+      
+      # Extract polygon feature
+      feature <- input$dataEvalMap_draw_new_feature
+      coords <- feature$geometry$coordinates[[1]]
+      selectionPoly <- st_polygon(list(matrix(unlist(coords), ncol = 2, byrow = TRUE)))
+      
+      # Find points within the polygon
+      pointsInPoly <- st_filter(currentData, selectionPoly)
+      
+      # Get index values for new points  
+      newPolySelection <- pointsInPoly %>% pull(index)
+      
+      # Combine with previously selected and save
+      newSelection <- c(selected_points(), newPolySelection) %>% unique()
+      selected_points(newSelection)
+    })
+  })
+}
+
+# TABLE MODULE -------------------------------------------------------------------------
+tableModuleUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    reactableOutput(outputId = ns("pointsTable"))
+  )
+}
+
+tableModuleServer <- function(id, combined_data, selected_points) {
+  moduleServer(id, function(input, output, session) {
+    
+    output$pointsTable <- renderReactable({
+      req(nrow(combined_data()) > 0)
+      data <- st_drop_geometry(combined_data())
+      selected <- selected_points()
+
+      calc_width <- function(text) {
+        max(100, nchar(text) * 12)  # Roughly 8px per character + padding
+      }
+
+
+      
+      reactable(data = data,
+                selection = "multiple",
+                defaultSelected = which(data$index %in% selected),
+                onClick = "select",
+                highlight = TRUE,
+                pagination = FALSE,  
+                groupBy = "source",
+                  columns = lapply(names(data), function(col) {
+                    colDef(
+                    minWidth = calc_width(col)
+                    )
+  }) %>% setNames(names(data))
+                )
+    })
+    
+    # Handle table row selection
+    observeEvent(getReactableState("pointsTable", "selected"), {
+      table_selected <- getReactableState("pointsTable", "selected")
+      print(table_selected)
+      if (length(table_selected) > 0) {
+        selected_points(combined_data()$index[table_selected])
+      } else {
+        selected_points(numeric(0))
+      }
+    }, ignoreNULL = FALSE)
+  })
+}
+
+# GAP ANALYSIS MODULE ----------------------------------------------------------------
 gapAnalysisUI <- function(id) {
   ns <- NS(id)
   div(
@@ -321,7 +504,7 @@ gapAnalysisServer <- function(id) {
   })
 }
 
-# About Module
+# ABOUT MODULE ------------------------------------------------------------------------
 aboutUI <- function(id) {
   ns <- NS(id)
   div(
@@ -343,7 +526,7 @@ aboutServer <- function(id) {
   })
 }
 
-# UI
+# MAIN UI ----------------------------------------------------------------------------------
 ui <- page_navbar(
   title = "Data Explorer",
   id = "navbar",
@@ -366,8 +549,13 @@ ui <- page_navbar(
   nav_panel("About", value = "about", aboutUI("about"))
 )
 
-# Server
+# MAIN SERVER -------------------------------------------------------------------------------
 server <- function(input, output, session) {
+
+  combined_data <- reactiveVal(data.frame())
+  selected_points <- reactiveVal(numeric(0))
+
+
   
   # Landing page module
   launch_actions <- landingServer("landing")
@@ -398,7 +586,8 @@ server <- function(input, output, session) {
   })
   
   # Initialize other modules
-  dataAnalysisServer("data_analysis")
+  dataAnalysisServer("data_analysis", combined_data, selected_points)
+  controlsModuleServer("controls", combined_data, selected_points)
   gapAnalysisServer("gap_analysis")
   aboutServer("about")
 }
