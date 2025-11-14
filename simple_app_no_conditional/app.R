@@ -11,6 +11,7 @@ library(sf)
 library(dplyr)
 library(shiny)
 library(reactable)
+library(DT)
 
 
 # Custom CSS for navbar styling and landing page
@@ -278,28 +279,35 @@ landingServer <- function(id) {
 # DATA ANALYSIS MODULE ------------------------------------------------------------------
 dataAnalysisUI <- function(id) {
   ns <- NS(id)
-  div(
-    controlsModuleUI("controls"),
+  layout_sidebar(
+    sidebar = controlsModuleUI("controls"),
     mapModuleUI(ns("map")),
-    tableModuleUI(ns("table"))
+    navset_tab(
+      nav_panel(title = "Reactable", tableModuleUI(ns("table"))),
+      nav_panel(title = "DT", DT_tableModuleUI(ns("DT_table")))
+    )
+    
   )
 }
+
+
 
 dataAnalysisServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     controlsModuleServer("controls")
     mapModuleServer("map", combined_data, selected_points)
     tableModuleServer("table", combined_data, selected_points)
+    DT_tableModuleServer("DT_table", combined_data, selected_points)
   })
 }
 # Controls Module 
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
-    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"), br(), br(),
-    actionButton(inputId = ns("loadupload"), label = "Load Upload"), br(), br(),
-    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"), br(), br(),
-    actionButton(inputId = ns("deleteSelection"), label = "Delete Selection", class = "btn-danger"), br()
+    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"),
+    actionButton(inputId = ns("loadupload"), label = "Load Upload"),
+    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"), 
+    actionButton(inputId = ns("deleteSelection"), label = "Delete Selection", class = "btn-danger")
   )
 }
 
@@ -445,45 +453,143 @@ tableModuleUI <- function(id) {
 
 tableModuleServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    
     output$pointsTable <- renderReactable({
       req(nrow(combined_data()) > 0)
       data <- st_drop_geometry(combined_data())
       selected <- selected_points()
 
       calc_width <- function(text) {
-        max(100, nchar(text) * 12)  # Roughly 8px per character + padding
+        max(100, nchar(text) * 12) # Roughly 8px per character + padding
       }
 
-
-      
-      reactable(data = data,
-                selection = "multiple",
-                defaultSelected = which(data$index %in% selected),
-                onClick = "select",
-                highlight = TRUE,
-                pagination = FALSE,  
-                groupBy = "source",
-                  columns = lapply(names(data), function(col) {
-                    colDef(
-                    minWidth = calc_width(col)
-                    )
-  }) %>% setNames(names(data))
-                )
+      reactable(
+        data = data,
+        selection = "multiple",
+        defaultSelected = which(data$index %in% selected),
+        onClick = "select",
+        highlight = TRUE,
+        pagination = FALSE,
+        groupBy = "source",
+        columns = lapply(names(data), function(col) {
+          colDef(
+            minWidth = calc_width(col)
+          )
+        }) %>%
+          setNames(names(data))
+      )
     })
-    
+
     # Handle table row selection
-    observeEvent(getReactableState("pointsTable", "selected"), {
-      table_selected <- getReactableState("pointsTable", "selected")
-      print(table_selected)
+    observeEvent(
+      getReactableState("pointsTable", "selected"),
+      {
+        table_selected <- getReactableState("pointsTable", "selected")
+        print(table_selected)
+        if (length(table_selected) > 0) {
+          selected_points(combined_data()$index[table_selected])
+        } else {
+          selected_points(numeric(0))
+        }
+      },
+      ignoreNULL = FALSE
+    )
+  })
+}
+
+# DT_TABLE MODULE ---------------------------------------------------------------
+DT_tableModuleUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    DTOutput(outputId = ns("DT_pointsTable"))
+  )
+}
+
+DT_tableModuleServer <- function(id, combined_data, selected_points) {
+  moduleServer(id, function(input, output, session) {
+    output$DT_pointsTable <- renderDT({
+      req(nrow(combined_data()) > 0)
+      data <- st_drop_geometry(combined_data())
+      selected <- selected_points()
+
+      data_display <- data[, c(
+        "Taxon Name",
+        "Collection Date",
+        "Locality",
+        "Collector",
+        "Latitude",
+        "Longitude",
+        "Current Germplasm Type",
+        "Accession Number",
+        "issues",
+        "source",
+        "index"
+      )]
+
+      datatable(
+        data_display,
+        # extensions = c('Select'),
+        # selection = 'none', #turn of DT native select in order to use Select Extension
+        rownames = FALSE,
+        filter = 'none',
+        options = list(
+          dom = 'ti',
+          columnDefs = list(
+            list(
+              targets = '_all',
+              className = 'dt-center',
+              createdCell = JS(
+                "function(td, cellData, rowData, row, col) {",
+                "  if(cellData != null) $(td).attr('title', cellData);",
+                "}"
+              )
+            )
+          ),
+          paging = FALSE,
+          autoWidth = FALSE,
+          scrollX = TRUE,
+          scrollY = "600px"
+        ),
+        class = 'cell-border stripe hover compact'
+        
+      ) %>%
+        formatStyle(
+          columns = 1:ncol(data_display),
+          `max-width` = '300px',
+          `white-space` = 'nowrap',
+          `overflow` = 'hidden',
+          `text-overflow` = 'ellipsis',
+          fontSize = '13px'
+        ) %>%
+        formatStyle(
+          'Current Germplasm Type',
+          backgroundColor = styleEqual(c('G', 'H'), c('#e3f2fd', '#f1f8e9')),
+          fontWeight = 'bold'
+        ) %>%
+        formatRound(c('Latitude', 'Longitude'), 4)
+  })
+      observeEvent(input$DT_pointsTable_rows_selected,{
+      table_selected <- input$DT_pointsTable_rows_selected
+      print(input$DT_pointsTable_rows_selected)
       if (length(table_selected) > 0) {
         selected_points(combined_data()$index[table_selected])
       } else {
         selected_points(numeric(0))
       }
     }, ignoreNULL = FALSE)
+    
   })
 }
+
+
+
+
+
+
+
+
+
+
+
 
 # GAP ANALYSIS MODULE ----------------------------------------------------------------
 gapAnalysisUI <- function(id) {

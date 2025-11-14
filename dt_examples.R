@@ -61,21 +61,12 @@ data_display <- data[, c("Taxon Name", "Collection Date", "Locality",
 datatable(
   
   data_display,
-  extensions = c('Select', 'Buttons'),
+  extensions = c('Select'),
   selection = 'none', #turn of DT native select in order to use Select Extension
   rownames = FALSE,
-  filter = 'top',
+  filter = 'none',
   options = list(
-    dom = 'Bfrtip',
-    buttons = list(
-      'copy',
-      list(extend = 'csv', filename = 'data'),
-      list(extend = 'excel', filename = 'data')
-    ),
-    select = list(
-      style = 'multi',
-      items = 'row'
-    ),
+    dom = 'rti',
     columnDefs = list(
       list(
         targets = '_all',
@@ -87,10 +78,12 @@ datatable(
         )
       )
     ),
-    pageLength = 25,
-    lengthMenu = c(10, 25, 50, 100),
+    paging = FALSE,
+    #pageLength = 25,
+    #lengthMenu = c(10, 25, 50, 100),
     autoWidth = FALSE,
-    scrollX = TRUE
+    scrollX = TRUE,
+    scrollY = "600px"
   ),
   class = 'cell-border stripe hover compact'
 ) %>%
@@ -109,4 +102,46 @@ datatable(
   ) %>%
   formatRound(c('Latitude', 'Longitude'), 4)
 
+
+datatable(
+  
+  data_display,
+  rownames = FALSE,
+  filter = 'none',
+  options = list(
+    dom = 'rti',
+    columnDefs = list(
+      list(
+        targets = '_all',
+        className = 'dt-center',
+        createdCell = JS(
+          "function(td, cellData, rowData, row, col) {",
+          "  if(cellData != null) $(td).attr('title', cellData);",
+          "}"
+        )
+      )
+    ),
+    paging = FALSE,
+    #pageLength = 25,
+    #lengthMenu = c(10, 25, 50, 100),
+    autoWidth = FALSE,
+    scrollX = TRUE,
+    scrollY = "600px"
+  ),
+  class = 'cell-border stripe hover compact'
+) %>%
+  formatStyle(
+    columns = 1:ncol(data_display),
+    `max-width` = '300px',
+    `white-space` = 'nowrap',
+    `overflow` = 'hidden',
+    `text-overflow` = 'ellipsis',
+    fontSize = '13px'
+  ) %>%
+  formatStyle(
+    'Current Germplasm Type',
+    backgroundColor = styleEqual(c('G', 'H'), c('#e3f2fd', '#f1f8e9')),
+    fontWeight = 'bold'
+  ) %>%
+  formatRound(c('Latitude', 'Longitude'), 4)
 
