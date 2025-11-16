@@ -1,6 +1,6 @@
-Accession Number,Taxon Name,Current Germplasm Type,Collection Date,Latitude,Longitude,Locality,Collector,issues,source,index
-574755918,Magnolia acuminata (L.) L.,G,2011,35.3715,-83.1304,Highline Rd.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",GBIF,20005
-574781040,Magnolia acuminata (L.) L.,G,2011,35.6949,-82.4001,Blue Ridge Parkway. Craggy Gardens Picnic Site turn off.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",GBIF,20006
-574714005,Magnolia acuminata (L.) L.,G,2010,37.0105,-81.1408,Seven Sisiters Trail off Rt 717,South East USA Expedition (2010),"cdc,gass84,ambcol,inmafu",GBIF,20007
-574733699,Magnolia acuminata (L.) L.,G,NA,42.75,-80.4333,Charlotteville Tp.,NA,"cdc,gass84,ambcol,inmafu",GBIF,20011
-2561516334,Magnolia acuminata (L.) L.,G,NA,49.2541,-123.2508,UBC Botanical Garden,NA,inmano,GBIF,20012
+Accession Number,Taxon Name,Current Germplasm Type,Collection Date,Latitude,Longitude,Locality,Collector,issues,index
+574755918,Magnolia acuminata (L.) L.,G,2011,35.3715,-83.1304,Highline Rd.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",20005
+574781040,Magnolia acuminata (L.) L.,G,2011,35.6949,-82.4001,Blue Ridge Parkway. Craggy Gardens Picnic Site turn off.,"Unwin, Robert & Scott, Lesley","cdc,ambcol,inmafu",20006
+574714005,Magnolia acuminata (L.) L.,G,2010,37.0105,-81.1408,Seven Sisiters Trail off Rt 717,South East USA Expedition (2010),"cdc,gass84,ambcol,inmafu",20007
+574733699,Magnolia acuminata (L.) L.,G,NA,42.75,-80.4333,Charlotteville Tp.,NA,"cdc,gass84,ambcol,inmafu",20011
+2561516334,Magnolia acuminata (L.) L.,G,NA,49.2541,-123.2508,UBC Botanical Garden,NA,inmano,20012
