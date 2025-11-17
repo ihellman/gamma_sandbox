@@ -6,12 +6,19 @@ library(mapview)
 
 land <- terra::vect("C:/Users/ianhe/OneDrive/Documents/Github/gap-analysis-shiny-app-main/appData/land/landNoLakes.gpkg")
 
+
 ecoRegions <-terra::vect("C:/Users/ianhe/OneDrive/Documents/Github/gap-analysis-shiny-app-main/appData/ecoregionsSimplified.gpkg")
 
 
-gapPoints <- read_csv("C:/Users/ianhe/OneDrive/Documents/Github/gamma_sandbox/simple_app_no_conditional/appData/Magnolia_acuminata_data.csv") %>%
+# gapPoints <- read_csv("C:/Users/ianhe/OneDrive/Documents/Github/gamma_sandbox/simple_app_no_conditional/appData/Magnolia_acuminata_data.csv") %>%
+#   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
+#   vect()
+
+gapPoints <- read_csv("C:/Users/ianhe/Downloads/Magnolia_acuminata_data_log.csv") %>%
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
   vect()
+
+
 
 # Buffer arond points and exclude water from buffer
 bufferDist <- 100
