@@ -2,30 +2,44 @@ library(readr)
 library(sf)
 library(terra)
 library(tictoc)
+library(mapview)
 
-land <- terra::vect("appData/land/landNoLakes.gpkg")
+land <- terra::vect("C:/Users/ianhe/OneDrive/Documents/Github/gap-analysis-shiny-app-main/appData/land/landNoLakes.gpkg")
 
-ecoRegions <-terra::vect("appData/ecoregionsSimplified.gpkg")
+ecoRegions <-terra::vect("C:/Users/ianhe/OneDrive/Documents/Github/gap-analysis-shiny-app-main/appData/ecoregionsSimplified.gpkg")
 
 
-gapPoints <- read_csv("C:/Users/ianhe/Downloads/Magnolia_acuminata_data.csv") %>%
+gapPoints <- read_csv("C:/Users/ianhe/OneDrive/Documents/Github/gamma_sandbox/simple_app_no_conditional/appData/Magnolia_acuminata_data.csv") %>%
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326) %>%
   vect()
 
-
+# Buffer arond points and exclude water from buffer
+bufferDist <- 100
 pointsBuffer <- gapPoints %>%
-  terra::buffer(width = as.numeric(100) * 1000) |>
+  terra::buffer(width = as.numeric(bufferDist) * 1000) |>
       terra::intersect(land)
 
+# H Buffers dissolve
 h_buffer <- terra::aggregate(
-      pointsBuffer[pointsBuffer$`Current Germplasm Type` == "H", ])
+      #pointsBuffer[pointsBuffer$`Current Germplasm Type` == "H", ]
+      pointsBuffer[pointsBuffer$Current.Germplasm.Type == "H", ]
+    )
 
+# G buffer dissolve
 g_buffer <- terra::aggregate(
-      pointsBuffer[pointsBuffer$`Current Germplasm Type` == "G", ])
+      #pointsBuffer[pointsBuffer$`Current Germplasm Type` == "G", ]
+      pointsBuffer[pointsBuffer$Current.Germplasm.Type == "G", ]  
+    )
 
-
+# Erase h_buffer from g_buffer
 grsex_buffers <- terra::erase(x = h_buffer,
                             y = g_buffer)
+
+
+
+
+# Scores
+#SRSEX Score:
 
 
 
@@ -54,13 +68,8 @@ grsex_buffers <- terra::erase(x = h_buffer,
    
     
 
-  
-    # define point objects
-    d1 <- gapPoints
-    print("d1")
-    # print(head(d1))
     # determine the eco regions present in the
-    inter <- terra::intersect(x = d1, y = ecoRegions) 
+    inter <- terra::intersect(x = gapPoints, y = ecoRegions) 
     print("inter")
     # print(head(inter))
     
@@ -68,19 +77,26 @@ grsex_buffers <- terra::erase(x = h_buffer,
     ecoCodes <- unique(inter$ECO_NAME)
     # select ecoregions of interest
     ersex_Ecos <- ecoRegions[ecoRegions$ECO_NAME %in% ecoCodes, ]
-    print("ecos")
 
 
- 
+
+    
+  mapview(g_buffer) + mapview(ersex_Ecos, col.regions = "red")
+
+
+
     currentEcos <- ersex_Ecos
     print("current Ecos")
     # print(currentEcos$ECO_NAME)
     # determine ecoregions with G buffers  
-    gs <- terra::aggregate(g_buffer)
-    gEco <- terra::intersect(x = gs, y = currentEcos)
+    #gs <- terra::aggregate(g_buffer)
+    gEco <- terra::intersect(x = g_buffer, y = currentEcos)
     print("gEcos")
     print(gEco$ECO_NAME)
-    
+
+    mapview(g_buffer) + mapview(gEco, col.regions = "red")
+
+  # determine missing ecos 
     # Pull unique Ids and subset the G values 
     ecoIDs <- unique(currentEcos$ECO_NAME[!currentEcos$ECO_NAME %in% gEco$ECO_NAME])
     print("ecoIDs")
