@@ -403,7 +403,7 @@ landingServer <- function(id, landing_text) {
       showModal(modalDialog(
         title = landing_text$gather$modal_title,
         includeMarkdown(here::here(
-          # "simple_app_no_conditional", # if running localing this is required, need to  commit out before deploying
+          "simple_app_no_conditional", # if running localing this is required, need to  commit out before deploying
           "appData",
           "gather_modal.md"
         )),
