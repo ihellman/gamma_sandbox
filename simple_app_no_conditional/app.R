@@ -18,6 +18,8 @@ library(here)
 # Load text from YAML file
 landing_text <- read_yaml("appData/landing_text.yml")
 
+# altering a bit before attaching to merge back in
+
 # Custom CSS for navbar styling and landing page
 custom_css <- "
 /* Hide navbar initially */
