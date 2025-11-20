@@ -1,0 +1,26 @@
+hero:
+  title: "GAMMA"
+  subtitle: "Observing the meta collection."
+
+summary: 
+  text1 : "GAMMA evaluates the extent to which a living collection for a taxon is representative of its wild diversity. Living collections managers and curators at botanic gardens and similar organizations can use this app to assess how much wild diversity is or is not represented in a living collection or metacollection for a species. Areas of wild distribution not represented in a living collection, the gaps, can be prioritized for collection to bring more diversity into the collection."
+  text2 : "The app includes taxon-level data currently in the Global Biodiversity Information Facility (GBIF), a publically-accessible database. Accessions data for a living collection is provided by app users for the purpose of a single analysis, and is not stored within the application."
+
+gather:
+  title: "Gather your Data"
+  text: "Upload your datasets, compare against public data, and prepare them for analysis."
+  modal_title: "Step 1: Gathering Your Data"
+  modal_text: "This is the placeholder text for the 'Gather Data' modal. You can describe what kind of data can be uploaded, what public sources are used (like GBIF), and how the comparison works."
+
+find: 
+  title: "Find the gaps"
+  text: "Geographic gap analysis to locations to priortize collections."
+  modal_title: "Step 2: Finding the Gaps"
+  modal_text: "This is the where we share additional information on the gap analysis page or method"
+
+share:
+  title: "Share the results"
+  text: "Export and share your findings"
+  modal_title: "Step 3: Sharing Your Results"
+  modal_text: "Maybe demo a output from the application to show what provided"
+
