@@ -12,12 +12,7 @@ library(dplyr)
 library(shiny)
 library(reactable)
 library(DT)
-library(yaml)
-library(markdown)
-library(here)
 
-# Load text from YAML file
-landing_text <- read_yaml("appData/landing_text.yml")
 
 # Custom CSS for navbar styling and landing page
 custom_css <- "
@@ -55,7 +50,7 @@ body.on-home .navbar {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  z-index: 1000;
+  z-index: 9999;
   overflow-y: auto;
 }
 
@@ -112,25 +107,19 @@ body.on-home .navbar {
 .features-container {
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 20px;
   margin-top: 40px;
   margin-bottom: 50px;
   flex-wrap: wrap;
-  align-items: stretch;
+  align-items: center;
 }
 
 .feature-box {
-  width: 300px;
-  height: 300px;
   flex-basis: 280px;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  min-height: 340px;
 }
 
 .feature-box:hover {
@@ -212,62 +201,13 @@ body.on-home .navbar {
   color: #212529 !important;
   border: 1px solid #dee2e6;
 }
-.action-bar-container {
-  padding: 40px 0; /* Vertical padding, no horizontal padding */
-  background-color: #f8f9fa; /* A light grey, similar to your navbar */
-  text-align: center;
-  border-bottom: 1px solid #dee2e6; 
-  /* Removed radius, shadow, and margin, as it's a full-width banner now */
-}
-
-.action-bar-container h3 {
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.action-bar-container p {
-  font-size: 1.1rem;
-  color: #6c757d; /* A muted text color */
-  margin-bottom: 25px;
-}
-.action-bar-buttons {
-  display: flex;        /* 1. Turns on Flexbox (like your example) */
-  flex-wrap: nowrap;  /* Ensures buttons stay horizontal */
-  gap: 1rem;          /* 2. Sets space *between* buttons (like your example) */
-}
-.action-bar-buttons .btn {  flex: 1; /* 3. Makes all buttons grow to be the same width (like your example) */
-}
-
-.features-container > a {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-
-/* Add pointer cursor to feature box on hover */
-.feature-box:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  cursor: pointer; /* <-- This is new */
-}
-  /* Inside your custom_css string in app.R */
-.modal-body img {
-  max-width: 80%;
-  height: auto;
-  display: block; /* to allow margin: auto */
-  margin: 0 auto; /* to center the image */
-  padding: 10px 0; /* Add some vertical spacing */
-  box-sizing: border-box; /* Include padding/border in element's total width/height */
-}
 "
 
 # LANDING PAGE MODULE -------------------------------------------------------------------
-landingUI <- function(id, landing_text) {
-  # <-- Renamed
+landingUI <- function(id) {
   ns <- NS(id)
   div(
     class = "landing-page",
-    # --- HERO SECTION ---
     div(
       class = "hero-section",
       tags$img(
@@ -277,104 +217,49 @@ landingUI <- function(id, landing_text) {
       div(class = "hero-overlay"),
       div(
         class = "hero-content",
-        h1(landing_text$hero$title),
-        p(landing_text$hero$subtitle, style = "font-size: 1.2rem;")
+        h1("GAMMA"),
+        p("Observing the meta collection.", style = "font-size: 1.2rem;")
       )
     ),
-
-    # --- FULL-WIDTH ACTION BAR ---
-    div(
-      class = "action-bar-container",
-      div(
-        class = "container",
-        div(
-          class = "action-bar-buttons",
-          # tags$a(
-          #   "Botanic Garden Conservation International",
-          #   href = "https://www.bgci.org/",
-          #   target = "_blank",
-          #   rel = "noopener noreferrer",
-          #   class = "btn btn-outline-secondary btn-lg"
-          # ),
-          actionButton(
-            ns("launch"),
-            "Get Started",
-            class = "btn btn-outline-success btn-lg"
-          ),
-          class = "btn-group-right",
-          actionButton(
-            ns("learn_more"),
-            "Learn More",
-            class = "btn btn-outline-success btn-lg"
-          ),
-          # tags$a(
-          #   "Global Conservation Consortia (GCC)",
-          #   href = "https://www.bgci.org/our-work/networks/global-conservation-consortia-gcc/",
-          #   target = "_blank",
-          #   rel = "noopener noreferrer",
-          #   class = "btn btn-outline-secondary btn-lg"
-          # )
-        )
-      )
-    ),
-
-    # --- MAIN CONTENT SECTION ---
     div(
       class = "container content-section",
-
-      # --- SUMMARY SECTION ---
-      div(
-        class = "summary-section",
-        p(landing_text$summary$text1),
-        p(landing_text$summary$text2)
-      ),
-
-      # --- FEATURES CONTAINER ---
       div(
         class = "features-container",
-
-        # --- Feature Box 1 (from YAML) ---
-        actionLink(
-          ns("show_gather"),
-          label = div(
-            class = "feature-box",
-            tags$img(
-              src = "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
-            ),
-            h4(landing_text$gather$title),
-            p(landing_text$gather$text)
+        div(
+          class = "feature-box",
+          tags$img(
+            src = "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
+          ),
+          h4("Gather your Data"),
+          p(
+            "Upload your datasets, compare against public data, and prepare them for analysis."
           )
         ),
-
-        # --- Feature Box 2 (from YAML) ---
-        actionLink(
-          ns("show_find"),
-          label = div(
-            class = "feature-box",
-            tags$img(
-              src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"
-            ),
-            h4(landing_text$find$title),
-            p(landing_text$find$text)
-          )
+        div(class = "feature-arrow", HTML("&#8594;")),
+        div(
+          class = "feature-box",
+          tags$img(
+            src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"
+          ),
+          h4("Find the gaps"),
+          p("Geographic gap analysis to locations to priortize collections.")
         ),
-
-        # --- Feature Box 3 (from YAML) ---
-        actionLink(
-          ns("show_share"),
-          label = div(
-            class = "feature-box",
-            tags$img(
-              src = "https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            ),
-            h4(landing_text$share$title),
-            p(landing_text$share$text)
-          )
+        div(class = "feature-arrow", HTML("&#8594;")),
+        div(
+          class = "feature-box",
+          tags$img(
+            src = "https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
+          ),
+          h4("Share the results"),
+          p("Export and share your findings")
         )
+      ),
+      div(
+        class = "nav-buttons",
+        actionButton(ns("launch"), "Get Started", class = "btn-primary btn-lg"),
+        actionButton(ns("learn_more"), "Learn More", class = "btn-info btn-lg")
       )
     ),
-
-    # --- FOOTER ---
     div(
       class = "footer-banner",
       tags$a(
@@ -396,45 +281,9 @@ landingUI <- function(id, landing_text) {
     )
   )
 }
-landingServer <- function(id, landing_text) {
-  # <-- Renamed
+
+landingServer <- function(id) {
   moduleServer(id, function(input, output, session) {
-    # --- Modal for "Gather Data" ---
-    observeEvent(input$show_gather, {
-      showModal(modalDialog(
-        title = landing_text$gather$modal_title,
-        includeMarkdown(here::here(
-          "simple_app_no_conditional", # if running localing this is required, need to  commit out before deploying
-          "appData",
-          "gather_modal.md"
-        )),
-        footer = modalButton("Close"),
-        easyClose = TRUE,
-        size = "xl"
-      ))
-    })
-
-    # --- Modal for "Find Gaps" ---
-    observeEvent(input$show_find, {
-      showModal(modalDialog(
-        title = landing_text$find$modal_title,
-        p(landing_text$find$modal_text),
-        footer = modalButton("Close"),
-        easyClose = TRUE
-      ))
-    })
-
-    # --- Modal for "Share Results" ---
-    observeEvent(input$show_share, {
-      showModal(modalDialog(
-        title = landing_text$share$modal_title,
-        p(landing_text$share$modal_text),
-        footer = modalButton("Close"),
-        easyClose = TRUE,
-      ))
-    })
-
-    # --- Return the launch button actions ---
     return(
       list(
         launch = reactive(input$launch),
@@ -450,14 +299,16 @@ dataAnalysisUI <- function(id) {
   layout_sidebar(
     sidebar = controlsModuleUI("controls"),
     mapModuleUI(ns("map")),
-    tableModuleUI(ns("table"))
+    navset_tab(
+      nav_panel(title = "Reactable", tableModuleUI(ns("table"))),
+      nav_panel(title = "DT", DT_tableModuleUI(ns("DT_table")))
+    )
   )
 }
 
 dataAnalysisServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    ## Working just being called at the end of the application?
-    controlsModuleServer("controls", combined_data, selected_points)
+    controlsModuleServer("controls")
     mapModuleServer("map", combined_data, selected_points)
     tableModuleServer("table", combined_data, selected_points)
     DT_tableModuleServer("DT_table", combined_data, selected_points)
@@ -465,7 +316,6 @@ dataAnalysisServer <- function(id, combined_data, selected_points) {
 }
 
 # CONTROLS MODULE ----------------------------------------------------------------------
-# Controls Module
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -480,7 +330,175 @@ controlsModuleUI <- function(id) {
   )
 }
 
-controlsModuleServer <- function(id, combined_data, selected_points) {}
+controlsModuleServer <- function(id, combined_data, selected_points) {
+  moduleServer(id, function(input, output, session) {
+    # Load sample GBIF data (for testing)
+    load_gbif_sample <- function() {
+      read_csv(
+        "appData/Magnolia_acuminata_data.csv",
+        col_types = cols(.default = "c")
+      ) %>%
+        sf::st_as_sf(
+          coords = c("Longitude", "Latitude"),
+          crs = 4326,
+          remove = FALSE
+        ) %>%
+        mutate(index = dplyr::row_number(), source = "GBIF")
+    }
+
+    # Load sample upload data (for testing)
+    load_upload_sample <- function() {
+      read_csv(
+        "appData/upload_sample.csv",
+        col_types = cols(.default = "c")
+      ) %>%
+        sf::st_as_sf(
+          coords = c("Longitude", "Latitude"),
+          crs = 4326,
+          remove = FALSE
+        ) %>%
+        mutate(index = dplyr::row_number(), source = "upload")
+    }
+
+    # Load GBIF data Button
+    observeEvent(input$loadGBIF, {
+      current <- combined_data()
+      gbifPoints <- load_gbif_sample()
+
+      # Check if GBIF data already exists
+      has_gbif <- nrow(current) > 0 && any(current$source == "GBIF")
+
+      if (has_gbif) {
+        showModal(modalDialog(
+          title = "Overwrite GBIF Data?",
+          "GBIF data is already loaded. Do you want to overwrite it with new data?",
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton(
+              session$ns("confirmLoadGBIF"), # No automatic namespacing in modals withtin module.
+              "Overwrite",
+              class = "btn-primary"
+            )
+          )
+        ))
+      } else {
+        # No GBIF data exists, load directly
+        if (nrow(current) == 0) {
+          combined_data(gbifPoints)
+        } else {
+          new_dat <- bind_rows(current, gbifPoints) %>%
+            mutate(index = row_number())
+          combined_data(new_dat)
+        }
+      }
+    })
+
+    # Confirm GBIF overwrite
+    observeEvent(
+      input$confirmLoadGBIF,
+      {
+        current <- combined_data()
+        gbifPoints <- load_gbif_sample()
+
+        # Remove existing GBIF data and add new
+        filtered <- current %>% filter(source != "GBIF")
+
+        if (nrow(filtered) == 0) {
+          combined_data(gbifPoints)
+        } else {
+          new_dat <- bind_rows(filtered, gbifPoints) %>%
+            mutate(index = row_number())
+          combined_data(new_dat)
+        }
+
+        removeModal()
+      },
+      ignoreInit = TRUE
+    )
+
+    # Load upload data
+    observeEvent(input$loadUpload, {
+      current <- combined_data()
+      uploadPoints <- load_upload_sample()
+
+      # Check if upload data already exists
+      has_upload <- nrow(current) > 0 && any(current$source == "upload")
+
+      if (has_upload) {
+        showModal(modalDialog(
+          title = "Overwrite Upload Data?",
+          "Upload data is already loaded. Do you want to overwrite it with new data?",
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton(
+              session$ns("confirmloadUpload"), # No automatic namespacing in modals withtin module.
+              "Overwrite",
+              class = "btn-primary"
+            )
+          )
+        ))
+      } else {
+        # No upload data exists, load directly
+        if (nrow(current) == 0) {
+          combined_data(uploadPoints)
+        } else {
+          new_dat <- bind_rows(current, uploadPoints) %>%
+            mutate(index = row_number())
+          combined_data(new_dat)
+        }
+      }
+    })
+
+    # Confirm upload overwrite
+    observeEvent(
+      input$confirmloadUpload,
+      {
+        current <- combined_data()
+        uploadPoints <- load_upload_sample()
+
+        # Remove existing upload data and add new
+        filtered <- current %>% filter(source != "upload")
+
+        if (nrow(filtered) == 0) {
+          combined_data(uploadPoints)
+        } else {
+          new_dat <- bind_rows(filtered, uploadPoints) %>%
+            mutate(index = row_number())
+          combined_data(new_dat)
+        }
+
+        removeModal()
+      },
+      ignoreInit = TRUE
+    )
+
+    # Clear selection
+    observeEvent(input$clearSelection, {
+      selected_points(numeric(0))
+    })
+
+    # Delete selected points
+    observeEvent(input$deleteSelection, {
+      req(nrow(combined_data()) > 0)
+      current_data <- combined_data()
+      current_selection <- selected_points()
+
+      # Only proceed if there are selected points
+      #if (length(current_selection) > 0 && nrow(current_data) > 0) {
+      # Remove selected rows
+      updated_data <- current_data %>%
+        filter(!index %in% current_selection) %>%
+        mutate(index = row_number()) # Re-index after deletion
+
+      # Update the data
+      combined_data(updated_data)
+
+      # Clear the selection
+      selected_points(numeric(0))
+      #}
+    })
+  })
+}
 
 # MAP MODULE -----------------------------------------------------------------------------
 
@@ -600,17 +618,98 @@ tableModuleServer <- function(id, combined_data, selected_points) {
 }
 
 # DT_TABLE MODULE ---------------------------------------------------------------
-DT_tableModuleUI <- function(id) {}
+DT_tableModuleUI <- function(id) {
+  ns <- NS(id)
+  tagList(
+    DTOutput(outputId = ns("DT_pointsTable"))
+  )
+}
 
-DT_tableModuleServer <- function(id, combined_data, selected_points) {}
+DT_tableModuleServer <- function(id, combined_data, selected_points) {
+  moduleServer(id, function(input, output, session) {
+    output$DT_pointsTable <- renderDT({
+      req(nrow(combined_data()) > 0)
+      data <- st_drop_geometry(combined_data())
+      selected <- selected_points()
+
+      data_display <- data[, c(
+        "Taxon Name",
+        "Collection Date",
+        "Locality",
+        "Collector",
+        "Latitude",
+        "Longitude",
+        "Current Germplasm Type",
+        "Accession Number",
+        "issues",
+        "source",
+        "index"
+      )]
+
+      datatable(
+        data_display,
+        # extensions = c('Select'),
+        # selection = 'none', #turn of DT native select in order to use Select Extension
+        rownames = FALSE,
+        filter = 'none',
+        options = list(
+          dom = 'ti',
+          columnDefs = list(
+            list(
+              targets = '_all',
+              className = 'dt-center',
+              createdCell = JS(
+                "function(td, cellData, rowData, row, col) {",
+                "  if(cellData != null) $(td).attr('title', cellData);",
+                "}"
+              )
+            )
+          ),
+          paging = FALSE,
+          autoWidth = FALSE,
+          scrollX = TRUE,
+          scrollY = "600px"
+        ),
+        class = 'cell-border stripe hover compact'
+      ) %>%
+        formatStyle(
+          columns = 1:ncol(data_display),
+          `max-width` = '300px',
+          `white-space` = 'nowrap',
+          `overflow` = 'hidden',
+          `text-overflow` = 'ellipsis',
+          fontSize = '13px'
+        ) %>%
+        formatStyle(
+          'Current Germplasm Type',
+          backgroundColor = styleEqual(c('G', 'H'), c('#e3f2fd', '#f1f8e9')),
+          fontWeight = 'bold'
+        ) %>%
+        formatRound(c('Latitude', 'Longitude'), 4)
+    })
+    observeEvent(
+      input$DT_pointsTable_rows_selected,
+      {
+        table_selected <- input$DT_pointsTable_rows_selected
+        print(input$DT_pointsTable_rows_selected)
+        if (length(table_selected) > 0) {
+          selected_points(combined_data()$index[table_selected])
+        } else {
+          selected_points(numeric(0))
+        }
+      },
+      ignoreNULL = FALSE
+    )
+  })
+}
 
 
-# Gap ANALYSIS MODULE ----------------------------------------------------------------
+# GAP ANALYSIS MODULE ----------------------------------------------------------------
 gapAnalysisUI <- function(id) {
   ns <- NS(id)
   div(
-    h2("Gap Analysis"),
-    p("This is the Gap Analysis page."),
+    h2("GAP Analysis"),
+    p("This is the GAP Analysis page."),
     plotOutput(ns("plot"))
   )
 }
@@ -621,7 +720,7 @@ gapAnalysisServer <- function(id) {
       plot(
         1:10,
         1:10,
-        main = "Sample Gap Analysis Plot",
+        main = "Sample GAP Analysis Plot",
         xlab = "X",
         ylab = "Y",
         col = "purple",
@@ -637,7 +736,14 @@ aboutUI <- function(id) {
   ns <- NS(id)
   div(
     h2("About"),
-    p("more to come")
+    p("This application demonstrates a modular Shiny app with:"),
+    tags$ul(
+      tags$li("A landing page with custom styling"),
+      tags$li("Modular page structure"),
+      tags$li("Custom navbar styling"),
+      tags$li("Persistent Leaflet map state"),
+      tags$li("No navbar flicker on load")
+    )
   )
 }
 
@@ -661,12 +767,12 @@ ui <- page_navbar(
   useShinyjs(),
 
   # Landing page overlay
-  landingUI("landing", landing_text = landing_text),
+  landingUI("landing"),
 
   # Navigation pages
   nav_panel("Home", value = "home", div()),
   nav_panel("Data Analysis", value = "data", dataAnalysisUI("data_analysis")),
-  nav_panel("Gap Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
+  nav_panel("GAP Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
   nav_panel("About", value = "about", aboutUI("about"))
 )
 
@@ -676,7 +782,8 @@ server <- function(input, output, session) {
   selected_points <- reactiveVal(numeric(0))
 
   # Landing page module
-  launch_actions <- landingServer("landing", landing_text = landing_text)
+  launch_actions <- landingServer("landing")
+
   # Observe launch button (Get Started)
   observeEvent(launch_actions$launch(), {
     req(launch_actions$launch() > 0)
@@ -710,5 +817,4 @@ server <- function(input, output, session) {
 }
 
 # Run the application
-shinyApp(ui, server) # not capturing the relative paths of objects
-# using the instead
+shinyApp(ui, server)
