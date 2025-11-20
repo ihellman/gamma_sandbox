@@ -14,6 +14,8 @@ library(reactable)
 library(DT)
 
 
+# altering a bit before attaching to merge back in
+
 # Custom CSS for navbar styling and landing page
 custom_css <- "
 /* Hide navbar initially */
