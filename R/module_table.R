@@ -13,8 +13,59 @@ tableModuleServer <- function(id, combined_data, selected_points) {
       data <- st_drop_geometry(combined_data())
       selected <- selected_points()
 
-      calc_width <- function(text) {
-        max(100, nchar(text) * 12) # Roughly 8px per character + padding
+      # Workaround to dynamically change width of columns.  Reactable does not have this functionality
+      # for some reason.  Currently assumes fixed px/charicter so is pretty rough.
+      dynamicColWidths <- function(reachCondLong, otherColDefs = NULL) {
+        getColWidths <- function(colName) {
+          # Width of column name
+          ncharColName <- nchar(colName)
+
+          # Width of data.  Code below handles if NA count in this colName is some, all, or none.
+          # max(NA, rm.na =TRUE) throws a warning without this.
+          nonNAdata <- reachCondLong %>% pull(colName) %>% nchar() %>% na.omit()
+
+          if (length(nonNAdata) > 0) {
+            ncharVal <- nonNAdata %>% max()
+          } else if (length(nonNAdata) == 0) {
+            ncharVal <- 0
+          }
+
+          # When grouping rows, add a few characters for the EvaluationID appended row count (e.g. "XE-SS-5141_2013-08-23 (10)")
+          if (colName == "EvaluationID") {
+            ncharVal <- ncharVal + 1
+          }
+
+          maxLength <- max(ncharColName, ncharVal, na.rm = TRUE) * 12 # 12 = pixels per character (font size?)
+
+          reactable::colDef(minWidth = maxLength)
+        }
+
+        # Make list of column widths.  set_names names the list elements properly in purrr:map().
+        singleLineColWidths <- purrr::set_names(names(reachCondLong)) %>%
+          purrr::map(getColWidths)
+
+        # Merge column width settings and other colDefs.
+        allColDefsMerged <- purrr::list_merge(
+          singleLineColWidths,
+          !!!otherColDefs
+        ) # '!!!' splices 2nd list into first
+
+        # Fix attributes.  the S3 class attribute isn't allowed through with list_merge.
+        # Each element is assigned the class here manually.  There must be a better way.
+
+        # Function to fix attributes
+        setColDefAttr <- function(x, elemName) {
+          y <- x[elemName]
+          attr(y[[elemName]], "class") <- "colDef"
+          return(y)
+        }
+
+        # Apply function to all elements.
+        allColDefs <- purrr::map(
+          names(allColDefsMerged),
+          ~ setColDefAttr(allColDefsMerged, .x)
+        ) %>%
+          purrr::flatten()
       }
 
       reactable(
@@ -24,13 +75,7 @@ tableModuleServer <- function(id, combined_data, selected_points) {
         onClick = "select",
         highlight = TRUE,
         pagination = FALSE,
-        groupBy = "source",
-        columns = lapply(names(data), function(col) {
-          colDef(
-            minWidth = calc_width(col)
-          )
-        }) %>%
-          setNames(names(data))
+        columns = dynamicColWidths(data)
       )
     })
 
