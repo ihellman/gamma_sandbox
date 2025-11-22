@@ -1,44 +1,27 @@
 # DT_TABLE MODULE ---------------------------------------------------------------
 DT_tableModuleUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    DTOutput(outputId = ns("DT_pointsTable"))
-  )
+  DTOutput(outputId = ns("DT_pointsTable"))
 }
 
-DT_tableModuleServer <- function(id, combined_data, selected_points) {
+DT_tableModuleServer <- function(id, combined_data, selected_points, data_source = "NULL") {
   moduleServer(id, function(input, output, session) {
+
     output$DT_pointsTable <- renderDT({
       req(nrow(combined_data()) > 0)
-      data <- st_drop_geometry(combined_data())
-      selected <- selected_points()
-
-      data_display <- data[, c(
-        "Taxon Name",
-        "Collection Date",
-        "Locality",
-        "Collector",
-        "Latitude",
-        "Longitude",
-        "Current Germplasm Type",
-        "Accession Number",
-        "issues",
-        "source",
-        "index"
-      )]
+      data <- st_drop_geometry(combined_data()) %>%
+        filter(source == data_source)
 
       datatable(
-        data_display,
-        # extensions = c('Select'),
-        # selection = 'none', #turn of DT native select in order to use Select Extension
+        data,
         rownames = FALSE,
         filter = 'none',
         options = list(
-          dom = 'ti',
+          dom = 't',
           columnDefs = list(
             list(
               targets = '_all',
-              className = 'dt-center',
+              className = 'dt-left',
               createdCell = JS(
                 "function(td, cellData, rowData, row, col) {",
                 "  if(cellData != null) $(td).attr('title', cellData);",
@@ -48,13 +31,13 @@ DT_tableModuleServer <- function(id, combined_data, selected_points) {
           ),
           paging = FALSE,
           autoWidth = FALSE,
-          scrollX = TRUE,
-          scrollY = "600px"
+          scrollX = TRUE
+          #scrollY = "600px"
         ),
         class = 'cell-border stripe hover compact'
       ) %>%
         formatStyle(
-          columns = 1:ncol(data_display),
+          columns = 1:ncol(data),
           `max-width` = '300px',
           `white-space` = 'nowrap',
           `overflow` = 'hidden',
@@ -68,6 +51,7 @@ DT_tableModuleServer <- function(id, combined_data, selected_points) {
         ) %>%
         formatRound(c('Latitude', 'Longitude'), 4)
     })
+    
     observeEvent(
       input$DT_pointsTable_rows_selected,
       {
