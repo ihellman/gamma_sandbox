@@ -40,7 +40,9 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
           crs = 4326,
           remove = FALSE
         ) %>%
-        mutate(index = dplyr::row_number(), source = "upload")
+        mutate(index = dplyr::row_number(), 
+               source = "upload",
+               issues = "")                     # !!!! Placeholder to allow tables to join
     }
 
     # Load GBIF data Button
