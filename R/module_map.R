@@ -8,19 +8,28 @@ mapModuleUI <- function(id) {
 
 mapModuleServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
+    
     # Initial map render
     output$dataEvalMap <- renderLeaflet({
       data_eval_base_map()
     })
 
-    # Update map when data or selection changes
-    observe({
-      data_eval_map_gbif_proxy(
-        mapID = "dataEvalMap",
-        allPoints = combined_data(),
-        selected = selected_points()
-      )
+    # Handle data handling of GBIF/uploaded data
+    observeEvent(combined_data(), {
+      req(combined_data())
+      
+      # Redraw the base points if data is updated
+      render_base_points("dataEvalMap", combined_data())
+      
+      # Re-apply highlights (in case we filtered data but kept selection)
+      update_selection_highlights("dataEvalMap", combined_data(), selected_points())
     })
+
+    # 2. Handle selection changes
+    observeEvent(selected_points(), {
+
+      update_selection_highlights("dataEvalMap", combined_data(), selected_points())
+    }, ignoreNULL = FALSE) # ignoreNULL=FALSE ensures highlights clear if selection is empty
 
     # Handle marker clicks
     observeEvent(input$dataEvalMap_marker_click, {

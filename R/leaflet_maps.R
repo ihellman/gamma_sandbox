@@ -55,7 +55,6 @@ point_labels <- function(data) {
     lapply(htmltools::HTML)
 }
 
-
 # Maps ---------------------------------------------------------------------------
 # Initial data evaluation map with just basemaps and general settings.
 
@@ -114,35 +113,34 @@ data_eval_base_map <- function() {
     )
 }
 
-
-data_eval_map_gbif_proxy <- function(mapID, allPoints, selected) {
-  # IMPORTANT: Check for empty data FIRST, before any operations
+# Renders the main dataset (RUNS ONCE when data loads)
+render_base_points <- function(mapID, allPoints) {
+  
+  # Safety check
   if (nrow(allPoints) == 0) {
-    leafletProxy(mapID) %>%
-      clearMarkers()
+    leafletProxy(mapID) %>% clearGroup("GBIF")
     return(invisible(NULL))
   }
 
-  # Define colors within table
+  # Define colors 
   data <- allPoints %>%
     dplyr::mutate(
       color = case_when(
-        index %in% selected ~ "red",
         `Current Germplasm Type` == "H" & source == "GBIF" ~ gbifColor[1],
         `Current Germplasm Type` == "G" & source == "GBIF" ~ gbifColor[2],
         `Current Germplasm Type` == "H" & source == "upload" ~ uploadColor[1],
         `Current Germplasm Type` == "G" & source == "upload" ~ uploadColor[2],
+        TRUE ~ "gray"
       )
     )
 
+  # Draw the points
   leafletProxy(mapID) |>
-    #setView(lng = mean(as.numeric(data$Longitude)), lat = mean(as.numeric(data$Latitude)), zoom = 6) |>
-    #clearGroup("GBIF") |>
-    clearMarkers() |>
+    clearGroup("GBIF") |> # Clear only the data layer
     addCircleMarkers(
       data = data,
       layerId = ~index,
-      group = "GBIF",
+      group = "GBIF",  
       radius = 5,
       color = "white",
       fillColor = ~color,
@@ -150,6 +148,37 @@ data_eval_map_gbif_proxy <- function(mapID, allPoints, selected) {
       weight = 1,
       fillOpacity = 1,
       label = point_labels(data)
+    )
+}
+
+# Renders the selected points only
+update_selection_highlights <- function(mapID, allPoints, selected_ids) {
+  
+  proxy <- leafletProxy(mapID)
+  
+  # Clear previous highlights
+  proxy |> clearGroup("GBIF Selection")
+  
+  if (length(selected_ids) == 0) return(invisible(NULL))
+  
+  # Filter data
+  selected_data <- allPoints %>% 
+    dplyr::filter(index %in% selected_ids)
+  
+  if (nrow(selected_data) == 0) return(invisible(NULL))
+
+  # Add selected data with halo effect
+  proxy |>
+    addCircleMarkers(
+      data = selected_data,
+      group = "GBIF Selection", 
+      radius = 12,              
+      color = "transparent",    
+      fillColor = "#025c8f",        
+      fillOpacity = 0.3,        
+      stroke = FALSE,
+      # Interactive = FALSE allows clicks to pass through to the base point
+      options = pathOptions(interactive = FALSE) 
     )
 }
 
@@ -271,7 +300,7 @@ data_eval_base_map <- function() {
 
 
 data_eval_map_gbif_proxy <- function(mapID, allPoints, selected) {
-  # IMPORTANT: Check for empty data FIRST, before any operations
+  # Check for empty data
   if (nrow(allPoints) == 0) {
     leafletProxy(mapID) %>%
       clearMarkers()
@@ -291,8 +320,6 @@ data_eval_map_gbif_proxy <- function(mapID, allPoints, selected) {
     )
 
   leafletProxy(mapID) |>
-    #setView(lng = mean(as.numeric(data$Longitude)), lat = mean(as.numeric(data$Latitude)), zoom = 6) |>
-    #clearGroup("GBIF") |>
     clearMarkers() |>
     addCircleMarkers(
       data = data,
