@@ -12,7 +12,7 @@ dataAnalysisUI <- function(id) {
       # Map takes full height on the left
       card(
         full_screen = TRUE,
-        card_header("Map"),
+        #card_header("Map"),
         card_body(
           padding = 0,
           mapModuleUI(ns("map"))
@@ -28,7 +28,8 @@ dataAnalysisUI <- function(id) {
         # GBIF table (top half)
         card(
           full_screen = TRUE,
-          card_header("GBIF"),
+          card_header("GBIF",
+          style = "background-color: #40a999; color: white;"),
           card_body(
             padding = 0,
             DT_tableModuleUI(ns("DT_table_GBIF"))
@@ -38,7 +39,8 @@ dataAnalysisUI <- function(id) {
         # Upload table (bottom half)
         card(
           full_screen = TRUE,
-          card_header("Upload"),
+          card_header("Upload",
+          style = "background-color: #c2914b; color: white;"),
           card_body(
             padding = 0,
             DT_tableModuleUI(ns("DT_table_upload"))
