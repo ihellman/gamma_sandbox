@@ -1,7 +1,47 @@
 # DT_TABLE MODULE ---------------------------------------------------------------
 DT_tableModuleUI <- function(id) {
   ns <- NS(id)
-  DTOutput(outputId = ns("DT_pointsTable"))
+  
+  tagList(
+    # Force Font Awesome dependency load (Fixes missing icons)
+    tags$div(style = "display: none;", icon("search")),
+    
+    # Custom CSS for the Link and Hover Effect
+    tags$head(
+      tags$style(HTML("
+        /* Base Link Style */
+        a.dt-link {
+          color: #333333;       /* Dark Grey Text */
+          text-decoration: none; /* No underline */
+          font-weight: bold;
+          transition: all 0.2s ease-in-out; /* Smooth transition */
+          display: inline-flex;  
+          align-items: center;
+        }
+
+        /* Icon Style */
+        a.dt-link i {
+          color: #007bff;       /* Blue Icon */
+          margin-right: 8px;
+          transition: all 0.2s ease-in-out;
+        }
+
+        /* --- HOVER STATES --- */
+        
+        /* When hovering over the link, change text color */
+        a.dt-link:hover {
+          color: #007bff; 
+        }
+
+        /* When hovering over the link, make the icon 'pop' (grow larger) */
+        a.dt-link:hover i {
+          transform: scale(1.3); 
+          color: #0056b3; /* Darker blue */
+        }
+      "))
+    ),
+    DTOutput(outputId = ns("DT_pointsTable"))
+  )
 }
 
 DT_tableModuleServer <- function(id, combined_data, selected_points, data_source = "NULL") {
@@ -44,6 +84,38 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
       current_selection <- isolate(selected_points())
       initial_rows <- which(data$index %in% current_selection)
 
+      # Dynamic Column Indexing. JS needs col #, not name. 
+      col_names <- names(data)
+      # JS indices are 0-based
+      accession_col_index <- which(col_names == "Accession Number") - 1 
+      source_col_index <- which(col_names == "source") - 1          
+      
+      # Custom JS Renderer.  Changes color and size of link icon on hover.
+      # Also only makes link if source is GBIF.
+      js_renderer <- JS(
+        sprintf(
+          "function(data, type, rowData, meta) {
+             var accessionNumber = data;
+             // rowData[%d] gets the value from the 'source' column in this row.
+             var source = rowData[%d]; 
+             var base_url = 'https://www.gbif.org/occurrence/';
+
+             if (source === 'GBIF') {
+               var link = base_url + accessionNumber;
+               // Apply link HTML with the custom class and icon
+               return '<a href=\"' + link + '\" target=\"_blank\" class=\"dt-link\">' +
+                      '<i class=\"fa fa-search\"></i>' +
+                      accessionNumber + '</a>';
+             } else {
+               // Return raw number if the source is not GBIF
+               return accessionNumber;
+             }
+           }",
+          source_col_index, source_col_index
+        )
+      )
+      
+      # Render the datatable 
       datatable(
         data,
         rownames = FALSE,
@@ -53,9 +125,9 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
           dom = 't',
           paging = FALSE,
           autoWidth = FALSE,
-          scrollX = TRUE,
           deferRender = TRUE,
           columnDefs = list(
+            # Existing createdCell definition
             list(
               targets = '_all',
               className = 'dt-left',
@@ -64,6 +136,11 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
                 "  if(cellData != null) $(td).attr('title', cellData);",
                 "}"
               )
+            ),
+            #Custom rendering for `Accession Number`
+            list(
+              targets = accession_col_index,
+              render = js_renderer
             )
           )
         ),
