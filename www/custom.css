@@ -1,0 +1,385 @@
+/* www/custom.css */
+
+/* Hide navbar initially */
+.navbar {
+  display: none;
+}
+
+/* Show navbar when app is launched */
+body.app-launched .navbar {
+  display: block !important;
+}
+
+/* Hide landing page when app is launched */
+body.app-launched .landing-page {
+  display: none !important;
+}
+
+/* Show landing page when on home */
+body.on-home .landing-page {
+  display: flex !important;
+}
+
+/* Hide navbar when on home */
+body.on-home .navbar {
+  display: none !important;
+}
+
+/* Landing page styles */
+.landing-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.hero-section {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+  clip-path: ellipse(120% 100% at 50% 0%);
+}
+
+.hero-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+.hero-content {
+  max-width: 800px;
+  padding: 20px;
+}
+
+.hero-content h1 {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.content-section {
+  padding: 60px 20px;
+  text-align: center;
+  background: white;
+}
+
+.features-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+  margin-bottom: 50px;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.feature-box {
+  width: 300px;
+  height: 300px;
+  flex-basis: 280px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+}
+
+.feature-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+.feature-box img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.feature-box h4 {
+  margin: 15px 0 10px 0;
+}
+
+.nav-buttons {
+  margin-top: 30px;
+}
+
+.nav-buttons .btn {
+  margin: 0 10px;
+}
+
+.footer-banner {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-top: 1px solid #dee2e6;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-banner img {
+  height: 50px;
+  margin: 0 20px;
+  vertical-align: middle;
+}
+
+/* Custom navbar styling */
+.navbar {
+  background-color: #f8f9fa !important;
+  box-shadow: none;
+  padding: 10px 20px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #212529 !important;
+}
+
+.navbar-nav .nav-link {
+  color: #495057 !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem !important;
+  margin: 0 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  background-color: #f8f9fa;
+  border: 1px solid transparent;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: #e9ecef;
+  color: #212529 !important;
+}
+
+.navbar-nav .nav-link.active {
+  background-color: #e9ecef !important;
+  color: #212529 !important;
+  border: 1px solid #dee2e6;
+}
+
+.action-bar-container {
+  padding: 40px 0;
+  background-color: #f8f9fa;
+  text-align: center;
+  border-bottom: 1px solid #dee2e6; 
+}
+
+.action-bar-container h3 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.action-bar-container p {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+.action-bar-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1rem;
+}
+
+.action-bar-buttons .btn {
+  flex: 1;
+}
+
+.features-container > a {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.modal-body img {
+  max-width: 80%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  padding: 10px 0;
+  box-sizing: border-box;
+}
+
+/* =========================================
+   MARKDOWN STYLING FOR "FIND GAPS" PANEL
+   ========================================= */
+
+/* Scoped specifically to the expandable panel */
+.feature-details-panel h3 {
+  color: #2c3e50;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+.feature-details-panel h4 {
+  color: #198754; /* Matches your success buttons */
+  margin-top: 25px;
+  margin-bottom: 15px;
+}
+
+/* --- Styled Tables --- */
+/* Markdown tables don't get Bootstrap classes by default, 
+   so we style them manually here */
+.feature-details-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.95rem;
+}
+
+.feature-details-panel th {
+  background-color: #f1f3f5;
+  color: #495057;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.feature-details-panel td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+/* Optional: Zebra striping for table rows */
+.feature-details-panel tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* --- Blockquotes (The "Note" section) --- */
+.feature-details-panel blockquote {
+  background-color: #e7f1ff; /* Light blue background */
+  border-left: 5px solid #0d6efd; /* Blue accent bar */
+  margin: 20px 0;
+  padding: 15px 20px;
+  color: #084298;
+  border-radius: 4px;
+}
+
+/* Remove the default margin on the paragraph inside the blockquote */
+.feature-details-panel blockquote p {
+  margin: 0; 
+}
+
+/* --- Links inside the text --- */
+.feature-details-panel a {
+  color: #198754;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.feature-details-panel a:hover {
+  color: #146c43;
+}
+
+
+/* =========================================
+   MODERN FOOTER STYLES (COMPACT VERSION)
+   ========================================= */
+
+.footer-modern {
+  background-color: #212529;
+  color: #adb5bd;
+  /* Reduced padding: 20px top/bottom instead of 60px */
+  padding: 25px 0 15px 0; 
+  margin-top: auto;
+  font-size: 0.85rem; /* Slightly smaller text */
+}
+
+.footer-modern h5 {
+  color: #fff;
+  font-weight: 600;
+  /* Tighter spacing below headers */
+  margin-bottom: 10px; 
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-col {
+  /* Reduced space between columns on mobile */
+  margin-bottom: 15px; 
+}
+
+/* Logo Styling */
+.footer-logos {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.footer-logos img {
+  /* Smaller Logos: 35px height instead of 50px */
+  height: 35px; 
+  width: auto;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  background-color: white;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.footer-logos img:hover {
+  opacity: 1;
+}
+
+/* Link Styling */
+.footer-link {
+  color: #adb5bd;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #198754;
+  text-decoration: underline;
+}
+
+/* List spacing */
+.footer-modern ul li {
+  margin-bottom: 5px; /* Tighter list items */
+}
+
+/* Copyright Section */
+.footer-modern .border-secondary {
+  border-color: #495057 !important;
+}
+
+/* Reduce the margin above the copyright line */
+.footer-modern .mt-4 {
+  margin-top: 1rem !important; 
+}
