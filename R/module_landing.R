@@ -1,7 +1,8 @@
-# LANDING PAGE MODULE -------------------------------------------------------------------
+# R/landing_module.R
+
 landingUI <- function(id, landing_text) {
-  # <-- Renamed
   ns <- NS(id)
+
   div(
     class = "landing-page",
     # --- HERO SECTION ---
@@ -9,6 +10,7 @@ landingUI <- function(id, landing_text) {
       class = "hero-section",
       tags$img(
         class = "hero-image",
+        # External images (Unsplash) work fine with full URLs
         src = "https://plus.unsplash.com/premium_photo-1690031000842-1ac0508f18b7?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
       ),
       div(class = "hero-overlay"),
@@ -26,13 +28,6 @@ landingUI <- function(id, landing_text) {
         class = "container",
         div(
           class = "action-bar-buttons",
-          # tags$a(
-          #   "Botanic Garden Conservation International",
-          #   href = "https://www.bgci.org/",
-          #   target = "_blank",
-          #   rel = "noopener noreferrer",
-          #   class = "btn btn-outline-secondary btn-lg"
-          # ),
           actionButton(
             ns("launch"),
             "Get Started",
@@ -43,14 +38,7 @@ landingUI <- function(id, landing_text) {
             ns("learn_more"),
             "Learn More",
             class = "btn btn-outline-success btn-lg"
-          ),
-          # tags$a(
-          #   "Global Conservation Consortia (GCC)",
-          #   href = "https://www.bgci.org/our-work/networks/global-conservation-consortia-gcc/",
-          #   target = "_blank",
-          #   rel = "noopener noreferrer",
-          #   class = "btn btn-outline-secondary btn-lg"
-          # )
+          )
         )
       )
     ),
@@ -70,7 +58,7 @@ landingUI <- function(id, landing_text) {
       div(
         class = "features-container",
 
-        # --- Feature Box 1 (from YAML) ---
+        # Feature Box 1
         actionLink(
           ns("show_gather"),
           label = div(
@@ -83,7 +71,7 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # --- Feature Box 2 (from YAML) ---
+        # Feature Box 2
         actionLink(
           ns("show_find"),
           label = div(
@@ -96,7 +84,7 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # --- Feature Box 3 (from YAML) ---
+        # Feature Box 3
         actionLink(
           ns("show_share"),
           label = div(
@@ -118,7 +106,7 @@ landingUI <- function(id, landing_text) {
         href = "https://www.bgci.org/",
         target = "_blank",
         tags$img(
-          src = "https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/Botanic_Gardens_Conservation_International_logo.svg/320px-Botanic_Gardens_Conservation_International_logo.svg.png",
+          src = "bgci.png",
           alt = "Botanic Gardens Conservation International Logo"
         )
       ),
@@ -126,23 +114,22 @@ landingUI <- function(id, landing_text) {
         href = "https://www.usbg.gov/",
         target = "_blank",
         tags$img(
-          src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/US_Botanic_Garden_logo.svg/320px-US_Botanic_Garden_logo.svg.png",
+          src = "abg.jpg",
           alt = "US Botanic Garden Logo"
         )
       )
     )
   )
 }
+
 landingServer <- function(id, landing_text) {
-  # <-- Renamed
   moduleServer(id, function(input, output, session) {
     # --- Modal for "Gather Data" ---
     observeEvent(input$show_gather, {
       showModal(modalDialog(
         title = landing_text$gather$modal_title,
-        includeMarkdown(
-          "appData/gather_modal.md"
-        ),
+        # Ensure this file path exists relative to project root
+        includeMarkdown("appData/gather_modal.md"),
         footer = modalButton("Close"),
         easyClose = TRUE,
         size = "xl"
@@ -169,7 +156,6 @@ landingServer <- function(id, landing_text) {
       ))
     })
 
-    # --- Return the launch button actions ---
     return(
       list(
         launch = reactive(input$launch),
