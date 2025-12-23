@@ -98,18 +98,84 @@ landingUI <- function(id, landing_text) {
       uiOutput(ns("feature_details"))
     ),
 
+    # ... inside landingUI ...
+
     # --- FOOTER ---
-    div(
-      class = "footer-banner",
-      tags$a(
-        href = "https://www.bgci.org/",
-        target = "_blank",
-        tags$img(src = "bgci.png", alt = "BGCI Logo")
-      ),
-      tags$a(
-        href = "https://www.usbg.gov/",
-        target = "_blank",
-        tags$img(src = "abg.jpg", alt = "USBG Logo")
+    tags$footer(
+      class = "footer-modern",
+      div(
+        class = "container",
+        div(
+          class = "row",
+          # COLUMN 1: Partners & Logos
+          div(
+            class = "col-md-5 footer-col",
+            h5("Supported By"),
+            div(
+              class = "footer-logos",
+              tags$a(
+                href = "https://www.bgci.org/",
+                target = "_blank",
+                tags$img(src = "bgci.png", alt = "BGCI Logo")
+              ),
+              tags$a(
+                href = "https://www.usbg.gov/",
+                target = "_blank",
+                tags$img(src = "usbg.jpg", alt = "USBG Logo")
+              ),
+              tags$a(
+                href = "https://atlantabg.org/",
+                target = "_blank",
+                tags$img(src = "abg.jpg", alt = "USBG Logo")
+              )
+            )
+          ),
+
+          # COLUMN 2: About the Tool
+          div(
+            class = "col-md-4 footer-col",
+            h5("About This Tool"),
+            p(
+              "This dashboard supports global conservation efforts by providing gap analysis and data exploration tools for prioritized taxa."
+            ),
+            p(tags$a(href = "#", "Read Documentation", class = "footer-link"))
+          ),
+
+          # COLUMN 3: Contact / Links
+          div(
+            class = "col-md-3 footer-col",
+            h5("Contact"),
+            tags$ul(
+              class = "list-unstyled",
+              tags$li(tags$i(class = "bi bi-envelope"), " contact@example.org"),
+              tags$li(
+                tags$i(class = "bi bi-github"),
+                tags$a(href = "#", " View Source Code", class = "footer-link")
+              ),
+              tags$li(
+                tags$i(class = "bi bi-bug"),
+                tags$a(href = "#", " Report an Issue", class = "footer-link")
+              )
+            )
+          )
+        ),
+
+        # Bottom Copyright Row
+        div(
+          class = "row mt-4 pt-3 border-top border-secondary",
+          div(
+            class = "col-md-6 text-muted small",
+            paste(
+              "©",
+              format(Sys.Date(), "%Y"),
+              "Global Conservation Consortia. All rights reserved."
+            )
+          ),
+          div(
+            class = "col-md-6 text-end text-muted small",
+            "Version 1.0.0"
+          )
+        )
       )
     )
   )

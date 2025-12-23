@@ -36,7 +36,7 @@ ui <- page_navbar(
   # Navigation pages
   nav_panel("Home", value = "home", div()),
   nav_panel("Data Analysis", value = "data", dataAnalysisUI("data_analysis")),
-  nav_panel("GAP Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
+  nav_panel("Gap Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
   nav_panel("About", value = "about", aboutUI("about"))
 )
 
@@ -76,7 +76,7 @@ server <- function(input, output, session) {
   # Initialize other modules
   dataAnalysisServer("data_analysis", combined_data, selected_points)
   controlsModuleServer("controls", combined_data, selected_points)
-  gapAnalysisServer("gap_analysis")
+  gapAnalysisServer("gap_analysis", combined_data)
   aboutServer("about")
 }
 

@@ -304,3 +304,82 @@ body.on-home .navbar {
 .feature-details-panel a:hover {
   color: #146c43;
 }
+
+
+/* =========================================
+   MODERN FOOTER STYLES (COMPACT VERSION)
+   ========================================= */
+
+.footer-modern {
+  background-color: #212529;
+  color: #adb5bd;
+  /* Reduced padding: 20px top/bottom instead of 60px */
+  padding: 25px 0 15px 0; 
+  margin-top: auto;
+  font-size: 0.85rem; /* Slightly smaller text */
+}
+
+.footer-modern h5 {
+  color: #fff;
+  font-weight: 600;
+  /* Tighter spacing below headers */
+  margin-bottom: 10px; 
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-col {
+  /* Reduced space between columns on mobile */
+  margin-bottom: 15px; 
+}
+
+/* Logo Styling */
+.footer-logos {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.footer-logos img {
+  /* Smaller Logos: 35px height instead of 50px */
+  height: 35px; 
+  width: auto;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  background-color: white;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.footer-logos img:hover {
+  opacity: 1;
+}
+
+/* Link Styling */
+.footer-link {
+  color: #adb5bd;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #198754;
+  text-decoration: underline;
+}
+
+/* List spacing */
+.footer-modern ul li {
+  margin-bottom: 5px; /* Tighter list items */
+}
+
+/* Copyright Section */
+.footer-modern .border-secondary {
+  border-color: #495057 !important;
+}
+
+/* Reduce the margin above the copyright line */
+.footer-modern .mt-4 {
+  margin-top: 1rem !important; 
+}
