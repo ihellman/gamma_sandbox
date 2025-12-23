@@ -1,5 +1,3 @@
-# R/landing_module.R
-
 landingUI <- function(id, landing_text) {
   ns <- NS(id)
 
@@ -10,7 +8,6 @@ landingUI <- function(id, landing_text) {
       class = "hero-section",
       tags$img(
         class = "hero-image",
-        # External images (Unsplash) work fine with full URLs
         src = "https://plus.unsplash.com/premium_photo-1690031000842-1ac0508f18b7?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
       ),
       div(class = "hero-overlay"),
@@ -21,7 +18,7 @@ landingUI <- function(id, landing_text) {
       )
     ),
 
-    # --- FULL-WIDTH ACTION BAR ---
+    # --- ACTION BAR ---
     div(
       class = "action-bar-container",
       div(
@@ -33,7 +30,6 @@ landingUI <- function(id, landing_text) {
             "Get Started",
             class = "btn btn-outline-success btn-lg"
           ),
-          class = "btn-group-right",
           actionButton(
             ns("learn_more"),
             "Learn More",
@@ -47,7 +43,6 @@ landingUI <- function(id, landing_text) {
     div(
       class = "container content-section",
 
-      # --- SUMMARY SECTION ---
       div(
         class = "summary-section",
         p(landing_text$summary$text1),
@@ -58,7 +53,7 @@ landingUI <- function(id, landing_text) {
       div(
         class = "features-container",
 
-        # Feature Box 1
+        # BOX 1: Triggers Modal
         actionLink(
           ns("show_gather"),
           label = div(
@@ -71,10 +66,11 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # Feature Box 2
+        # BOX 2: Triggers Expandable Panel (Hybrid)
         actionLink(
           ns("show_find"),
           label = div(
+            id = ns("box_find"), # ID needed for adding 'active' class
             class = "feature-box",
             tags$img(
               src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"
@@ -84,7 +80,7 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # Feature Box 3
+        # BOX 3: Triggers Modal
         actionLink(
           ns("show_share"),
           label = div(
@@ -96,7 +92,10 @@ landingUI <- function(id, landing_text) {
             p(landing_text$share$text)
           )
         )
-      )
+      ),
+
+      # --- DETAILS SECTION (Only used by Box 2) ---
+      uiOutput(ns("feature_details"))
     ),
 
     # --- FOOTER ---
@@ -105,18 +104,12 @@ landingUI <- function(id, landing_text) {
       tags$a(
         href = "https://www.bgci.org/",
         target = "_blank",
-        tags$img(
-          src = "bgci.png",
-          alt = "Botanic Gardens Conservation International Logo"
-        )
+        tags$img(src = "bgci.png", alt = "BGCI Logo")
       ),
       tags$a(
         href = "https://www.usbg.gov/",
         target = "_blank",
-        tags$img(
-          src = "abg.jpg",
-          alt = "US Botanic Garden Logo"
-        )
+        tags$img(src = "abg.jpg", alt = "USBG Logo")
       )
     )
   )
@@ -124,11 +117,16 @@ landingUI <- function(id, landing_text) {
 
 landingServer <- function(id, landing_text) {
   moduleServer(id, function(input, output, session) {
-    # --- Modal for "Gather Data" ---
+    ns <- session$ns
+
+    # Track selection ONLY for the expandable box (Box 2)
+    # TRUE = Open, FALSE = Closed
+    find_box_open <- reactiveVal(FALSE)
+
+    # --- BOX 1: Modal (Legacy) ---
     observeEvent(input$show_gather, {
       showModal(modalDialog(
         title = landing_text$gather$modal_title,
-        # Ensure this file path exists relative to project root
         includeMarkdown("appData/gather_modal.md"),
         footer = modalButton("Close"),
         easyClose = TRUE,
@@ -136,17 +134,42 @@ landingServer <- function(id, landing_text) {
       ))
     })
 
-    # --- Modal for "Find Gaps" ---
+    # --- BOX 2: Expandable Panel (New Method) ---
     observeEvent(input$show_find, {
-      showModal(modalDialog(
-        title = landing_text$find$modal_title,
-        p(landing_text$find$modal_text),
-        footer = modalButton("Close"),
-        easyClose = TRUE
-      ))
+      # Toggle the state
+      find_box_open(!find_box_open())
     })
 
-    # --- Modal for "Share Results" ---
+    output$feature_details <- renderUI({
+      req(find_box_open()) # Only render if True
+
+      div(
+        class = "feature-details-panel slide-down",
+        includeMarkdown("appData/find_gaps.md"),
+        # Internal Close Button
+        actionButton(
+          ns("close_details"),
+          "Close Section",
+          class = "btn btn-sm btn-outline-secondary mt-3"
+        )
+      )
+    })
+
+    # Handle the internal close button
+    observeEvent(input$close_details, {
+      find_box_open(FALSE)
+    })
+
+    # Handle visual "Active" state for Box 2
+    observe({
+      if (find_box_open()) {
+        shinyjs::addClass(id = "box_find", class = "active-feature-box")
+      } else {
+        shinyjs::removeClass(id = "box_find", class = "active-feature-box")
+      }
+    })
+
+    # --- BOX 3: Modal (Legacy) ---
     observeEvent(input$show_share, {
       showModal(modalDialog(
         title = landing_text$share$modal_title,
@@ -156,11 +179,9 @@ landingServer <- function(id, landing_text) {
       ))
     })
 
-    return(
-      list(
-        launch = reactive(input$launch),
-        learn_more = reactive(input$learn_more)
-      )
-    )
+    return(list(
+      launch = reactive(input$launch),
+      learn_more = reactive(input$learn_more)
+    ))
   })
 }

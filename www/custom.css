@@ -230,3 +230,77 @@ body.on-home .navbar {
   padding: 10px 0;
   box-sizing: border-box;
 }
+
+/* =========================================
+   MARKDOWN STYLING FOR "FIND GAPS" PANEL
+   ========================================= */
+
+/* Scoped specifically to the expandable panel */
+.feature-details-panel h3 {
+  color: #2c3e50;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+
+.feature-details-panel h4 {
+  color: #198754; /* Matches your success buttons */
+  margin-top: 25px;
+  margin-bottom: 15px;
+}
+
+/* --- Styled Tables --- */
+/* Markdown tables don't get Bootstrap classes by default, 
+   so we style them manually here */
+.feature-details-panel table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 0.95rem;
+}
+
+.feature-details-panel th {
+  background-color: #f1f3f5;
+  color: #495057;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.feature-details-panel td {
+  padding: 12px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+/* Optional: Zebra striping for table rows */
+.feature-details-panel tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+/* --- Blockquotes (The "Note" section) --- */
+.feature-details-panel blockquote {
+  background-color: #e7f1ff; /* Light blue background */
+  border-left: 5px solid #0d6efd; /* Blue accent bar */
+  margin: 20px 0;
+  padding: 15px 20px;
+  color: #084298;
+  border-radius: 4px;
+}
+
+/* Remove the default margin on the paragraph inside the blockquote */
+.feature-details-panel blockquote p {
+  margin: 0; 
+}
+
+/* --- Links inside the text --- */
+.feature-details-panel a {
+  color: #198754;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+.feature-details-panel a:hover {
+  color: #146c43;
+}
