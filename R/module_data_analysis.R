@@ -7,7 +7,7 @@ dataAnalysisUI <- function(id) {
     fillable = TRUE,
     
     layout_columns(
-      row_heights = c(8, 4), # Top row 8/12, Bottom row 4/12
+      row_heights = c(6, 6), # Top row 8/12, Bottom row 4/12
       col_widths = 12,
       
       # --- TOP ROW ---
@@ -44,7 +44,8 @@ dataAnalysisUI <- function(id) {
             value = "192",
             #showcase = bsicons::bs_icon("graph-up"),
             theme = value_box_theme(bg = "#d5dff0"),
-            p("Detail 3")
+            p("Detail 3"),
+            p("Detail 4"),
           )
         )
       ),
