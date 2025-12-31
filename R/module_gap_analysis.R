@@ -66,7 +66,12 @@ gapAnalysisServer <- function(id, combined_data) {
 
     # --- 2. Update Map Points (Runs when data changes) ---
     observe({
+      # Check if gap_map is rendered or not before plotting points.  Otherwise,
+      # map will render with no points on initial load of data into combined_data().  
+      req(combined_data(), input$gap_map_bounds)
+
       data <- combined_data()
+
       if (is.data.frame(data) && nrow(data) > 0) {
         col_name <- if ("Current Germplasm Type" %in% names(data)) {
           "Current Germplasm Type"

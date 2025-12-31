@@ -17,27 +17,27 @@ source("R/leaflet_maps.R")
 landing_text <- read_yaml("appData/landing_text.yml")
 
 # MAIN UI ----------------------------------------------------------------------------------
-ui <- page_navbar(
-  title = "Data Explorer",
-  id = "navbar",
-  theme = bs_theme(version = 5),
-  # LINKING THE CSS FILE HERE
-  header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+ui <- tagList(
+  page_navbar(
+    title = "Data Explorer",
+    id = "navbar",
+    theme = bs_theme(version = 5),
+    # LINKING THE CSS FILE HERE
+    header = tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+    ),
+    nav_spacer(),
+    # Navigation pages
+    nav_panel("Home", value = "home", div()),
+    nav_panel("Data Analysis", value = "data", dataAnalysisUI("data_analysis")),
+    nav_panel("Gap Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
+    nav_panel("About", value = "about", aboutUI("about"))
   ),
-  nav_spacer(),
-
+  # Need to keep these items out of page_navbar, otherwise they show up as blank nav items
   # Initialize shinyjs
   useShinyjs(),
-
   # Landing page overlay
   landingUI("landing", landing_text = landing_text),
-
-  # Navigation pages
-  nav_panel("Home", value = "home", div()),
-  nav_panel("Data Analysis", value = "data", dataAnalysisUI("data_analysis")),
-  nav_panel("Gap Analysis", value = "gap", gapAnalysisUI("gap_analysis")),
-  nav_panel("About", value = "about", aboutUI("about"))
 )
 
 # MAIN SERVER -------------------------------------------------------------------------------
