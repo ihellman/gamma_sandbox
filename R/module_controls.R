@@ -1,9 +1,16 @@
-# CONTROLS MODULE ----------------------------------------------------------------------
+# CONTROLS UI ----------------------------------------------------------------------
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
     actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"),
     actionButton(inputId = ns("loadUpload"), label = "Load Upload"),
+    fileInput(
+      inputId = ns("uploadData"),
+      label = "Upload Data",
+      accept = c(".csv", ".xlsx", ".xls"),
+      buttonLabel = "Browse...",
+      placeholder = "No file selected"
+    ),
     actionButton(inputId = ns("clearSelection"), label = "Clear Selection"),
     actionButton(
       inputId = ns("deleteSelection"),
@@ -13,9 +20,10 @@ controlsModuleUI <- function(id) {
   )
 }
 
+# CONTROLS SERVER ----------------------------------------------------------------------
 controlsModuleServer <- function(id, combined_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    # Load sample GBIF data (for testing)
+    # Load sample GBIF data (for testing) ----------------------------------------------
     load_gbif_sample <- function() {
       read_csv(
         "appData/Magnolia_acuminata_data.csv",
@@ -29,7 +37,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
         mutate(index = dplyr::row_number(), source = "GBIF")
     }
 
-    # Load sample upload data (for testing)
+    # Load sample upload data (for testing) ----------------------------------------------
     load_upload_sample <- function() {
       read_csv(
         "appData/upload_sample.csv",
@@ -40,12 +48,10 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
           crs = 4326,
           remove = FALSE
         ) %>%
-        mutate(index = dplyr::row_number(), 
-               source = "upload",
-               issues = "")                     # !!!! Placeholder to allow tables to join
+        mutate(index = dplyr::row_number(), source = "upload", issues = "") # !!!! Placeholder to allow tables to join
     }
 
-    # Load GBIF data Button
+    # Load GBIF data Button --------------------------------------------------------------
     observeEvent(input$loadGBIF, {
       current <- combined_data()
       gbifPoints <- load_gbif_sample()
@@ -101,7 +107,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       ignoreInit = TRUE
     )
 
-    # Load upload data
+    # Load sample upload data ---------------------------------------------------------------------
     observeEvent(input$loadUpload, {
       current <- combined_data()
       uploadPoints <- load_upload_sample()
@@ -134,35 +140,109 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       }
     })
 
-    # Confirm upload overwrite
-    observeEvent(
-      input$confirmloadUpload,
-      {
-        current <- combined_data()
-        uploadPoints <- load_upload_sample()
+    # Upload file logic ---------------------------------------------------------------------
+    uploadData_temp <- reactiveVal(NULL)
 
-        # Remove existing upload data and add new
-        filtered <- current %>% filter(source != "upload")
+    # Handle file upload
+    observeEvent(input$uploadData, {
+      req(input$uploadData)
 
-        if (nrow(filtered) == 0) {
+      # Read and validate the file
+      upload_result <- read_upload_file(file_info = input$uploadData) # helper function
+
+      # Check if upload was successful
+      if (!upload_result$success) {
+        showNotification(
+          upload_result$message,
+          type = "error",
+          duration = 10
+        )
+        return()
+      }
+
+      # Upload was successful, get the data
+      uploadPoints <- upload_result$data
+
+      # Check if upload data already exists
+      current <- combined_data()
+      has_upload <- nrow(current) > 0 && any(current$source == "upload")
+
+      if (has_upload) {
+        showModal(modalDialog(
+          title = "Overwrite Upload Data?",
+          "Upload data is already loaded. Do you want to overwrite it with new data?",
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton(
+              session$ns("confirmloadUpload"),
+              "Overwrite",
+              class = "btn-primary"
+            )
+          )
+        ))
+
+        # Store the upload data temporarily for the confirm action
+        uploadData_temp(uploadPoints)
+      } else {
+        # No upload data exists, load directly
+        if (nrow(current) == 0) {
+          uploadPoints <- uploadPoints %>%
+            mutate(index = row_number())
           combined_data(uploadPoints)
         } else {
-          new_dat <- bind_rows(filtered, uploadPoints) %>%
+          new_dat <- bind_rows(current, uploadPoints) %>%
             mutate(index = row_number())
           combined_data(new_dat)
         }
 
-        removeModal()
-      },
-      ignoreInit = TRUE
-    )
+        showNotification(
+          upload_result$message,
+          type = "message",
+          duration = 3
+        )
+      }
+    })
 
-    # Clear selection
+    # Handle the confirmation for overwriting
+    observeEvent(input$confirmloadUpload, {
+      current <- combined_data()
+      uploadPoints <- uploadData_temp()
+
+      # Remove existing upload data
+      current <- current %>%
+        filter(source != "upload")
+
+      # Add new upload data
+      if (nrow(current) == 0) {
+        uploadPoints <- uploadPoints %>%
+          mutate(index = row_number())
+        combined_data(uploadPoints)
+      } else {
+        new_dat <- bind_rows(current, uploadPoints) %>%
+          mutate(index = row_number())
+        combined_data(new_dat)
+      }
+
+      # Clear selections that might reference old upload indices
+      selected_points(numeric(0))
+
+      removeModal()
+      showNotification(
+        paste("Successfully uploaded", nrow(uploadPoints), "records"),
+        type = "message",
+        duration = 3
+      )
+
+      # Clear temporary storage
+      uploadData_temp(NULL)
+    })
+
+    # Clear selection ---------------------------------------------------------------
     observeEvent(input$clearSelection, {
       selected_points(numeric(0))
     })
 
-    # Delete selected points
+    # Delete selected points ---------------------------------------------------------
     observeEvent(input$deleteSelection, {
       req(nrow(combined_data()) > 0)
       current_data <- combined_data()

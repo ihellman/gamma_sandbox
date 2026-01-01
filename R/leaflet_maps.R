@@ -2,8 +2,8 @@
 
 # --- Color Palettes ---
 # Data Eval map - Input data
-uploadColor <- c("#dfc27d", "#a6611a")
-gbifColor <- c("#80cdc1", "#018571")
+uploadColor <- c("#c2a5cf", "#7b3294") #(GBIF H, GBIF G)
+gbifColor <- c("#a6dba0", "#008837") #(upload H, upload G)
 
 # GAP Map
 combinedColor <- c("#f1a340", "#542788")
@@ -36,7 +36,7 @@ gbif_legend_shape <- make_shapes(
   shapes = "circle"
 )
 upload_legend_shape <- make_shapes(
-  combinedColor,
+  uploadColor,
   sizes = 20,
   borders = "white",
   shapes = "circle"
@@ -97,11 +97,11 @@ data_eval_base_map <- function() {
       labels = c("Upload Reference", "Upload Germplasm"),
       group = "Upload"
     ) |>
-    addLegend(
-      position = "topright",
-      colors = "red",
-      labels = c("Selected Point")
-    ) |>
+    # addLegend(
+    #   position = "topright",
+    #   colors = "red",
+    #   labels = c("Selected Point")
+    # ) |>
     # Draw Toolbar
     addDrawToolbar(
       singleFeature = TRUE,
@@ -134,7 +134,7 @@ data_eval_base_map <- function() {
 render_base_points <- function(mapID, allPoints) {
   # Safety check
   if (nrow(allPoints) == 0) {
-    leafletProxy(mapID) %>% clearGroup("GBIF")
+    leafletProxy(mapID) %>% clearMarkers()
     return(invisible(NULL))
   }
 
@@ -152,7 +152,7 @@ render_base_points <- function(mapID, allPoints) {
 
   # Draw Points
   leafletProxy(mapID) |>
-    clearGroup("GBIF") |>
+    clearMarkers() |>
     addCircleMarkers(
       data = data,
       layerId = ~index,
@@ -165,6 +165,16 @@ render_base_points <- function(mapID, allPoints) {
       fillOpacity = 1,
       label = point_labels(data)
     )
+  
+  if (nrow(allPoints) > 0) {
+    leafletProxy(mapID) |>
+      fitBounds(
+          lng1 = min(allPoints$Longitude, na.rm = TRUE),
+          lat1 = min(allPoints$Latitude, na.rm = TRUE),
+          lng2 = max(allPoints$Longitude, na.rm = TRUE),
+          lat2 = max(allPoints$Latitude, na.rm = TRUE)
+        )
+  }
 }
 
 # 3. Update Selection

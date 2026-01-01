@@ -8,10 +8,6 @@ library(sf)
 library(dplyr)
 library(DT)
 library(yaml)
-library(markdown)
-
-# necesary only if app is called from the "play" button in positron
-source("R/leaflet_maps.R")
 
 # Load text from YAML file
 landing_text <- read_yaml("appData/landing_text.yml")

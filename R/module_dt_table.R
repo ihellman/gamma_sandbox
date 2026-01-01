@@ -1,7 +1,7 @@
 # DT_TABLE MODULE ---------------------------------------------------------------
 DT_tableModuleUI <- function(id) {
   ns <- NS(id)
-  
+   
   tagList(
     # Force Font Awesome dependency load (Fixes missing icons)
     tags$div(style = "display: none;", icon("search")),
@@ -38,8 +38,14 @@ DT_tableModuleUI <- function(id) {
           transform: scale(1.3); 
           color: #0056b3; /* Darker blue */
         }
+        
+        /* Prevent column header wrapping */
+        table.dataTable thead th {
+          white-space: nowrap !important;
+        }
       "))
     ),
+
     DTOutput(outputId = ns("DT_pointsTable"))
   )
 }
@@ -127,6 +133,10 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
           autoWidth = FALSE,
           deferRender = TRUE,
           columnDefs = list(
+            list(
+              targets = c('source', 'index'),
+              visible = FALSE
+            ),
             # Existing createdCell definition
             list(
               targets = '_all',
@@ -148,6 +158,7 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
       ) %>%
         formatStyle(
           columns = 1:ncol(data),
+          `min-width` = 'fit-content',
           `max-width` = '300px',
           `white-space` = 'nowrap',
           `overflow` = 'hidden',
