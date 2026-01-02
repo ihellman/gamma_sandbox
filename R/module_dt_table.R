@@ -1,14 +1,15 @@
 # DT_TABLE MODULE ---------------------------------------------------------------
 DT_tableModuleUI <- function(id) {
   ns <- NS(id)
-   
+
   tagList(
     # Force Font Awesome dependency load (Fixes missing icons)
     tags$div(style = "display: none;", icon("search")),
-    
+
     # Custom CSS for the Link and Hover Effect
     tags$head(
-      tags$style(HTML("
+      tags$style(HTML(
+        "
         /* Base Link Style */
         a.dt-link {
           color: #333333;       /* Dark Grey Text */
@@ -43,28 +44,44 @@ DT_tableModuleUI <- function(id) {
         table.dataTable thead th {
           white-space: nowrap !important;
         }
-      "))
+      "
+      ))
     ),
 
     DTOutput(outputId = ns("DT_pointsTable"))
   )
 }
 
-DT_tableModuleServer <- function(id, combined_data, selected_points, data_source = "NULL") {
+DT_tableModuleServer <- function(
+  id,
+  combined_data,
+  selected_points,
+  data_source = "NULL"
+) {
   moduleServer(id, function(input, output, session) {
-
     # 1. Helper Reactive
     table_data <- reactive({
       # Standardize the data retrieval
       # We check for existence, but we let the filter handle the 0-row case
       # so that column names are preserved (crucial for replaceData).
       data <- combined_data()
-      
+
       # If data is completely missing/null (app start), return empty frame
       if (is.null(data) || nrow(data) == 0 && ncol(data) == 0) {
         return(data.frame())
       }
-      
+
+      data <- data %>%
+        mutate(
+          germplasm_color = case_when(
+            source == 'GBIF' & `Current Germplasm Type` == 'H' ~ '#a6dba0',
+            source == 'GBIF' & `Current Germplasm Type` == 'G' ~ '#008837',
+            source == 'upload' & `Current Germplasm Type` == 'H' ~ '#c2a5cf',
+            source == 'upload' & `Current Germplasm Type` == 'G' ~ '#7b3294',
+            TRUE ~ 'transparent' # Fallback color
+          )
+        )
+
       st_drop_geometry(data) %>%
         filter(source == data_source)
     })
@@ -84,18 +101,18 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
     # 3. Render the Table (RUNS ONCE)
     output$DT_pointsTable <- renderDT({
       req(init_trigger())
-      
+
       # ISOLATE everything to prevent re-rendering loops
       data <- isolate(table_data())
       current_selection <- isolate(selected_points())
       initial_rows <- which(data$index %in% current_selection)
 
-      # Dynamic Column Indexing. JS needs col #, not name. 
+      # Dynamic Column Indexing. JS needs col #, not name.
       col_names <- names(data)
       # JS indices are 0-based
-      accession_col_index <- which(col_names == "Accession Number") - 1 
-      source_col_index <- which(col_names == "source") - 1          
-      
+      accession_col_index <- which(col_names == "Accession Number") - 1
+      source_col_index <- which(col_names == "source") - 1
+
       # Custom JS Renderer.  Changes color and size of link icon on hover.
       # Also only makes link if source is GBIF.
       js_renderer <- JS(
@@ -117,11 +134,13 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
                return accessionNumber;
              }
            }",
-          source_col_index, source_col_index
+          source_col_index,
+          source_col_index
         )
       )
-      
-      # Render the datatable 
+
+      # Render the datatable
+
       datatable(
         data,
         rownames = FALSE,
@@ -133,8 +152,9 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
           autoWidth = FALSE,
           deferRender = TRUE,
           columnDefs = list(
+            # 1. HIDE THE NEW HELPER COLUMN HERE
             list(
-              targets = c('source', 'index'),
+              targets = c('source', 'index', 'germplasm_color'),
               visible = FALSE
             ),
             # Existing createdCell definition
@@ -147,7 +167,7 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
                 "}"
               )
             ),
-            #Custom rendering for `Accession Number`
+            # Custom rendering for `Accession Number`
             list(
               targets = accession_col_index,
               render = js_renderer
@@ -165,9 +185,14 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
           `text-overflow` = 'ellipsis',
           fontSize = '13px'
         ) %>%
+        # 2. UPDATED LOGIC FOR COLORING
         formatStyle(
           'Current Germplasm Type',
-          backgroundColor = styleEqual(c('G', 'H'), c('#e3f2fd', '#f1f8e9')),
+          valueColumns = 'germplasm_color', # Logic looks at this hidden column
+          backgroundColor = styleEqual(
+            c('#a6dba0', '#008837', '#c2a5cf', '#7b3294'), # If value is this...
+            c('#a6dba066', '#00883766', '#c2a5cf66', '#7b329466') # Set background to this (66 appended to each hex is 40% opacity)
+          ),
           fontWeight = 'bold'
         ) %>%
         formatRound(c('Latitude', 'Longitude'), 4)
@@ -180,44 +205,56 @@ DT_tableModuleServer <- function(id, combined_data, selected_points, data_source
     observeEvent(table_data(), {
       req(init_trigger())
       new_data <- table_data()
-      
+
       replaceData(
-        proxy, 
-        new_data, 
+        proxy,
+        new_data,
         rownames = FALSE, # match rownames=FALSE setting from renderDT
-        resetPaging = FALSE, 
+        resetPaging = FALSE,
         clearSelection = "none"
       )
     })
 
     # 6. Map -> Table Selection
-    observeEvent(selected_points(), {
-      req(init_trigger())
-      data <- table_data()
-      
-      if (nrow(data) > 0) {
-        rows_to_select <- which(data$index %in% selected_points())
-        selectRows(proxy, rows_to_select)
-      } else {
-        selectRows(proxy, NULL)
-      }
-    }, ignoreNULL = FALSE)
+    observeEvent(
+      selected_points(),
+      {
+        req(init_trigger())
+        data <- table_data()
+
+        if (nrow(data) > 0) {
+          rows_to_select <- which(data$index %in% selected_points())
+          selectRows(proxy, rows_to_select)
+        } else {
+          selectRows(proxy, NULL)
+        }
+      },
+      ignoreNULL = FALSE
+    )
 
     # 7. Table -> Map Selection
-    observeEvent(input$DT_pointsTable_rows_selected, {
-      req(init_trigger())
-      data <- table_data()
-      
-      local_indices <- input$DT_pointsTable_rows_selected
-      local_ids <- if (is.null(local_indices)) numeric(0) else data$index[local_indices]
+    observeEvent(
+      input$DT_pointsTable_rows_selected,
+      {
+        req(init_trigger())
+        data <- table_data()
 
-      current_global <- selected_points()
-      foreign_ids <- setdiff(current_global, data$index)
-      new_global <- sort(unique(c(foreign_ids, local_ids)))
+        local_indices <- input$DT_pointsTable_rows_selected
+        local_ids <- if (is.null(local_indices)) {
+          numeric(0)
+        } else {
+          data$index[local_indices]
+        }
 
-      if (!setequal(new_global, current_global)) {
-        selected_points(new_global)
-      }
-    }, ignoreNULL = FALSE)
+        current_global <- selected_points()
+        foreign_ids <- setdiff(current_global, data$index)
+        new_global <- sort(unique(c(foreign_ids, local_ids)))
+
+        if (!setequal(new_global, current_global)) {
+          selected_points(new_global)
+        }
+      },
+      ignoreNULL = FALSE
+    )
   })
 }

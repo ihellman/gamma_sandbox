@@ -2,8 +2,8 @@
 
 # --- Color Palettes ---
 # Data Eval map - Input data
-uploadColor <- c("#c2a5cf", "#7b3294") #(GBIF H, GBIF G)
-gbifColor <- c("#a6dba0", "#008837") #(upload H, upload G)
+uploadColor <- c("#c2a5cf", "#7b3294") #(upload H, upload G)
+gbifColor <- c("#a6dba0", "#008837") #(GBIF H, GBIF G)
 
 # GAP Map
 combinedColor <- c("#f1a340", "#542788")
@@ -89,19 +89,16 @@ data_eval_base_map <- function() {
       position = "topright",
       colors = gbif_legend_shape,
       labels = c("GBIF Reference", "GBIF Germplasm"),
-      group = "GBIF"
+      group = "GBIF",
+      opacity = 1
     ) |>
     addLegend(
       position = "topright",
       colors = upload_legend_shape,
       labels = c("Upload Reference", "Upload Germplasm"),
-      group = "Upload"
+      group = "Upload",
+      opacity = 1
     ) |>
-    # addLegend(
-    #   position = "topright",
-    #   colors = "red",
-    #   labels = c("Selected Point")
-    # ) |>
     # Draw Toolbar
     addDrawToolbar(
       singleFeature = TRUE,
@@ -156,7 +153,6 @@ render_base_points <- function(mapID, allPoints) {
     addCircleMarkers(
       data = data,
       layerId = ~index,
-      group = "GBIF",
       radius = 5,
       color = "white",
       fillColor = ~color,

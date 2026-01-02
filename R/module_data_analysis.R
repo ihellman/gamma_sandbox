@@ -29,7 +29,7 @@ dataAnalysisUI <- function(id) {
         card(
           full_screen = TRUE,
           card_header("GBIF",
-          style = "background-color: #40a999; color: white;"),
+          style = "background-color: #008837; color: white;"),
           card_body(
             padding = 0,
             DT_tableModuleUI(ns("DT_table_GBIF"))
@@ -40,7 +40,7 @@ dataAnalysisUI <- function(id) {
         card(
           full_screen = TRUE,
           card_header("Upload",
-          style = "background-color: #c2914b; color: white;"),
+          style = "background-color: #7b3294; color: white;"),
           card_body(
             padding = 0,
             DT_tableModuleUI(ns("DT_table_upload"))
