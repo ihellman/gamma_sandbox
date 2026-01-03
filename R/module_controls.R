@@ -21,7 +21,7 @@ controlsModuleUI <- function(id) {
 }
 
 # CONTROLS SERVER ----------------------------------------------------------------------
-controlsModuleServer <- function(id, combined_data, selected_points) {
+controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     # Load sample GBIF data (for testing) ----------------------------------------------
     load_gbif_sample <- function() {
@@ -53,7 +53,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
 
     # Load GBIF data Button --------------------------------------------------------------
     observeEvent(input$loadGBIF, {
-      current <- combined_data()
+      current <- analysis_data()
       gbifPoints <- load_gbif_sample()
 
       # Check if GBIF data already exists
@@ -75,11 +75,11 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       } else {
         # No GBIF data exists, load directly
         if (nrow(current) == 0) {
-          combined_data(gbifPoints)
+          analysis_data(gbifPoints)
         } else {
           new_dat <- bind_rows(current, gbifPoints) %>%
             mutate(index = row_number())
-          combined_data(new_dat)
+          analysis_data(new_dat)
         }
       }
     })
@@ -88,18 +88,18 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
     observeEvent(
       input$confirmLoadGBIF,
       {
-        current <- combined_data()
+        current <- analysis_data()
         gbifPoints <- load_gbif_sample()
 
         # Remove existing GBIF data and add new
         filtered <- current %>% filter(source != "GBIF")
 
         if (nrow(filtered) == 0) {
-          combined_data(gbifPoints)
+          analysis_data(gbifPoints)
         } else {
           new_dat <- bind_rows(filtered, gbifPoints) %>%
             mutate(index = row_number())
-          combined_data(new_dat)
+          analysis_data(new_dat)
         }
 
         removeModal()
@@ -109,7 +109,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
 
     # Load sample upload data ---------------------------------------------------------------------
     observeEvent(input$loadUpload, {
-      current <- combined_data()
+      current <- analysis_data()
       uploadPoints <- load_upload_sample()
 
       # Check if upload data already exists
@@ -131,11 +131,11 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       } else {
         # No upload data exists, load directly
         if (nrow(current) == 0) {
-          combined_data(uploadPoints)
+          analysis_data(uploadPoints)
         } else {
           new_dat <- bind_rows(current, uploadPoints) %>%
             mutate(index = row_number())
-          combined_data(new_dat)
+          analysis_data(new_dat)
         }
       }
     })
@@ -164,7 +164,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       uploadPoints <- upload_result$data
 
       # Check if upload data already exists
-      current <- combined_data()
+      current <- analysis_data()
       has_upload <- nrow(current) > 0 && any(current$source == "upload")
 
       if (has_upload) {
@@ -188,11 +188,11 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
         if (nrow(current) == 0) {
           uploadPoints <- uploadPoints %>%
             mutate(index = row_number())
-          combined_data(uploadPoints)
+          analysis_data(uploadPoints)
         } else {
           new_dat <- bind_rows(current, uploadPoints) %>%
             mutate(index = row_number())
-          combined_data(new_dat)
+          analysis_data(new_dat)
         }
 
         showNotification(
@@ -205,7 +205,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
 
     # Handle the confirmation for overwriting
     observeEvent(input$confirmloadUpload, {
-      current <- combined_data()
+      current <- analysis_data()
       uploadPoints <- uploadData_temp()
 
       # Remove existing upload data
@@ -216,11 +216,11 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
       if (nrow(current) == 0) {
         uploadPoints <- uploadPoints %>%
           mutate(index = row_number())
-        combined_data(uploadPoints)
+        analysis_data(uploadPoints)
       } else {
         new_dat <- bind_rows(current, uploadPoints) %>%
           mutate(index = row_number())
-        combined_data(new_dat)
+        analysis_data(new_dat)
       }
 
       # Clear selections that might reference old upload indices
@@ -244,8 +244,8 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
 
     # Delete selected points ---------------------------------------------------------
     observeEvent(input$deleteSelection, {
-      req(nrow(combined_data()) > 0)
-      current_data <- combined_data()
+      req(nrow(analysis_data()) > 0)
+      current_data <- analysis_data()
       current_selection <- selected_points()
 
       # Only proceed if there are selected points
@@ -256,7 +256,7 @@ controlsModuleServer <- function(id, combined_data, selected_points) {
         mutate(index = row_number()) # Re-index after deletion
 
       # Update the data
-      combined_data(updated_data)
+      analysis_data(updated_data)
 
       # Clear the selection
       selected_points(numeric(0))

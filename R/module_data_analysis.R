@@ -51,11 +51,11 @@ dataAnalysisUI <- function(id) {
   )
 }
 
-dataAnalysisServer <- function(id, combined_data, selected_points) {
+dataAnalysisServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     controlsModuleServer("controls")
-    mapModuleServer("map", combined_data, selected_points)
-    DT_tableModuleServer("DT_table_GBIF", combined_data, selected_points, data_source = "GBIF")
-    DT_tableModuleServer("DT_table_upload", combined_data, selected_points, data_source = "upload")
+    mapModuleServer("map", analysis_data, selected_points)
+    DT_tableModuleServer("DT_table_GBIF", analysis_data, selected_points, data_source = "GBIF")
+    DT_tableModuleServer("DT_table_upload", analysis_data, selected_points, data_source = "upload")
   })
 }

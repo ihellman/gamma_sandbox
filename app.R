@@ -38,7 +38,7 @@ ui <- tagList(
 
 # MAIN SERVER -------------------------------------------------------------------------------
 server <- function(input, output, session) {
-  combined_data <- reactiveVal(data.frame())
+  analysis_data <- reactiveVal(data.frame())
   selected_points <- reactiveVal(numeric(0))
 
   # Landing page module
@@ -70,9 +70,9 @@ server <- function(input, output, session) {
   })
 
   # Initialize other modules
-  dataAnalysisServer("data_analysis", combined_data, selected_points)
-  controlsModuleServer("controls", combined_data, selected_points)
-  gapAnalysisServer("gap_analysis", combined_data)
+  dataAnalysisServer("data_analysis", analysis_data, selected_points)
+  controlsModuleServer("controls", analysis_data, selected_points)
+  gapAnalysisServer("gap_analysis", analysis_data)
   aboutServer("about")
 }
 

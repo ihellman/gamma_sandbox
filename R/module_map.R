@@ -6,7 +6,7 @@ mapModuleUI <- function(id) {
   )
 }
 
-mapModuleServer <- function(id, combined_data, selected_points) {
+mapModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     
     # Initial map render
@@ -15,20 +15,20 @@ mapModuleServer <- function(id, combined_data, selected_points) {
     })
 
     # Handle data handling of GBIF/uploaded data
-    observeEvent(combined_data(), {
-      req(combined_data())
+    observeEvent(analysis_data(), {
+      req(analysis_data())
       
       # Redraw the base points if data is updated
-      render_base_points("dataEvalMap", combined_data())
+      render_base_points("dataEvalMap", analysis_data())
       
       # Re-apply highlights (in case we filtered data but kept selection)
-      update_selection_highlights("dataEvalMap", combined_data(), selected_points())
+      update_selection_highlights("dataEvalMap", analysis_data(), selected_points())
     })
 
     # 2. Handle selection changes
     observeEvent(selected_points(), {
 
-      update_selection_highlights("dataEvalMap", combined_data(), selected_points())
+      update_selection_highlights("dataEvalMap", analysis_data(), selected_points())
     }, ignoreNULL = FALSE) # ignoreNULL=FALSE ensures highlights clear if selection is empty
 
     # Handle marker clicks
@@ -45,8 +45,8 @@ mapModuleServer <- function(id, combined_data, selected_points) {
 
     # Handle polygon selection
     observeEvent(input$dataEvalMap_draw_new_feature, {
-      req(nrow(combined_data()) > 0)
-      currentData <- combined_data()
+      req(nrow(analysis_data()) > 0)
+      currentData <- analysis_data()
 
       # Extract polygon feature
       feature <- input$dataEvalMap_draw_new_feature

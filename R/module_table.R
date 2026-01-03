@@ -6,11 +6,11 @@ tableModuleUI <- function(id) {
   )
 }
 
-tableModuleServer <- function(id, combined_data, selected_points) {
+tableModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     output$pointsTable <- renderReactable({
-      req(nrow(combined_data()) > 0)
-      data <- st_drop_geometry(combined_data())
+      req(nrow(analysis_data()) > 0)
+      data <- st_drop_geometry(analysis_data())
       selected <- selected_points()
 
       # Workaround to dynamically change width of columns.  Reactable does not have this functionality
@@ -86,7 +86,7 @@ tableModuleServer <- function(id, combined_data, selected_points) {
         table_selected <- getReactableState("pointsTable", "selected")
         print(table_selected)
         if (length(table_selected) > 0) {
-          selected_points(combined_data()$index[table_selected])
+          selected_points(analysis_data()$index[table_selected])
         } else {
           selected_points(numeric(0))
         }

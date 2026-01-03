@@ -54,7 +54,7 @@ DT_tableModuleUI <- function(id) {
 
 DT_tableModuleServer <- function(
   id,
-  combined_data,
+  analysis_data,
   selected_points,
   data_source = "NULL"
 ) {
@@ -64,7 +64,7 @@ DT_tableModuleServer <- function(
       # Standardize the data retrieval
       # We check for existence, but we let the filter handle the 0-row case
       # so that column names are preserved (crucial for replaceData).
-      data <- combined_data()
+      data <- analysis_data()
 
       # If data is completely missing/null (app start), return empty frame
       if (is.null(data) || nrow(data) == 0 && ncol(data) == 0) {

@@ -42,7 +42,7 @@ gapAnalysisUI <- function(id) {
 }
 
 # server
-gapAnalysisServer <- function(id, combined_data) {
+gapAnalysisServer <- function(id, analysis_data) {
   moduleServer(id, function(input, output, session) {
     # --- 0. Reactive Buffer Distance ---
     buffer_dist_km <- reactive({
@@ -67,10 +67,10 @@ gapAnalysisServer <- function(id, combined_data) {
     # --- 2. Update Map Points (Runs when data changes) ---
     observe({
       # Check if gap_map is rendered or not before plotting points.  Otherwise,
-      # map will render with no points on initial load of data into combined_data().  
-      req(combined_data(), input$gap_map_bounds)
+      # map will render with no points on initial load of data into analysis_data().  
+      req(analysis_data(), input$gap_map_bounds)
 
-      data <- combined_data()
+      data <- analysis_data()
 
       if (is.data.frame(data) && nrow(data) > 0) {
         col_name <- if ("Current Germplasm Type" %in% names(data)) {
@@ -122,9 +122,9 @@ gapAnalysisServer <- function(id, combined_data) {
 
     # --- Render Table ---
     output$gap_table <- DT::renderDT({
-      req(is.data.frame(combined_data()) && nrow(combined_data()) > 0)
+      req(is.data.frame(analysis_data()) && nrow(analysis_data()) > 0)
       DT::datatable(
-        combined_data(),
+        analysis_data(),
         options = list(pageLength = 10, scrollX = TRUE, dom = 'Bfrtip'),
         rownames = FALSE,
         class = "display nowrap"
@@ -133,7 +133,7 @@ gapAnalysisServer <- function(id, combined_data) {
 
     # --- Generate Buffers Action ---
     observeEvent(input$generate_buffers, {
-      data <- combined_data()
+      data <- analysis_data()
       req(is.data.frame(data) && nrow(data) > 0)
 
       dist_km <- buffer_dist_km()
