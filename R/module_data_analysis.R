@@ -6,45 +6,37 @@ dataAnalysisUI <- function(id) {
     fillable = TRUE,
     layout_columns(
       col_widths = c(6, 6),
-      row_heights = c(1),
       fillable = TRUE,
+      
+      # Map card - left side
       card(
         full_screen = TRUE,
         card_body(
           padding = 0,
-          # Map needs to be in a relative div to position absolutePanel correctly
           div(
-            style = "position: relative;",
+            style = "position: relative; height: 100%;",
             mapModuleUI(ns("map")),
-            # absolutePanel positioned in bottom right corner
             absolutePanel(
-              bottom = 30,
-              right = 10,
-              style = "background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000; pointer-events: auto;",
+              bottom = 30, right = 10,
+              style = "background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000;",
               div(
-                actionButton(
-                  ns("deleteSelection"),
-                  "Delete Selection",
+                actionButton(ns("deleteSelection"), "Delete Selection",
                   icon = icon("trash-can"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5bff; color: white; border: none; cursor: pointer;"
+                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5b; color: white; border: none;"
                 ),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(
-                  ns("undoLastDelete"),
-                  "Undo Delete",
+                actionButton(ns("undoLastDelete"), "Undo Delete",
                   icon = icon("rotate-left"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ffffff; color: #000000; border: 1px solid #ddd; cursor: pointer;"
+                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
                 ),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(
-                  ns("clearSelection"),
-                  "Clear Selection",
+                actionButton(ns("clearSelection"), "Clear Selection",
                   icon = icon("square-minus"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ffffff; color: #000000; border: 1px solid #ddd; cursor: pointer;"
+                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
                 )
               )
             )
@@ -52,13 +44,11 @@ dataAnalysisUI <- function(id) {
         )
       ),
 
-      # Tables stacked vertically on the right
+      # Tables - right side
       layout_columns(
         col_widths = 12,
-        row_heights = c(1, 1),
         fillable = TRUE,
-
-        # GBIF table (top half)
+        
         card(
           full_screen = TRUE,
           card_header(
@@ -72,7 +62,6 @@ dataAnalysisUI <- function(id) {
           )
         ),
 
-        # Upload table (bottom half)
         card(
           full_screen = TRUE,
           card_header(
@@ -155,7 +144,10 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
       current_selection <- selected_points()
 
       # Only proceed if there are selected points
-      #if (length(current_selection) > 0 && nrow(current_data) > 0) {
+      if (length(current_selection) == 0) {
+        showNotification("No points selected to delete", type = "warning")
+        return()
+      }
       # Remove selected rows
       updated_data <- current_data %>%
         filter(!index %in% current_selection) %>%
@@ -176,6 +168,11 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
         nrow(analysis_data()),
         "rows in the CURRENT data."
       ))
+    })
+
+    # Enable/disable Undo button based on backup existence ------------------------
+    observe({
+      shinyjs::toggleState("undoLastDelete", condition = nrow(analysis_data_backup()) > 0)
     })
 
     # Undo last delete -------------------------------------------------------------

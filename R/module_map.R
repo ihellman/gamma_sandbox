@@ -2,7 +2,7 @@
 mapModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
-    leafletOutput(ns("dataEvalMap"), height = "50vh") # vh = viewport height. 50% doesnt work.
+    leafletOutput(ns("dataEvalMap"), height = "100%", width = "100%")
   )
 }
 
