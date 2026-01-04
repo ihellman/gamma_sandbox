@@ -10,23 +10,6 @@ controlsModuleUI <- function(id) {
       accept = c(".csv", ".xlsx", ".xls"),
       buttonLabel = "Browse...",
       placeholder = "No file selected"
-    ),
-    actionButton(inputId = ns("clearSelection"), label = "Clear Selection"),
-    # Delete and Undo Buttons (div allows closer vertical stacking)
-    div(
-      style = "display: inline-block;",
-      actionButton(
-        inputId = ns("deleteSelection"),
-        label = "Delete Selection",
-        class = "btn-danger",
-        style = "width: 100%; margin-bottom: 2px;"
-      ),
-      actionButton(
-        inputId = ns("undoLastDelete"),
-        label = "Undo Last Delete",
-        class = "btn-secondary",
-        style = "font-size: 11px; padding: 3px 10px; width: 100%;"
-      )
     )
   )
 }
@@ -35,7 +18,7 @@ controlsModuleUI <- function(id) {
 controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     # Empty reactive for backup of analysis_data() for undo functionality
-    analysis_data_backup <- reactiveVal(data.frame())
+    #analysis_data_backup <- reactiveVal(data.frame())
 
     # Load sample GBIF data (for testing) ----------------------------------------------
     load_gbif_sample <- function() {
@@ -249,56 +232,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
       # Clear temporary storage
       uploadData_temp(NULL)
-    })
-
-    # Clear selection ---------------------------------------------------------------
-    observeEvent(input$clearSelection, {
-      selected_points(numeric(0))
-    })
-
-    # Delete selected points ---------------------------------------------------------
-    observeEvent(input$deleteSelection, {
-      req(nrow(analysis_data()) > 0)
-
-      # Backup before deletion
-      analysis_data_backup(analysis_data())
-
-      current_data <- analysis_data()
-      current_selection <- selected_points()
-
-      # Only proceed if there are selected points
-      #if (length(current_selection) > 0 && nrow(current_data) > 0) {
-      # Remove selected rows
-      updated_data <- current_data %>%
-        filter(!index %in% current_selection) %>%
-        mutate(index = row_number()) # Re-index after deletion
-
-      # Update the data
-      analysis_data(updated_data)
-
-      # Clear the selection
-      selected_points(numeric(0))
-      print(paste0(
-        "There are",
-        nrow(analysis_data_backup()),
-        "rows in the BACKUP data."
-      ))
-      print(paste0(
-        "There are",
-        nrow(analysis_data()),
-        "rows in the CURRENT data."
-      ))
-    })
-
-    # Undo last delete -------------------------------------------------------------
-    observeEvent(input$undoLastDelete, {
-      req(nrow(analysis_data_backup()) > 0)
-
-      # Restore from backup
-      analysis_data(analysis_data_backup())
-
-      # Clear the backup
-      analysis_data_backup(data.frame())
     })
   })
 }
