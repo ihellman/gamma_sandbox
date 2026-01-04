@@ -16,13 +16,18 @@ controlsModuleUI <- function(id) {
       inputId = ns("deleteSelection"),
       label = "Delete Selection",
       class = "btn-danger"
-    )
+    ),
+    actionButton(inputId = ns("undoLastDelete"), label = "Undo Last Delete")
   )
 }
 
 # CONTROLS SERVER ----------------------------------------------------------------------
 controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
+    
+    # Empty reactive for backup of analysis_data() for undo functionality
+    analysis_data_backup <- reactiveVal(data.frame())
+
     # Load sample GBIF data (for testing) ----------------------------------------------
     load_gbif_sample <- function() {
       read_csv(
@@ -245,6 +250,10 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     # Delete selected points ---------------------------------------------------------
     observeEvent(input$deleteSelection, {
       req(nrow(analysis_data()) > 0)
+
+      # Backup before deletion
+      analysis_data_backup(analysis_data())
+
       current_data <- analysis_data()
       current_selection <- selected_points()
 
@@ -260,7 +269,27 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
       # Clear the selection
       selected_points(numeric(0))
-      #}
+      print(paste0(
+        "There are",
+        nrow(analysis_data_backup()),
+        "rows in the BACKUP data."
+      ))
+      print(paste0(
+        "There are",
+        nrow(analysis_data()),
+        "rows in the CURRENT data."
+      ))
+    })
+
+    # Undo last delete -------------------------------------------------------------
+    observeEvent(input$undoLastDelete, {
+      req(nrow(analysis_data_backup()) > 0)
+
+      # Restore from backup
+      analysis_data(analysis_data_backup())
+
+      # Clear the backup
+      analysis_data_backup(data.frame())
     })
   })
 }
