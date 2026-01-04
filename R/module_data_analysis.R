@@ -145,7 +145,7 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
 
       # Only proceed if there are selected points
       if (length(current_selection) == 0) {
-        showNotification("No points selected to delete", type = "warning")
+        showNotification("No records selected to delete", type = "warning")
         return()
       }
       # Remove selected rows
@@ -158,16 +158,16 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
 
       # Clear the selection
       selected_points(numeric(0))
-      print(paste0(
-        "There are",
-        nrow(analysis_data_backup()),
-        "rows in the BACKUP data."
-      ))
-      print(paste0(
-        "There are",
-        nrow(analysis_data()),
-        "rows in the CURRENT data."
-      ))
+      
+      # Show success notification
+      showNotification(
+        paste0(
+          "Successfully deleted ",
+          length(current_selection), 
+          " record",
+          if (length(current_selection) > 1) "s"
+        ), 
+        type = "message")
     })
 
     # Enable/disable Undo button based on backup existence ------------------------
@@ -179,8 +179,22 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
     observeEvent(input$undoLastDelete, {
       req(nrow(analysis_data_backup()) > 0)
 
+      # Calculate number of restored records
+      numRestoredRecords <- nrow(analysis_data_backup()) - nrow(analysis_data())
+
       # Restore from backup
       analysis_data(analysis_data_backup())
+
+      # Show success notification
+      showNotification(
+        paste0(
+          "Successfully restored ",
+          numRestoredRecords,
+          " record",
+          if (numRestoredRecords > 1) "s"
+        ),
+        type = "message"
+      )
 
       # Clear the backup
       analysis_data_backup(data.frame())
