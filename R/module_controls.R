@@ -12,19 +12,28 @@ controlsModuleUI <- function(id) {
       placeholder = "No file selected"
     ),
     actionButton(inputId = ns("clearSelection"), label = "Clear Selection"),
-    actionButton(
-      inputId = ns("deleteSelection"),
-      label = "Delete Selection",
-      class = "btn-danger"
-    ),
-    actionButton(inputId = ns("undoLastDelete"), label = "Undo Last Delete")
+    # Delete and Undo Buttons (div allows closer vertical stacking)
+    div(
+      style = "display: inline-block;",
+      actionButton(
+        inputId = ns("deleteSelection"),
+        label = "Delete Selection",
+        class = "btn-danger",
+        style = "width: 100%; margin-bottom: 2px;"
+      ),
+      actionButton(
+        inputId = ns("undoLastDelete"),
+        label = "Undo Last Delete",
+        class = "btn-secondary",
+        style = "font-size: 11px; padding: 3px 10px; width: 100%;"
+      )
+    )
   )
 }
 
 # CONTROLS SERVER ----------------------------------------------------------------------
 controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    
     # Empty reactive for backup of analysis_data() for undo functionality
     analysis_data_backup <- reactiveVal(data.frame())
 
