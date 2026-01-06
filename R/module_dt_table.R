@@ -153,10 +153,10 @@ DT_tableModuleServer <- function(
           deferRender = TRUE,
           columnDefs = list(
             # 1. HIDE THE NEW HELPER COLUMN HERE
-            list(
-              targets = c('source', 'index', 'germplasm_color'),
-              visible = FALSE
-            ),
+            # list(
+            #   targets = c('source', 'index', 'germplasm_color'),
+            #   visible = FALSE
+            # ),
             # Existing createdCell definition
             list(
               targets = '_all',

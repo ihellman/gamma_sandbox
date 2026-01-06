@@ -4,7 +4,6 @@
 # required_cols = Character vector of required column names
 
 read_upload_file <- function(file_info) {
-  
   # Define required columns for your data
   required_cols <- c(
     "Accession Number",
@@ -30,11 +29,11 @@ read_upload_file <- function(file_info) {
   file_ext <- tools::file_ext(file_info$name)
 
   # Validate file type
-  if (!file_ext %in% c("csv", "xlsx", "xls")) {
+  if (!file_ext %in% c("csv")) {
     return(list(
       success = FALSE,
       data = NULL,
-      message = "Please upload a CSV or Excel file (.csv, .xlsx, .xls)"
+      message = "Unsupported file type. Please upload a CSV file."
     ))
   }
 
@@ -42,34 +41,36 @@ read_upload_file <- function(file_info) {
   result <- tryCatch(
     {
       if (file_ext == "csv") {
-        data <- read.csv(
+        data <- read_csv(
           file_info$datapath,
-          check.names = FALSE,
-          stringsAsFactors = FALSE
+          col_types = cols(.default = "c")
         )
       } else {
-        # Requires readxl package
-        data <- readxl::read_excel(file_info$datapath)
+        stop("Unsupported file type")
       }
 
-      # Add source column
+      # Validate required columns
+      missing_cols <- setdiff(required_cols, names(data))
+
+      if (length(missing_cols) > 0) {
+        return(list(
+          success = FALSE,
+          data = NULL,
+          message = paste(
+            "Missing required columns:",
+            paste(missing_cols, collapse = ", ")
+          )
+        ))
+      }
+
+      # Convert to spatial dataframe (sf object) add index and source.
       data <- data %>%
-        mutate(source = "upload")
-      # Validate required columns if specified
-      if (!is.null(required_cols)) {
-        missing_cols <- setdiff(required_cols, names(data))
-
-        if (length(missing_cols) > 0) {
-          return(list(
-            success = FALSE,
-            data = NULL,
-            message = paste(
-              "Missing required columns:",
-              paste(missing_cols, collapse = ", ")
-            )
-          ))
-        }
-      }
+        sf::st_as_sf(
+          coords = c("Longitude", "Latitude"),
+          crs = 4326,
+          remove = FALSE
+        ) %>%
+        mutate(index = dplyr::row_number(), source = "upload")
 
       # Success!
       list(

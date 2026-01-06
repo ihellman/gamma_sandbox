@@ -140,36 +140,35 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     # Upload file logic ---------------------------------------------------------------------
     uploadData_temp <- reactiveVal(NULL)
 
-    # Handle file upload
     observeEvent(input$uploadData, {
       req(input$uploadData)
 
-      # Read and validate the file
-      upload_result <- read_upload_file(file_info = input$uploadData) # helper function
+      # 1. Read and Validate
+      upload_result <- read_upload_file(file_info = input$uploadData)
 
-      # Check if upload was successful
       if (!upload_result$success) {
-        showNotification(
-          upload_result$message,
-          type = "error",
-          duration = 10
-        )
+        showNotification(upload_result$message, type = "error", duration = 10)
         return()
       }
 
-      # Upload was successful, get the data
-      uploadPoints <- upload_result$data
-
-      # Check if upload data already exists
+      new_points <- upload_result$data
       current <- analysis_data()
-      has_upload <- nrow(current) > 0 && any(current$source == "upload")
 
-      if (has_upload) {
+      # 2. Check for conflict
+      # Check if we have existing data specifically from "upload" source
+      has_existing_upload <- nrow(current) > 0 &&
+        any(current$source == "upload")
+
+      if (has_existing_upload) {
+        # 3a. CONFLICT: Store temp data and ask user
+        uploadData_temp(new_points)
+
         showModal(modalDialog(
           title = "Overwrite Upload Data?",
-          "Upload data is already loaded. Do you want to overwrite it with new data?",
+          "Upload data is already loaded. Do you want to overwrite it?",
           footer = tagList(
-            modalButton("Cancel"),
+            # Use actionButton for Cancel so we can clear temp data explicitly
+            actionButton(session$ns("cancelUpload"), "Cancel"),
             actionButton(
               session$ns("confirmloadUpload"),
               "Overwrite",
@@ -177,61 +176,45 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
             )
           )
         ))
-
-        # Store the upload data temporarily for the confirm action
-        uploadData_temp(uploadPoints)
       } else {
-        # No upload data exists, load directly
-        if (nrow(current) == 0) {
-          uploadPoints <- uploadPoints %>%
-            mutate(index = row_number())
-          analysis_data(uploadPoints)
-        } else {
-          new_dat <- bind_rows(current, uploadPoints) %>%
-            mutate(index = row_number())
-          analysis_data(new_dat)
-        }
+        # 3b. NO CONFLICT: Update immediately
+        updated_df <- merge_and_index(current, new_points)
+        analysis_data(updated_df)
 
-        showNotification(
-          upload_result$message,
-          type = "message",
-          duration = 3
-        )
+        showNotification(upload_result$message, type = "message", duration = 3)
       }
     })
 
-    # Handle the confirmation for overwriting
+    # Handle Confirmation
     observeEvent(input$confirmloadUpload, {
+      req(uploadData_temp()) # Ensure we actually have data waiting
+
       current <- analysis_data()
-      uploadPoints <- uploadData_temp()
+      new_points <- uploadData_temp()
 
-      # Remove existing upload data
-      current <- current %>%
-        filter(source != "upload")
+      # Filter out OLD upload data
+      current_clean <- current %>% filter(source != "upload")
 
-      # Add new upload data
-      if (nrow(current) == 0) {
-        uploadPoints <- uploadPoints %>%
-          mutate(index = row_number())
-        analysis_data(uploadPoints)
-      } else {
-        new_dat <- bind_rows(current, uploadPoints) %>%
-          mutate(index = row_number())
-        analysis_data(new_dat)
-      }
+      # Merge NEW upload data using the helper function
+      updated_df <- merge_and_index(current_clean, new_points)
+      analysis_data(updated_df)
 
-      # Clear selections that might reference old upload indices
+      # Cleanup
       selected_points(numeric(0))
-
+      uploadData_temp(NULL) # Clear memory
       removeModal()
+
       showNotification(
-        paste("Successfully uploaded", nrow(uploadPoints), "records"),
+        paste("Successfully uploaded", nrow(new_points), "records"),
         type = "message",
         duration = 3
       )
+    })
 
-      # Clear temporary storage
-      uploadData_temp(NULL)
+    # Handle Cancel
+    observeEvent(input$cancelUpload, {
+      uploadData_temp(NULL) # Clear the pending data
+      removeModal()
     })
   })
 }
