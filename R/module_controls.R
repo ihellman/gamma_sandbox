@@ -70,14 +70,9 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
           )
         ))
       } else {
-        # No GBIF data exists, load directly
-        if (nrow(current) == 0) {
-          analysis_data(gbifPoints)
-        } else {
-          new_dat <- bind_rows(current, gbifPoints) %>%
-            mutate(index = row_number())
-          analysis_data(new_dat)
-        }
+        # If no GBIF data exists, load directly, else merge with current
+        updated_df <- merge_and_index(current, gbifPoints)
+        analysis_data(updated_df)
       }
     })
 
@@ -91,13 +86,9 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         # Remove existing GBIF data and add new
         filtered <- current %>% filter(source != "GBIF")
 
-        if (nrow(filtered) == 0) {
-          analysis_data(gbifPoints)
-        } else {
-          new_dat <- bind_rows(filtered, gbifPoints) %>%
-            mutate(index = row_number())
-          analysis_data(new_dat)
-        }
+        # If no GBIF data exists, load directly, else merge with current
+        updated_df <- merge_and_index(filtered, gbifPoints)
+        analysis_data(updated_df)
 
         removeModal()
       },
@@ -113,6 +104,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       has_upload <- nrow(current) > 0 && any(current$source == "upload")
 
       if (has_upload) {
+        uploadData_temp(uploadPoints)
         showModal(modalDialog(
           title = "Overwrite Upload Data?",
           "Upload data is already loaded. Do you want to overwrite it with new data?",
@@ -126,14 +118,9 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
           )
         ))
       } else {
-        # No upload data exists, load directly
-        if (nrow(current) == 0) {
-          analysis_data(uploadPoints)
-        } else {
-          new_dat <- bind_rows(current, uploadPoints) %>%
-            mutate(index = row_number())
-          analysis_data(new_dat)
-        }
+        # If no Upload data exists, load directly, else merge with current
+        updated_df <- merge_and_index(current, uploadPoints)
+        analysis_data(updated_df)
       }
     })
 
