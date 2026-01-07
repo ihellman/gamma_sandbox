@@ -1,17 +1,12 @@
-# FUNCTION to read and validate uploaded file
-#
-# file_info = The file input object from Shiny (input$fileInput)
-# required_cols = Character vector of required column names
+# fctn_read_upload_file.R
 
 read_upload_file <- function(file_info) {
-  # Define required columns for your data
+  # 1. Remove Lat/Lon from strict requirements
   required_cols <- c(
     "Accession Number",
     "Taxon Name",
     "Current Germplasm Type",
     "Collection Date",
-    "Latitude",
-    "Longitude",
     "Locality",
     "Collector",
     "issues"
@@ -22,7 +17,7 @@ read_upload_file <- function(file_info) {
     return(list(
       success = FALSE,
       data = NULL,
-      message = "No file provided"
+      message = "⚠️ No file provided"
     ))
   }
 
@@ -33,7 +28,7 @@ read_upload_file <- function(file_info) {
     return(list(
       success = FALSE,
       data = NULL,
-      message = "Unsupported file type. Please upload a CSV file."
+      message = "❌ Unsupported file type. Please upload a CSV file."
     ))
   }
 
@@ -49,6 +44,10 @@ read_upload_file <- function(file_info) {
         stop("Unsupported file type")
       }
 
+      # 2. Ensure Lat/Lon columns exist (fill with NA if missing)
+      if (!"Latitude" %in% names(data)) data$Latitude <- NA
+      if (!"Longitude" %in% names(data)) data$Longitude <- NA
+
       # Validate required columns
       missing_cols <- setdiff(required_cols, names(data))
 
@@ -57,33 +56,50 @@ read_upload_file <- function(file_info) {
           success = FALSE,
           data = NULL,
           message = paste(
-            "Missing required columns:",
+            "❌ Missing required columns:",
             paste(missing_cols, collapse = ", ")
           )
         ))
       }
 
-      # Convert to spatial dataframe (sf object) add index and source.
-      data <- data %>%
-        sf::st_as_sf(
-          coords = c("Longitude", "Latitude"),
-          crs = 4326,
-          remove = FALSE
+      # 3. Check for missing or invalid coordinates
+      # We check if they are NA or cannot be converted to numbers
+      n_missing_coords <- data %>%
+        dplyr::filter(
+          is.na(suppressWarnings(as.numeric(Latitude))) | 
+          is.na(suppressWarnings(as.numeric(Longitude)))
         ) %>%
-        mutate(index = dplyr::row_number(), source = "upload")
+        nrow()
+
+      # Add index and source
+      data <- data %>%
+        dplyr::mutate(index = dplyr::row_number(), source = "upload")
+
+      # 4. Construct Message
+      base_msg <- paste("✅ Successfully loaded", nrow(data), "records")
+      
+      if (n_missing_coords > 0) {
+        final_message <- paste0(
+          "⚠️ NOTE: ", n_missing_coords, " records are missing valid Latitude/Longitude data.\n",
+          "These records will be included in the GAP analysis, but cannot be displayed on the map."
+        )
+      } else {
+        final_message <- base_msg
+      }
 
       # Success!
       list(
         success = TRUE,
         data = data,
-        message = paste("Successfully loaded", nrow(data), "records")
+        message = final_message
       )
     },
+    # What to return if there's an error
     error = function(e) {
       list(
         success = FALSE,
         data = NULL,
-        message = paste("Error reading file:", e$message)
+        message = paste("🚫 Error reading file:", e$message)
       )
     }
   )

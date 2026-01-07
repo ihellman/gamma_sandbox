@@ -127,16 +127,36 @@ data_eval_base_map <- function() {
 }
 
 # 2. Render Main Points
-# Logic to color and render the base dataset (Runs when data loads)
 render_base_points <- function(mapID, allPoints) {
   # Safety check
   if (nrow(allPoints) == 0) {
     leafletProxy(mapID) %>% clearMarkers()
     return(invisible(NULL))
+  } 
+  
+  # Filter for valid coordinates
+  mappable_data <- allPoints %>%
+      mutate(
+        Latitude = as.numeric(Latitude),
+        Longitude = as.numeric(Longitude)
+      ) %>%
+      filter(!is.na(Latitude) & !is.na(Longitude))
+
+  if (nrow(mappable_data) == 0) {
+    leafletProxy(mapID) %>% clearMarkers()
+    return(invisible(NULL))
   }
 
-  # Assign Colors
-  data <- allPoints %>%
+  # Convert to sf object
+  mappable_data <- mappable_data %>%
+      sf::st_as_sf(
+        coords = c("Longitude", "Latitude"),
+        crs = 4326,
+        remove = FALSE
+      )
+  
+  # Assign Colors (using mappable_data)
+  data <- mappable_data %>%
     dplyr::mutate(
       color = case_when(
         `Current Germplasm Type` == "H" & source == "GBIF" ~ gbifColor[1],
@@ -152,7 +172,7 @@ render_base_points <- function(mapID, allPoints) {
     clearMarkers() |>
     addCircleMarkers(
       data = data,
-      layerId = ~index,
+      layerId = ~index, # The index ensures we can link clicks back to the full dataset
       radius = 5,
       color = "white",
       fillColor = ~color,
@@ -161,49 +181,64 @@ render_base_points <- function(mapID, allPoints) {
       fillOpacity = 1,
       label = point_labels(data)
     )
-  
+
   if (nrow(allPoints) > 0) {
     leafletProxy(mapID) |>
       fitBounds(
-          lng1 = min(allPoints$Longitude, na.rm = TRUE),
-          lat1 = min(allPoints$Latitude, na.rm = TRUE),
-          lng2 = max(allPoints$Longitude, na.rm = TRUE),
-          lat2 = max(allPoints$Latitude, na.rm = TRUE)
-        )
+        lng1 = min(allPoints$Longitude, na.rm = TRUE),
+        lat1 = min(allPoints$Latitude, na.rm = TRUE),
+        lng2 = max(allPoints$Longitude, na.rm = TRUE),
+        lat2 = max(allPoints$Latitude, na.rm = TRUE)
+      )
   }
 }
 
 # 3. Update Selection
-# Efficiently highlights specific points without re-rendering the whole map
 update_selection_highlights <- function(mapID, allPoints, selected_ids) {
+  
+  if (nrow(allPoints) == 0 || length(selected_ids) == 0) {
+    leafletProxy(mapID) |> clearGroup("GBIF Selection")
+    return(invisible(NULL))
+  } 
+    
+  # Filter for valid coordinates 
+  mappable_data <- allPoints %>%
+      filter(index %in% selected_ids) %>% # Filter by ID first for efficiency
+      mutate(
+        Latitude = as.numeric(Latitude),
+        Longitude = as.numeric(Longitude)
+      ) %>%
+      filter(!is.na(Latitude) & !is.na(Longitude))
+
+  if (nrow(mappable_data) == 0) {
+    leafletProxy(mapID) |> clearGroup("GBIF Selection")
+    return(invisible(NULL))
+  }
+  # -----------------------------------------
+
+  mappable_data <- mappable_data %>%
+      sf::st_as_sf(
+        coords = c("Longitude", "Latitude"),
+        crs = 4326,
+        remove = FALSE
+      )
+  
   proxy <- leafletProxy(mapID)
 
   # Clear previous highlights
   proxy |> clearGroup("GBIF Selection")
 
-  if (length(selected_ids) == 0) {
-    return(invisible(NULL))
-  }
-
-  # Filter data
-  selected_data <- allPoints %>%
-    dplyr::filter(index %in% selected_ids)
-
-  if (nrow(selected_data) == 0) {
-    return(invisible(NULL))
-  }
-
   # Add Halo Effect for Selection
   proxy |>
     addCircleMarkers(
-      data = selected_data,
+      data = mappable_data,
       group = "GBIF Selection",
       radius = 12,
       color = "transparent",
       fillColor = "#025c8f",
       fillOpacity = 0.3,
       stroke = FALSE,
-      options = pathOptions(interactive = FALSE) # Clicks pass through to base point
+      options = pathOptions(interactive = FALSE)
     )
 }
 

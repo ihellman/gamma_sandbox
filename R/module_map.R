@@ -17,7 +17,7 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
     # Handle data handling of GBIF/uploaded data
     observeEvent(analysis_data(), {
       req(analysis_data())
-      
+
       # Redraw the base points if data is updated
       render_base_points("dataEvalMap", analysis_data())
       
@@ -25,7 +25,7 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
       update_selection_highlights("dataEvalMap", analysis_data(), selected_points())
     })
 
-    # 2. Handle selection changes
+    # Handle selection changes
     observeEvent(selected_points(), {
 
       update_selection_highlights("dataEvalMap", analysis_data(), selected_points())
@@ -48,6 +48,19 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
       req(nrow(analysis_data()) > 0)
       currentData <- analysis_data()
 
+      # Filter only rows with valid coordinates for spatial intersection
+      spatialData <- currentData %>%
+        mutate(
+          Latitude = as.numeric(Latitude),
+          Longitude = as.numeric(Longitude)
+        ) %>%
+        filter(!is.na(Latitude) & !is.na(Longitude)) %>%
+        sf::st_as_sf(
+          coords = c("Longitude", "Latitude"),
+          crs = 4326,
+          remove = FALSE
+        )
+
       # Extract polygon feature
       feature <- input$dataEvalMap_draw_new_feature
       coords <- feature$geometry$coordinates[[1]]
@@ -57,8 +70,8 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
         byrow = TRUE
       )))
 
-      # Find points within the polygon
-      pointsInPoly <- st_filter(currentData, selectionPoly)
+      # Find points within the polygon using the filtered spatialData
+      pointsInPoly <- st_filter(spatialData, selectionPoly)
 
       # Get index values for new points
       newPolySelection <- pointsInPoly %>% pull(index)

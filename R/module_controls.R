@@ -7,7 +7,7 @@ controlsModuleUI <- function(id) {
     fileInput(
       inputId = ns("uploadData"),
       label = "Upload Data",
-      accept = c(".csv", ".xlsx", ".xls"),
+      accept = c(".csv"),
       buttonLabel = "Browse...",
       placeholder = "No file selected"
     )
@@ -26,11 +26,11 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         "appData/Magnolia_acuminata_data.csv",
         col_types = cols(.default = "c")
       ) %>%
-        sf::st_as_sf(
-          coords = c("Longitude", "Latitude"),
-          crs = 4326,
-          remove = FALSE
-        ) %>%
+        # sf::st_as_sf(
+        #   coords = c("Longitude", "Latitude"),
+        #   crs = 4326,
+        #   remove = FALSE
+        # ) %>%
         mutate(index = dplyr::row_number(), source = "GBIF")
     }
 
@@ -40,11 +40,11 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         "appData/upload_sample.csv",
         col_types = cols(.default = "c")
       ) %>%
-        sf::st_as_sf(
-          coords = c("Longitude", "Latitude"),
-          crs = 4326,
-          remove = FALSE
-        ) %>%
+        # sf::st_as_sf(
+        #   coords = c("Longitude", "Latitude"),
+        #   crs = 4326,
+        #   remove = FALSE
+        # ) %>%
         mutate(index = dplyr::row_number(), source = "upload", issues = "") # !!!! Placeholder to allow tables to join
     }
 

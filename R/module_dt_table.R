@@ -81,9 +81,10 @@ DT_tableModuleServer <- function(
             TRUE ~ 'transparent' # Fallback color
           )
         )
-
-      st_drop_geometry(data) %>%
+      data %>%
         filter(source == data_source)
+      # st_drop_geometry(data) %>%
+      #   filter(source == data_source)
     })
 
     # 2. Initialization Latch
