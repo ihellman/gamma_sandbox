@@ -1,201 +1,201 @@
-"Accession Number","Taxon Name","Current Germplasm Type","Collection Date","Latitude","Longitude","Locality","Collector","issues","source","index"
-"574713468","Pinus ponderosa var. ponderosa","G",NA,41.2083,-120.1767,"off summit trail above Paterson Ranger Station","North Wales Arboretum; California 1996","cdc,gass84,ambcol,inmafu","GBIF",20000
-"574730172","Pinus washoensis Mason & Stockw.","G",NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station","North Wales Arboretum; California 1996","cdc,gass84,ambcol,inmafu","GBIF",20001
-"574751035","Pinus washoensis Mason & Stockw.","G",NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station","North Wales Arboretum; California 1996","cdc,gass84,ambcol,inmafu","GBIF",20002
-"574753591","Pinus ponderosa var. ponderosa","G",NA,49.0333,-118.0833,NA,NA,"cdc,gass84,ambcol,inmafu","GBIF",20003
-"574774665","Pinus washoensis Mason & Stockw.","G",NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station","North Wales Arboretum; California 1996","cdc,gass84,ambcol,inmafu","GBIF",20004
-"5006902297","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",37.8851,-122.2255,NA,"Ben Sims","cdc,cdround","GBIF",20005
-"5063293749","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",43.7393,-122.3638,NA,"ehappy","cdc,cdround","GBIF",20006
-"5063561100","Pinus ponderosa var. ponderosa","H","2025",43.7012,-116.2086,NA,"Gwen Gallagher","cdc,cdround","GBIF",20007
-"5063612592","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",43.9971,-122.9801,NA,"prosecar","cdc,cdround","GBIF",20008
-"5069779155","Pinus ponderosa var. ponderosa","H","2025",42.2892,-121.8768,NA,"Zoe Stephens","cdc,cdround","GBIF",20009
-"5063831752","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",44.2066,-123.0136,NA,"ehappy","cdc,cdround","GBIF",20010
-"5076853759","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",37.0487,-122.138,NA,"James Bailey","cdc,cdround","GBIF",20011
-"5076943122","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",37.0868,-122.058,NA,"Chuck Wilson","cdc,cdround","GBIF",20012
-"5077158576","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",45.3346,-122.7911,NA,"maclifton","cdc,cdround","GBIF",20013
-"5133778593","Pinus ponderosa var. ponderosa","H","2025",45.341,-117.2238,NA,"Bryan M Maitland","cdc,cdround","GBIF",20014
-"5087796425","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",35.8139,-121.2206,NA,"Leif Behrmann","cdc,cdround","GBIF",20015
-"5133236955","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",44.066,-122.9092,NA,"Ed Alverson","cdc","GBIF",20016
-"5133988061","Pinus ponderosa var. ponderosa","H","2025",45.6289,-117.7673,NA,"Sean Cozart","cdc,cdround","GBIF",20017
-"5134446403","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",44.5373,-123.2847,NA,"James Mickley","cdc,cdround","GBIF",20018
-"5140752902","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",44.2907,-122.9501,NA,"ehappy","cdc,cdround","GBIF",20019
-"5154694428","Pinus ponderosa var. benthamiana (Hartw.) Vasey","H","2025",44.0216,-123.1566,NA,"petrelharp","cdc,cdround","GBIF",20020
-"5198286129","Pinus ponderosa var. ponderosa","H","2025",45.2855,-117.7554,NA,"Matthew Cozart","cdc,cdround","GBIF",20021
-"5198743142","Pinus ponderosa var. ponderosa","H","2025",45.2857,-117.757,NA,"Matthew Cozart","cdc,cdround","GBIF",20022
-"5198998126","Pinus ponderosa var. ponderosa","H","2025",45.2848,-117.7519,NA,"Matthew Cozart","cdc,cdround","GBIF",20023
-"5199079154","Pinus ponderosa var. ponderosa","H","2025",45.2855,-117.7559,NA,"Matthew Cozart","cdc,cdround","GBIF",20024
-"5231051610","Pinus ponderosa var. ponderosa","H","2025",45.2833,-117.7412,NA,"Sean Cozart","cdc,cdround","GBIF",20025
-"5230028756","Pinus ponderosa var. ponderosa","H","2025",45.298,-117.1997,NA,"Matthew Cozart","cdc,cdround","GBIF",20026
-"5761179221","Pinus ponderosa var. ponderosa","H","2025",42.2246,-120.0972,NA,"ceramikat","cdc,cdround","GBIF",20027
-"5205997782","Pinus ponderosa var. ponderosa","H","2025",45.5517,-116.7989,NA,"Matthew Cozart","cdc,cdround","GBIF",20028
-"5206087823","Pinus ponderosa var. ponderosa","H","2025",45.5567,-116.8092,NA,"Matthew Cozart","cdc,cdround","GBIF",20029
-"5206203791","Pinus ponderosa var. ponderosa","H","2025",45.5288,-116.7808,NA,"Matthew Cozart","cdc,cdround","GBIF",20030
-"5206235765","Pinus ponderosa var. ponderosa","H","2025",45.5555,-116.8059,NA,"Matthew Cozart","cdc,cdround","GBIF",20031
-"5206299808","Pinus ponderosa var. ponderosa","H","2025",45.5566,-116.8085,NA,"Matthew Cozart","cdc,cdround","GBIF",20032
-"5206340778","Pinus ponderosa var. ponderosa","H","2025",45.5563,-116.8073,NA,"Matthew Cozart","cdc,cdround","GBIF",20033
-"5206507785","Pinus ponderosa var. ponderosa","H","2025",45.552,-116.7976,NA,"Matthew Cozart","cdc,cdround","GBIF",20034
-"5206524773","Pinus ponderosa var. ponderosa","H","2025",45.5517,-116.8003,NA,"Matthew Cozart","cdc,cdround","GBIF",20035
-"5206701770","Pinus ponderosa var. ponderosa","H","2025",45.5514,-116.7956,NA,"Matthew Cozart","cdc,cdround","GBIF",20036
-"5206811776","Pinus ponderosa var. ponderosa","H","2025",45.5519,-116.7966,NA,"Matthew Cozart","cdc,cdround","GBIF",20037
-"5217068971","Pinus ponderosa var. ponderosa","H","2025",43.0063,-121.1347,NA,"Aaron Liston","cdc,cdround","GBIF",20038
-"5229947810","Pinus ponderosa var. ponderosa","H","2025",45.3832,-117.032,NA,"Matthew Cozart","cdc,cdround","GBIF",20039
-"5229947811","Pinus ponderosa var. ponderosa","H","2025",45.4801,-116.7534,NA,"Matthew Cozart","cdc,cdround","GBIF",20040
-"5229948807","Pinus ponderosa var. ponderosa","H","2025",45.5501,-116.7924,NA,"Matthew Cozart","cdc,cdround","GBIF",20041
-"5229955820","Pinus ponderosa var. ponderosa","H","2025",45.5302,-116.7818,NA,"Matthew Cozart","cdc,cdround","GBIF",20042
-"5229966823","Pinus ponderosa var. ponderosa","H","2025",45.452,-116.983,NA,"Matthew Cozart","cdc,cdround","GBIF",20043
-"5229977863","Pinus ponderosa var. ponderosa","H","2025",45.5333,-116.7844,NA,"Matthew Cozart","cdc,cdround","GBIF",20044
-"5229981819","Pinus ponderosa var. ponderosa","H","2025",45.533,-116.784,NA,"Matthew Cozart","cdc,cdround","GBIF",20045
-"5229983844","Pinus ponderosa var. ponderosa","H","2025",45.3806,-117.0339,NA,"Matthew Cozart","cdc,cdround","GBIF",20046
-"5229991824","Pinus ponderosa var. ponderosa","H","2025",45.5265,-116.7795,NA,"Matthew Cozart","cdc,cdround","GBIF",20047
-"5229999796","Pinus ponderosa var. ponderosa","H","2025",45.5362,-116.7868,NA,"Matthew Cozart","cdc,cdround","GBIF",20048
-"5230006797","Pinus ponderosa var. ponderosa","H","2025",45.5392,-116.8575,NA,"Matthew Cozart","cdc,cdround","GBIF",20049
-"5230014802","Pinus ponderosa var. ponderosa","H","2025",45.3944,-117.0212,NA,"Matthew Cozart","cdc,cdround","GBIF",20050
-"5230182875","Pinus ponderosa var. ponderosa","H","2025",45.3347,-117.09,NA,"Matthew Cozart","cdc,cdround","GBIF",20051
-"5230185806","Pinus ponderosa var. ponderosa","H","2025",45.5252,-116.7789,NA,"Matthew Cozart","cdc,cdround","GBIF",20052
-"5230204837","Pinus ponderosa var. ponderosa","H","2025",45.5401,-116.7919,NA,"Matthew Cozart","cdc,cdround","GBIF",20053
-"5230212821","Pinus ponderosa var. ponderosa","H","2025",45.5216,-116.776,NA,"Matthew Cozart","cdc,cdround","GBIF",20054
-"5230252834","Pinus ponderosa var. ponderosa","H","2025",45.5307,-116.8597,NA,"Matthew Cozart","cdc,cdround","GBIF",20055
-"5230255794","Pinus ponderosa var. ponderosa","H","2025",45.5261,-116.7793,NA,"Matthew Cozart","cdc,cdround","GBIF",20056
-"5230256819","Pinus ponderosa var. ponderosa","H","2025",45.5288,-116.861,NA,"Matthew Cozart","cdc,cdround","GBIF",20057
-"5230258824","Pinus ponderosa var. ponderosa","H","2025",45.4146,-116.7379,NA,"Matthew Cozart","cdc,cdround","GBIF",20058
-"5230276861","Pinus ponderosa var. ponderosa","H","2025",45.5423,-116.854,NA,"Matthew Cozart","cdc,cdround","GBIF",20059
-"5230311860","Pinus ponderosa var. ponderosa","H","2025",45.403,-117.0103,NA,"Matthew Cozart","cdc,cdround","GBIF",20060
-"5230318879","Pinus ponderosa var. ponderosa","H","2025",45.5516,-116.7996,NA,"Matthew Cozart","cdc,cdround","GBIF",20061
-"5230376821","Pinus ponderosa var. ponderosa","H","2025",45.3376,-117.0786,NA,"Matthew Cozart","cdc,cdround","GBIF",20062
-"5230379806","Pinus ponderosa var. ponderosa","H","2025",45.5474,-116.8465,NA,"Matthew Cozart","cdc,cdround","GBIF",20063
-"5230387822","Pinus ponderosa var. ponderosa","H","2025",45.552,-116.7976,NA,"Matthew Cozart","cdc,cdround","GBIF",20064
-"5230395846","Pinus ponderosa var. ponderosa","H","2025",45.3535,-117.0547,NA,"Matthew Cozart","cdc,cdround","GBIF",20065
-"5230395847","Pinus ponderosa var. ponderosa","H","2025",45.4583,-116.9783,NA,"Matthew Cozart","cdc,cdround","GBIF",20066
-"5230416841","Pinus ponderosa var. ponderosa","H","2025",45.5501,-116.7972,NA,"Matthew Cozart","cdc,cdround","GBIF",20067
-"5230420822","Pinus ponderosa var. ponderosa","H","2025",45.5355,-116.8592,NA,"Matthew Cozart","cdc,cdround","GBIF",20068
-"5230421820","Pinus ponderosa var. ponderosa","H","2025",45.5491,-116.8012,NA,"Matthew Cozart","cdc,cdround","GBIF",20069
-"5230430812","Pinus ponderosa var. ponderosa","H","2025",45.3396,-117.0766,NA,"Matthew Cozart","cdc,cdround","GBIF",20070
-"5230449823","Pinus ponderosa var. ponderosa","H","2025",45.3915,-117.0266,NA,"Matthew Cozart","cdc,cdround","GBIF",20071
-"5230455844","Pinus ponderosa var. ponderosa","H","2025",45.5383,-116.797,NA,"Matthew Cozart","cdc,cdround","GBIF",20072
-"5230507818","Pinus ponderosa var. ponderosa","H","2025",45.5226,-116.7769,NA,"Matthew Cozart","cdc,cdround","GBIF",20073
-"5230511824","Pinus ponderosa var. ponderosa","H","2025",45.5211,-116.7754,NA,"Matthew Cozart","cdc,cdround","GBIF",20074
-"5230527810","Pinus ponderosa var. ponderosa","H","2025",45.5521,-116.8016,NA,"Matthew Cozart","cdc,cdround","GBIF",20075
-"5230548847","Pinus ponderosa var. ponderosa","H","2025",45.549,-116.8008,NA,"Matthew Cozart","cdc,cdround","GBIF",20076
-"5230552830","Pinus ponderosa var. ponderosa","H","2025",45.5176,-116.8672,NA,"Matthew Cozart","cdc,cdround","GBIF",20077
-"5230555805","Pinus ponderosa var. ponderosa","H","2025",45.5523,-116.8021,NA,"Matthew Cozart","cdc,cdround","GBIF",20078
-"5230556773","Pinus ponderosa var. ponderosa","H","2025",45.5568,-116.8104,NA,"Matthew Cozart","cdc,cdround","GBIF",20079
-"5230696834","Pinus ponderosa var. ponderosa","H","2025",45.5252,-116.8603,NA,"Matthew Cozart","cdc,cdround","GBIF",20080
-"5230717850","Pinus ponderosa var. ponderosa","H","2025",45.3935,-117.0239,NA,"Matthew Cozart","cdc,cdround","GBIF",20081
-"5230719817","Pinus ponderosa var. ponderosa","H","2025",45.5271,-116.7801,NA,"Matthew Cozart","cdc,cdround","GBIF",20082
-"5230730850","Pinus ponderosa var. ponderosa","H","2025",45.5225,-116.7768,NA,"Matthew Cozart","cdc,cdround","GBIF",20083
-"5230770840","Pinus ponderosa var. ponderosa","H","2025",45.5458,-116.8512,NA,"Matthew Cozart","cdc,cdround","GBIF",20084
-"5230799847","Pinus ponderosa var. ponderosa","H","2025",45.5006,-116.9025,NA,"Matthew Cozart","cdc,cdround","GBIF",20085
-"5230817807","Pinus ponderosa var. ponderosa","H","2025",45.4466,-116.9937,NA,"Matthew Cozart","cdc,cdround","GBIF",20086
-"5230836833","Pinus ponderosa var. ponderosa","H","2025",45.5497,-116.7923,NA,"Matthew Cozart","cdc,cdround","GBIF",20087
-"5230844841","Pinus ponderosa var. ponderosa","H","2025",45.5205,-116.7749,NA,"Matthew Cozart","cdc,cdround","GBIF",20088
-"5230851797","Pinus ponderosa var. ponderosa","H","2025",45.5501,-116.7973,NA,"Matthew Cozart","cdc,cdround","GBIF",20089
-"5230855912","Pinus ponderosa var. ponderosa","H","2025",45.3716,-117.0496,NA,"Matthew Cozart","cdc,cdround","GBIF",20090
-"5230861812","Pinus ponderosa var. ponderosa","H","2025",45.5551,-116.8052,NA,"Matthew Cozart","cdc,cdround","GBIF",20091
-"5230872850","Pinus ponderosa var. ponderosa","H","2025",45.5383,-116.7966,NA,"Matthew Cozart","cdc,cdround","GBIF",20092
-"5230896805","Pinus ponderosa var. ponderosa","H","2025",45.449,-116.9855,NA,"Matthew Cozart","cdc,cdround","GBIF",20093
-"5230896807","Pinus ponderosa var. ponderosa","H","2025",45.553,-116.8028,NA,"Matthew Cozart","cdc,cdround","GBIF",20094
-"5230914812","Pinus ponderosa var. ponderosa","H","2025",45.5149,-116.7665,NA,"Matthew Cozart","cdc,cdround","GBIF",20095
-"5230929800","Pinus ponderosa var. ponderosa","H","2025",45.5239,-116.7779,NA,"Matthew Cozart","cdc,cdround","GBIF",20096
-"5230930851","Pinus ponderosa var. ponderosa","H","2025",45.5311,-116.8597,NA,"Matthew Cozart","cdc,cdround","GBIF",20097
-"5230977829","Pinus ponderosa var. ponderosa","H","2025",45.3844,-117.0314,NA,"Matthew Cozart","cdc,cdround","GBIF",20098
-"5231019821","Pinus ponderosa var. ponderosa","H","2025",45.5185,-116.8648,NA,"Matthew Cozart","cdc,cdround","GBIF",20099
-"5231031824","Pinus ponderosa var. ponderosa","H","2025",45.5234,-116.7776,NA,"Matthew Cozart","cdc,cdround","GBIF",20100
-"5231048785","Pinus ponderosa var. ponderosa","H","2025",45.3354,-117.0851,NA,"Matthew Cozart","cdc,cdround","GBIF",20101
-"5231082818","Pinus ponderosa var. ponderosa","H","2025",45.5154,-116.7661,NA,"Matthew Cozart","cdc,cdround","GBIF",20102
-"5231087848","Pinus ponderosa var. ponderosa","H","2025",45.3809,-117.0336,NA,"Matthew Cozart","cdc,cdround","GBIF",20103
-"5231116796","Pinus ponderosa var. ponderosa","H","2025",45.4556,-116.9793,NA,"Matthew Cozart","cdc,cdround","GBIF",20104
-"5231132810","Pinus ponderosa var. ponderosa","H","2025",45.5423,-116.7909,NA,"Matthew Cozart","cdc,cdround","GBIF",20105
-"5231187813","Pinus ponderosa var. ponderosa","H","2025",45.5496,-116.845,NA,"Matthew Cozart","cdc,cdround","GBIF",20106
-"5231238806","Pinus ponderosa var. ponderosa","H","2025",45.5296,-116.7816,NA,"Matthew Cozart","cdc,cdround","GBIF",20107
-"5231245822","Pinus ponderosa var. ponderosa","H","2025",45.5285,-116.7807,NA,"Matthew Cozart","cdc,cdround","GBIF",20108
-"5231256804","Pinus ponderosa var. ponderosa","H","2025",45.5565,-116.8133,NA,"Matthew Cozart","cdc,cdround","GBIF",20109
-"5231298804","Pinus ponderosa var. ponderosa","H","2025",45.5289,-116.7809,NA,"Matthew Cozart","cdc,cdround","GBIF",20110
-"5231303855","Pinus ponderosa var. ponderosa","H","2025",45.5401,-116.7918,NA,"Matthew Cozart","cdc,cdround","GBIF",20111
-"5231357836","Pinus ponderosa var. ponderosa","H","2025",45.5494,-116.793,NA,"Matthew Cozart","cdc,cdround","GBIF",20112
-"5231389811","Pinus ponderosa var. ponderosa","H","2025",45.4925,-116.9113,NA,"Matthew Cozart","cdc,cdround","GBIF",20113
-"5231399833","Pinus ponderosa var. ponderosa","H","2025",45.5539,-116.8168,NA,"Matthew Cozart","cdc,cdround","GBIF",20114
-"5231414801","Pinus ponderosa var. ponderosa","H","2025",45.4947,-116.9064,NA,"Matthew Cozart","cdc,cdround","GBIF",20115
-"5231450822","Pinus ponderosa var. ponderosa","H","2025",45.5567,-116.812,NA,"Matthew Cozart","cdc,cdround","GBIF",20116
-"5231459797","Pinus ponderosa var. ponderosa","H","2025",45.5385,-116.7918,NA,"Matthew Cozart","cdc,cdround","GBIF",20117
-"5231491840","Pinus ponderosa var. ponderosa","H","2025",45.5539,-116.8031,NA,"Matthew Cozart","cdc,cdround","GBIF",20118
-"5231517770","Pinus ponderosa var. ponderosa","H","2025",45.4113,-116.7399,NA,"Matthew Cozart","cdc,cdround","GBIF",20119
-"5231521836","Pinus ponderosa var. ponderosa","H","2025",45.4477,-116.9877,NA,"Matthew Cozart","cdc,cdround","GBIF",20120
-"5231550770","Pinus ponderosa var. ponderosa","H","2025",45.5279,-116.7807,NA,"Matthew Cozart","cdc,cdround","GBIF",20121
-"5231586828","Pinus ponderosa var. ponderosa","H","2025",45.5247,-116.7786,NA,"Matthew Cozart","cdc,cdround","GBIF",20122
-"5215783278","Pinus ponderosa var. ponderosa","H","2025",44.3062,-119.2749,NA,"Matthew Cozart","cdc,cdround","GBIF",20123
-"5215814258","Pinus ponderosa var. ponderosa","H","2025",44.2771,-119.2802,NA,"Matthew Cozart","cdc,cdround","GBIF",20124
-"5216128306","Pinus ponderosa var. ponderosa","H","2025",44.3126,-119.2787,NA,"Matthew Cozart","cdc,cdround","GBIF",20125
-"5216133379","Pinus ponderosa var. ponderosa","H","2025",44.3878,-119.3109,NA,"Matthew Cozart","cdc,cdround","GBIF",20126
-"5216796316","Pinus ponderosa var. ponderosa","H","2025",44.3094,-119.2774,NA,"Matthew Cozart","cdc,cdround","GBIF",20127
-"5216996383","Pinus ponderosa var. ponderosa","H","2025",44.375,-119.3103,NA,"Matthew Cozart","cdc,cdround","GBIF",20128
-"5217112348","Pinus ponderosa var. ponderosa","H","2025",44.3113,-119.2784,NA,"Matthew Cozart","cdc,cdround","GBIF",20129
-"5217446375","Pinus ponderosa var. ponderosa","H","2025",44.2981,-119.2745,NA,"Matthew Cozart","cdc,cdround","GBIF",20130
-"5217515315","Pinus ponderosa var. ponderosa","H","2025",44.3171,-119.2796,NA,"Matthew Cozart","cdc,cdround","GBIF",20131
-"5230044048","Pinus ponderosa var. ponderosa","H","2025",45.3413,-117.2797,NA,"Matthew Cozart","cdc,cdround","GBIF",20132
-"5230051198","Pinus ponderosa var. ponderosa","H","2025",44.612,-118.5483,NA,"Matthew Cozart","cdc,cdround","GBIF",20133
-"5230060085","Pinus ponderosa var. ponderosa","H","2025",45.3433,-117.2749,NA,"Matthew Cozart","cdc,cdround","GBIF",20134
-"5230061029","Pinus ponderosa var. ponderosa","H","2025",45.3512,-117.2405,NA,"Matthew Cozart","cdc,cdround","GBIF",20135
-"5230072041","Pinus ponderosa var. ponderosa","H","2025",45.3362,-117.2959,NA,"Matthew Cozart","cdc,cdround","GBIF",20136
-"5230084083","Pinus ponderosa var. ponderosa","H","2025",45.3481,-117.2677,NA,"Matthew Cozart","cdc,cdround","GBIF",20137
-"5230146348","Pinus ponderosa var. ponderosa","H","2025",44.6424,-118.6627,NA,"Matthew Cozart","cdc,cdround","GBIF",20138
-"5230168386","Pinus ponderosa var. ponderosa","H","2025",44.7648,-118.8669,NA,"Matthew Cozart","cdc,cdround","GBIF",20139
-"5230218301","Pinus ponderosa var. ponderosa","H","2025",44.6782,-118.7404,NA,"Matthew Cozart","cdc,cdround","GBIF",20140
-"5230233397","Pinus ponderosa var. ponderosa","H","2025",45.149,-119.0199,NA,"Matthew Cozart","cdc,cdround","GBIF",20141
-"5230248317","Pinus ponderosa var. ponderosa","H","2025",44.626,-118.587,NA,"Matthew Cozart","cdc,cdround","GBIF",20142
-"5230268319","Pinus ponderosa var. ponderosa","H","2025",45.1446,-119.006,NA,"Matthew Cozart","cdc,cdround","GBIF",20143
-"5230328062","Pinus ponderosa var. ponderosa","H","2025",45.3413,-117.2831,NA,"Matthew Cozart","cdc,cdround","GBIF",20144
-"5230364065","Pinus ponderosa var. ponderosa","H","2025",45.3421,-117.2766,NA,"Matthew Cozart","cdc,cdround","GBIF",20145
-"5230379039","Pinus ponderosa var. ponderosa","H","2025",45.3397,-117.292,NA,"Matthew Cozart","cdc,cdround","GBIF",20146
-"5230412025","Pinus ponderosa var. ponderosa","H","2025",45.3485,-117.2632,NA,"Matthew Cozart","cdc,cdround","GBIF",20147
-"5230412280","Pinus ponderosa var. ponderosa","H","2025",45.1585,-119.0384,NA,"Matthew Cozart","cdc,cdround","GBIF",20148
-"5230437057","Pinus ponderosa var. ponderosa","H","2025",44.7975,-118.199,NA,"Matthew Cozart","cdc,cdround","GBIF",20149
-"5230441277","Pinus ponderosa var. ponderosa","H","2025",44.6688,-118.7185,NA,"Matthew Cozart","cdc,cdround","GBIF",20150
-"5230476042","Pinus ponderosa var. ponderosa","H","2025",45.3413,-117.2824,NA,"Matthew Cozart","cdc,cdround","GBIF",20151
-"5230495309","Pinus ponderosa var. ponderosa","H","2025",44.5879,-118.5062,NA,"Matthew Cozart","cdc,cdround","GBIF",20152
-"5230508336","Pinus ponderosa var. ponderosa","H","2025",44.7097,-118.8151,NA,"Matthew Cozart","cdc,cdround","GBIF",20153
-"5230529320","Pinus ponderosa var. ponderosa","H","2025",44.7322,-118.8358,NA,"Matthew Cozart","cdc,cdround","GBIF",20154
-"5230560059","Pinus ponderosa var. ponderosa","H","2025",45.3469,-117.2714,NA,"Matthew Cozart","cdc,cdround","GBIF",20155
-"5230579049","Pinus ponderosa var. ponderosa","H","2025",45.3453,-117.2723,NA,"Matthew Cozart","cdc,cdround","GBIF",20156
-"5230583051","Pinus ponderosa var. ponderosa","H","2025",45.3445,-117.2732,NA,"Matthew Cozart","cdc,cdround","GBIF",20157
-"5230592035","Pinus ponderosa var. ponderosa","H","2025",45.3344,-117.2987,NA,"Matthew Cozart","cdc,cdround","GBIF",20158
-"5230592296","Pinus ponderosa var. ponderosa","H","2025",45.1566,-119.0332,NA,"Matthew Cozart","cdc,cdround","GBIF",20159
-"5230606300","Pinus ponderosa var. ponderosa","H","2025",45.1427,-118.9692,NA,"Matthew Cozart","cdc,cdround","GBIF",20160
-"5230610339","Pinus ponderosa var. ponderosa","H","2025",45.1471,-119.0163,NA,"Matthew Cozart","cdc,cdround","GBIF",20161
-"5230625351","Pinus ponderosa var. ponderosa","H","2025",45.272,-119.355,NA,"Matthew Cozart","cdc,cdround","GBIF",20162
-"5230625355","Pinus ponderosa var. ponderosa","H","2025",44.7059,-118.8102,NA,"Matthew Cozart","cdc,cdround","GBIF",20163
-"5230628350","Pinus ponderosa var. ponderosa","H","2025",44.7633,-118.8708,NA,"Matthew Cozart","cdc,cdround","GBIF",20164
-"5230649381","Pinus ponderosa var. ponderosa","H","2025",44.7311,-118.8409,NA,"Matthew Cozart","cdc,cdround","GBIF",20165
-"5230662121","Pinus ponderosa var. ponderosa","H","2025",45.3366,-117.2952,NA,"Matthew Cozart","cdc,cdround","GBIF",20166
-"5230695391","Pinus ponderosa var. ponderosa","H","2025",44.6128,-118.5539,NA,"Matthew Cozart","cdc,cdround","GBIF",20167
-"5230753358","Pinus ponderosa var. ponderosa","H","2025",45.1481,-118.9774,NA,"Matthew Cozart","cdc,cdround","GBIF",20168
-"5230766067","Pinus ponderosa var. ponderosa","H","2025",45.3411,-117.2864,NA,"Matthew Cozart","cdc,cdround","GBIF",20169
-"5230835270","Pinus ponderosa var. ponderosa","H","2025",45.1493,-118.9867,NA,"Matthew Cozart","cdc,cdround","GBIF",20170
-"5230884357","Pinus ponderosa var. ponderosa","H","2025",44.7734,-118.8837,NA,"Matthew Cozart","cdc,cdround","GBIF",20171
-"5230893305","Pinus ponderosa var. ponderosa","H","2025",44.7072,-118.8143,NA,"Matthew Cozart","cdc,cdround","GBIF",20172
-"5230908991","Pinus ponderosa var. ponderosa","H","2025",45.3412,-117.2791,NA,"Matthew Cozart","cdc,cdround","GBIF",20173
-"5230909242","Pinus ponderosa var. ponderosa","H","2025",44.7313,-118.8272,NA,"Matthew Cozart","cdc,cdround","GBIF",20174
-"5230971131","Pinus ponderosa var. ponderosa","H","2025",45.3413,-117.2846,NA,"Matthew Cozart","cdc,cdround","GBIF",20175
-"5231001215","Pinus ponderosa var. ponderosa","H","2025",44.7652,-118.8736,NA,"Matthew Cozart","cdc,cdround","GBIF",20176
-"5231008271","Pinus ponderosa var. ponderosa","H","2025",45.1547,-119.0299,NA,"Matthew Cozart","cdc,cdround","GBIF",20177
-"5231033040","Pinus ponderosa var. ponderosa","H","2025",44.7929,-118.1956,NA,"Matthew Cozart","cdc,cdround","GBIF",20178
-"5231040373","Pinus ponderosa var. ponderosa","H","2025",44.6269,-118.5897,NA,"Matthew Cozart","cdc,cdround","GBIF",20179
-"5231058294","Pinus ponderosa var. ponderosa","H","2025",44.6187,-118.5627,NA,"Matthew Cozart","cdc,cdround","GBIF",20180
-"5231060030","Pinus ponderosa var. ponderosa","H","2025",45.3381,-117.2927,NA,"Matthew Cozart","cdc,cdround","GBIF",20181
-"5231072000","Pinus ponderosa var. ponderosa","H","2025",45.3429,-117.2751,NA,"Matthew Cozart","cdc,cdround","GBIF",20182
-"5231072237","Pinus ponderosa var. ponderosa","H","2025",44.6221,-118.5799,NA,"Matthew Cozart","cdc,cdround","GBIF",20183
-"5231115084","Pinus ponderosa var. ponderosa","H","2025",45.3413,-117.2808,NA,"Matthew Cozart","cdc,cdround","GBIF",20184
-"5231120041","Pinus ponderosa var. ponderosa","H","2025",45.3404,-117.289,NA,"Matthew Cozart","cdc,cdround","GBIF",20185
-"5231154086","Pinus ponderosa var. ponderosa","H","2025",45.3446,-117.273,NA,"Matthew Cozart","cdc,cdround","GBIF",20186
-"5231158317","Pinus ponderosa var. ponderosa","H","2025",44.6222,-118.5721,NA,"Matthew Cozart","cdc,cdround","GBIF",20187
-"5231196263","Pinus ponderosa var. ponderosa","H","2025",44.7724,-118.8804,NA,"Matthew Cozart","cdc,cdround","GBIF",20188
-"5231230317","Pinus ponderosa var. ponderosa","H","2025",44.7703,-118.8771,NA,"Matthew Cozart","cdc,cdround","GBIF",20189
-"5231243349","Pinus ponderosa var. ponderosa","H","2025",45.1454,-118.9731,NA,"Matthew Cozart","cdc,cdround","GBIF",20190
-"5231315307","Pinus ponderosa var. ponderosa","H","2025",45.1518,-119.0252,NA,"Matthew Cozart","cdc,cdround","GBIF",20191
-"5231326322","Pinus ponderosa var. ponderosa","H","2025",45.1622,-119.0474,NA,"Matthew Cozart","cdc,cdround","GBIF",20192
-"5231338281","Pinus ponderosa var. ponderosa","H","2025",44.6306,-118.5968,NA,"Matthew Cozart","cdc,cdround","GBIF",20193
-"5231351292","Pinus ponderosa var. ponderosa","H","2025",45.1454,-119.0016,NA,"Matthew Cozart","cdc,cdround","GBIF",20194
-"5231384994","Pinus ponderosa var. ponderosa","H","2025",44.7777,-118.1975,NA,"Matthew Cozart","cdc,cdround","GBIF",20195
-"5231400343","Pinus ponderosa var. ponderosa","H","2025",44.7434,-118.8506,NA,"Matthew Cozart","cdc,cdround","GBIF",20196
-"5231416332","Pinus ponderosa var. ponderosa","H","2025",45.1493,-118.981,NA,"Matthew Cozart","cdc,cdround","GBIF",20197
-"5231428072","Pinus ponderosa var. ponderosa","H","2025",45.3419,-117.2767,NA,"Matthew Cozart","cdc,cdround","GBIF",20198
-"5231503243","Pinus ponderosa var. ponderosa","H","2025",44.5882,-118.5047,NA,"Matthew Cozart","cdc,cdround","GBIF",20199
+Accession Number,Taxon Name,Current Germplasm Type,Collection Date,Latitude,Longitude,Locality,Collector,issues,source,index
+574713468,Pinus ponderosa var. ponderosa,G,NA,41.2083,-120.1767,off summit trail above Paterson Ranger Station,North Wales Arboretum; California 1996,"cdc,gass84,ambcol,inmafu",upload,20000
+574730172,Pinus washoensis Mason & Stockw.,G,NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station",North Wales Arboretum; California 1996,"cdc,gass84,ambcol,inmafu",upload,20001
+574751035,Pinus washoensis Mason & Stockw.,G,NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station",North Wales Arboretum; California 1996,"cdc,gass84,ambcol,inmafu",upload,20002
+574753591,Pinus ponderosa var. ponderosa,G,NA,49.0333,-118.0833,NA,NA,"cdc,gass84,ambcol,inmafu",upload,20003
+574774665,Pinus washoensis Mason & Stockw.,G,NA,41.2083,-120.1767,"South Warner Mtns, off summit trail above Paterson Ranger Station",North Wales Arboretum; California 1996,"cdc,gass84,ambcol,inmafu",upload,20004
+5006902297,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,37.8851,-122.2255,NA,Ben Sims,"cdc,cdround",upload,20005
+5063293749,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,43.7393,-122.3638,NA,ehappy,"cdc,cdround",upload,20006
+5063561100,Pinus ponderosa var. ponderosa,H,2025,43.7012,-116.2086,NA,Gwen Gallagher,"cdc,cdround",upload,20007
+5063612592,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,43.9971,-122.9801,NA,prosecar,"cdc,cdround",upload,20008
+5069779155,Pinus ponderosa var. ponderosa,H,2025,42.2892,-121.8768,NA,Zoe Stephens,"cdc,cdround",upload,20009
+5063831752,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,44.2066,-123.0136,NA,ehappy,"cdc,cdround",upload,20010
+5076853759,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,37.0487,-122.138,NA,James Bailey,"cdc,cdround",upload,20011
+5076943122,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,37.0868,-122.058,NA,Chuck Wilson,"cdc,cdround",upload,20012
+5077158576,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,45.3346,-122.7911,NA,maclifton,"cdc,cdround",upload,20013
+5133778593,Pinus ponderosa var. ponderosa,H,2025,45.341,-117.2238,NA,Bryan M Maitland,"cdc,cdround",upload,20014
+5087796425,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,35.8139,-121.2206,NA,Leif Behrmann,"cdc,cdround",upload,20015
+5133236955,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,44.066,-122.9092,NA,Ed Alverson,cdc,upload,20016
+5133988061,Pinus ponderosa var. ponderosa,H,2025,45.6289,-117.7673,NA,Sean Cozart,"cdc,cdround",upload,20017
+5134446403,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,44.5373,-123.2847,NA,James Mickley,"cdc,cdround",upload,20018
+5140752902,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,44.2907,-122.9501,NA,ehappy,"cdc,cdround",upload,20019
+5154694428,Pinus ponderosa var. benthamiana (Hartw.) Vasey,H,2025,44.0216,-123.1566,NA,petrelharp,"cdc,cdround",upload,20020
+5198286129,Pinus ponderosa var. ponderosa,H,2025,45.2855,-117.7554,NA,Matthew Cozart,"cdc,cdround",upload,20021
+5198743142,Pinus ponderosa var. ponderosa,H,2025,45.2857,-117.757,NA,Matthew Cozart,"cdc,cdround",upload,20022
+5198998126,Pinus ponderosa var. ponderosa,H,2025,45.2848,-117.7519,NA,Matthew Cozart,"cdc,cdround",upload,20023
+5199079154,Pinus ponderosa var. ponderosa,H,2025,45.2855,-117.7559,NA,Matthew Cozart,"cdc,cdround",upload,20024
+5231051610,Pinus ponderosa var. ponderosa,H,2025,45.2833,-117.7412,NA,Sean Cozart,"cdc,cdround",upload,20025
+5230028756,Pinus ponderosa var. ponderosa,H,2025,45.298,-117.1997,NA,Matthew Cozart,"cdc,cdround",upload,20026
+5761179221,Pinus ponderosa var. ponderosa,H,2025,42.2246,-120.0972,NA,ceramikat,"cdc,cdround",upload,20027
+5205997782,Pinus ponderosa var. ponderosa,H,2025,45.5517,-116.7989,NA,Matthew Cozart,"cdc,cdround",upload,20028
+5206087823,Pinus ponderosa var. ponderosa,H,2025,45.5567,-116.8092,NA,Matthew Cozart,"cdc,cdround",upload,20029
+5206203791,Pinus ponderosa var. ponderosa,H,2025,45.5288,-116.7808,NA,Matthew Cozart,"cdc,cdround",upload,20030
+5206235765,Pinus ponderosa var. ponderosa,H,2025,45.5555,-116.8059,NA,Matthew Cozart,"cdc,cdround",upload,20031
+5206299808,Pinus ponderosa var. ponderosa,H,2025,45.5566,-116.8085,NA,Matthew Cozart,"cdc,cdround",upload,20032
+5206340778,Pinus ponderosa var. ponderosa,H,2025,45.5563,-116.8073,NA,Matthew Cozart,"cdc,cdround",upload,20033
+5206507785,Pinus ponderosa var. ponderosa,H,2025,45.552,-116.7976,NA,Matthew Cozart,"cdc,cdround",upload,20034
+5206524773,Pinus ponderosa var. ponderosa,H,2025,45.5517,-116.8003,NA,Matthew Cozart,"cdc,cdround",upload,20035
+5206701770,Pinus ponderosa var. ponderosa,H,2025,45.5514,-116.7956,NA,Matthew Cozart,"cdc,cdround",upload,20036
+5206811776,Pinus ponderosa var. ponderosa,H,2025,45.5519,-116.7966,NA,Matthew Cozart,"cdc,cdround",upload,20037
+5217068971,Pinus ponderosa var. ponderosa,H,2025,43.0063,-121.1347,NA,Aaron Liston,"cdc,cdround",upload,20038
+5229947810,Pinus ponderosa var. ponderosa,H,2025,45.3832,-117.032,NA,Matthew Cozart,"cdc,cdround",upload,20039
+5229947811,Pinus ponderosa var. ponderosa,H,2025,45.4801,-116.7534,NA,Matthew Cozart,"cdc,cdround",upload,20040
+5229948807,Pinus ponderosa var. ponderosa,H,2025,45.5501,-116.7924,NA,Matthew Cozart,"cdc,cdround",upload,20041
+5229955820,Pinus ponderosa var. ponderosa,H,2025,45.5302,-116.7818,NA,Matthew Cozart,"cdc,cdround",upload,20042
+5229966823,Pinus ponderosa var. ponderosa,H,2025,45.452,-116.983,NA,Matthew Cozart,"cdc,cdround",upload,20043
+5229977863,Pinus ponderosa var. ponderosa,H,2025,45.5333,-116.7844,NA,Matthew Cozart,"cdc,cdround",upload,20044
+5229981819,Pinus ponderosa var. ponderosa,H,2025,45.533,-116.784,NA,Matthew Cozart,"cdc,cdround",upload,20045
+5229983844,Pinus ponderosa var. ponderosa,H,2025,45.3806,-117.0339,NA,Matthew Cozart,"cdc,cdround",upload,20046
+5229991824,Pinus ponderosa var. ponderosa,H,2025,45.5265,-116.7795,NA,Matthew Cozart,"cdc,cdround",upload,20047
+5229999796,Pinus ponderosa var. ponderosa,H,2025,45.5362,-116.7868,NA,Matthew Cozart,"cdc,cdround",upload,20048
+5230006797,Pinus ponderosa var. ponderosa,H,2025,45.5392,-116.8575,NA,Matthew Cozart,"cdc,cdround",upload,20049
+5230014802,Pinus ponderosa var. ponderosa,H,2025,45.3944,-117.0212,NA,Matthew Cozart,"cdc,cdround",upload,20050
+5230182875,Pinus ponderosa var. ponderosa,H,2025,45.3347,-117.09,NA,Matthew Cozart,"cdc,cdround",upload,20051
+5230185806,Pinus ponderosa var. ponderosa,H,2025,45.5252,-116.7789,NA,Matthew Cozart,"cdc,cdround",upload,20052
+5230204837,Pinus ponderosa var. ponderosa,H,2025,45.5401,-116.7919,NA,Matthew Cozart,"cdc,cdround",upload,20053
+5230212821,Pinus ponderosa var. ponderosa,H,2025,45.5216,-116.776,NA,Matthew Cozart,"cdc,cdround",upload,20054
+5230252834,Pinus ponderosa var. ponderosa,H,2025,45.5307,-116.8597,NA,Matthew Cozart,"cdc,cdround",upload,20055
+5230255794,Pinus ponderosa var. ponderosa,H,2025,45.5261,-116.7793,NA,Matthew Cozart,"cdc,cdround",upload,20056
+5230256819,Pinus ponderosa var. ponderosa,H,2025,45.5288,-116.861,NA,Matthew Cozart,"cdc,cdround",upload,20057
+5230258824,Pinus ponderosa var. ponderosa,H,2025,45.4146,-116.7379,NA,Matthew Cozart,"cdc,cdround",upload,20058
+5230276861,Pinus ponderosa var. ponderosa,H,2025,45.5423,-116.854,NA,Matthew Cozart,"cdc,cdround",upload,20059
+5230311860,Pinus ponderosa var. ponderosa,H,2025,45.403,-117.0103,NA,Matthew Cozart,"cdc,cdround",upload,20060
+5230318879,Pinus ponderosa var. ponderosa,H,2025,45.5516,-116.7996,NA,Matthew Cozart,"cdc,cdround",upload,20061
+5230376821,Pinus ponderosa var. ponderosa,H,2025,45.3376,-117.0786,NA,Matthew Cozart,"cdc,cdround",upload,20062
+5230379806,Pinus ponderosa var. ponderosa,H,2025,45.5474,-116.8465,NA,Matthew Cozart,"cdc,cdround",upload,20063
+5230387822,Pinus ponderosa var. ponderosa,H,2025,45.552,-116.7976,NA,Matthew Cozart,"cdc,cdround",upload,20064
+5230395846,Pinus ponderosa var. ponderosa,H,2025,45.3535,-117.0547,NA,Matthew Cozart,"cdc,cdround",upload,20065
+5230395847,Pinus ponderosa var. ponderosa,H,2025,45.4583,-116.9783,NA,Matthew Cozart,"cdc,cdround",upload,20066
+5230416841,Pinus ponderosa var. ponderosa,H,2025,45.5501,-116.7972,NA,Matthew Cozart,"cdc,cdround",upload,20067
+5230420822,Pinus ponderosa var. ponderosa,H,2025,45.5355,-116.8592,NA,Matthew Cozart,"cdc,cdround",upload,20068
+5230421820,Pinus ponderosa var. ponderosa,H,2025,45.5491,-116.8012,NA,Matthew Cozart,"cdc,cdround",upload,20069
+5230430812,Pinus ponderosa var. ponderosa,H,2025,45.3396,-117.0766,NA,Matthew Cozart,"cdc,cdround",upload,20070
+5230449823,Pinus ponderosa var. ponderosa,H,2025,45.3915,-117.0266,NA,Matthew Cozart,"cdc,cdround",upload,20071
+5230455844,Pinus ponderosa var. ponderosa,H,2025,45.5383,-116.797,NA,Matthew Cozart,"cdc,cdround",upload,20072
+5230507818,Pinus ponderosa var. ponderosa,H,2025,45.5226,-116.7769,NA,Matthew Cozart,"cdc,cdround",upload,20073
+5230511824,Pinus ponderosa var. ponderosa,H,2025,45.5211,-116.7754,NA,Matthew Cozart,"cdc,cdround",upload,20074
+5230527810,Pinus ponderosa var. ponderosa,H,2025,45.5521,-116.8016,NA,Matthew Cozart,"cdc,cdround",upload,20075
+5230548847,Pinus ponderosa var. ponderosa,H,2025,45.549,-116.8008,NA,Matthew Cozart,"cdc,cdround",upload,20076
+5230552830,Pinus ponderosa var. ponderosa,H,2025,45.5176,-116.8672,NA,Matthew Cozart,"cdc,cdround",upload,20077
+5230555805,Pinus ponderosa var. ponderosa,H,2025,45.5523,-116.8021,NA,Matthew Cozart,"cdc,cdround",upload,20078
+5230556773,Pinus ponderosa var. ponderosa,H,2025,45.5568,-116.8104,NA,Matthew Cozart,"cdc,cdround",upload,20079
+5230696834,Pinus ponderosa var. ponderosa,H,2025,45.5252,-116.8603,NA,Matthew Cozart,"cdc,cdround",upload,20080
+5230717850,Pinus ponderosa var. ponderosa,H,2025,45.3935,-117.0239,NA,Matthew Cozart,"cdc,cdround",upload,20081
+5230719817,Pinus ponderosa var. ponderosa,H,2025,45.5271,-116.7801,NA,Matthew Cozart,"cdc,cdround",upload,20082
+5230730850,Pinus ponderosa var. ponderosa,H,2025,45.5225,-116.7768,NA,Matthew Cozart,"cdc,cdround",upload,20083
+5230770840,Pinus ponderosa var. ponderosa,H,2025,45.5458,-116.8512,NA,Matthew Cozart,"cdc,cdround",upload,20084
+5230799847,Pinus ponderosa var. ponderosa,H,2025,45.5006,-116.9025,NA,Matthew Cozart,"cdc,cdround",upload,20085
+5230817807,Pinus ponderosa var. ponderosa,H,2025,45.4466,-116.9937,NA,Matthew Cozart,"cdc,cdround",upload,20086
+5230836833,Pinus ponderosa var. ponderosa,H,2025,45.5497,-116.7923,NA,Matthew Cozart,"cdc,cdround",upload,20087
+5230844841,Pinus ponderosa var. ponderosa,H,2025,45.5205,-116.7749,NA,Matthew Cozart,"cdc,cdround",upload,20088
+5230851797,Pinus ponderosa var. ponderosa,H,2025,45.5501,-116.7973,NA,Matthew Cozart,"cdc,cdround",upload,20089
+5230855912,Pinus ponderosa var. ponderosa,H,2025,45.3716,-117.0496,NA,Matthew Cozart,"cdc,cdround",upload,20090
+5230861812,Pinus ponderosa var. ponderosa,H,2025,45.5551,-116.8052,NA,Matthew Cozart,"cdc,cdround",upload,20091
+5230872850,Pinus ponderosa var. ponderosa,H,2025,45.5383,-116.7966,NA,Matthew Cozart,"cdc,cdround",upload,20092
+5230896805,Pinus ponderosa var. ponderosa,H,2025,45.449,-116.9855,NA,Matthew Cozart,"cdc,cdround",upload,20093
+5230896807,Pinus ponderosa var. ponderosa,H,2025,45.553,-116.8028,NA,Matthew Cozart,"cdc,cdround",upload,20094
+5230914812,Pinus ponderosa var. ponderosa,H,2025,45.5149,-116.7665,NA,Matthew Cozart,"cdc,cdround",upload,20095
+5230929800,Pinus ponderosa var. ponderosa,H,2025,45.5239,-116.7779,NA,Matthew Cozart,"cdc,cdround",upload,20096
+5230930851,Pinus ponderosa var. ponderosa,H,2025,45.5311,-116.8597,NA,Matthew Cozart,"cdc,cdround",upload,20097
+5230977829,Pinus ponderosa var. ponderosa,H,2025,45.3844,-117.0314,NA,Matthew Cozart,"cdc,cdround",upload,20098
+5231019821,Pinus ponderosa var. ponderosa,H,2025,45.5185,-116.8648,NA,Matthew Cozart,"cdc,cdround",upload,20099
+5231031824,Pinus ponderosa var. ponderosa,H,2025,45.5234,-116.7776,NA,Matthew Cozart,"cdc,cdround",upload,20100
+5231048785,Pinus ponderosa var. ponderosa,H,2025,45.3354,-117.0851,NA,Matthew Cozart,"cdc,cdround",upload,20101
+5231082818,Pinus ponderosa var. ponderosa,H,2025,45.5154,-116.7661,NA,Matthew Cozart,"cdc,cdround",upload,20102
+5231087848,Pinus ponderosa var. ponderosa,H,2025,45.3809,-117.0336,NA,Matthew Cozart,"cdc,cdround",upload,20103
+5231116796,Pinus ponderosa var. ponderosa,H,2025,45.4556,-116.9793,NA,Matthew Cozart,"cdc,cdround",upload,20104
+5231132810,Pinus ponderosa var. ponderosa,H,2025,45.5423,-116.7909,NA,Matthew Cozart,"cdc,cdround",upload,20105
+5231187813,Pinus ponderosa var. ponderosa,H,2025,45.5496,-116.845,NA,Matthew Cozart,"cdc,cdround",upload,20106
+5231238806,Pinus ponderosa var. ponderosa,H,2025,45.5296,-116.7816,NA,Matthew Cozart,"cdc,cdround",upload,20107
+5231245822,Pinus ponderosa var. ponderosa,H,2025,45.5285,-116.7807,NA,Matthew Cozart,"cdc,cdround",upload,20108
+5231256804,Pinus ponderosa var. ponderosa,H,2025,45.5565,-116.8133,NA,Matthew Cozart,"cdc,cdround",upload,20109
+5231298804,Pinus ponderosa var. ponderosa,H,2025,45.5289,-116.7809,NA,Matthew Cozart,"cdc,cdround",upload,20110
+5231303855,Pinus ponderosa var. ponderosa,H,2025,45.5401,-116.7918,NA,Matthew Cozart,"cdc,cdround",upload,20111
+5231357836,Pinus ponderosa var. ponderosa,H,2025,45.5494,-116.793,NA,Matthew Cozart,"cdc,cdround",upload,20112
+5231389811,Pinus ponderosa var. ponderosa,H,2025,45.4925,-116.9113,NA,Matthew Cozart,"cdc,cdround",upload,20113
+5231399833,Pinus ponderosa var. ponderosa,H,2025,45.5539,-116.8168,NA,Matthew Cozart,"cdc,cdround",upload,20114
+5231414801,Pinus ponderosa var. ponderosa,H,2025,45.4947,-116.9064,NA,Matthew Cozart,"cdc,cdround",upload,20115
+5231450822,Pinus ponderosa var. ponderosa,H,2025,45.5567,-116.812,NA,Matthew Cozart,"cdc,cdround",upload,20116
+5231459797,Pinus ponderosa var. ponderosa,H,2025,45.5385,-116.7918,NA,Matthew Cozart,"cdc,cdround",upload,20117
+5231491840,Pinus ponderosa var. ponderosa,H,2025,45.5539,-116.8031,NA,Matthew Cozart,"cdc,cdround",upload,20118
+5231517770,Pinus ponderosa var. ponderosa,H,2025,45.4113,-116.7399,NA,Matthew Cozart,"cdc,cdround",upload,20119
+5231521836,Pinus ponderosa var. ponderosa,H,2025,45.4477,-116.9877,NA,Matthew Cozart,"cdc,cdround",upload,20120
+5231550770,Pinus ponderosa var. ponderosa,H,2025,45.5279,-116.7807,NA,Matthew Cozart,"cdc,cdround",upload,20121
+5231586828,Pinus ponderosa var. ponderosa,H,2025,45.5247,-116.7786,NA,Matthew Cozart,"cdc,cdround",upload,20122
+5215783278,Pinus ponderosa var. ponderosa,H,2025,44.3062,-119.2749,NA,Matthew Cozart,"cdc,cdround",upload,20123
+5215814258,Pinus ponderosa var. ponderosa,H,2025,44.2771,-119.2802,NA,Matthew Cozart,"cdc,cdround",upload,20124
+5216128306,Pinus ponderosa var. ponderosa,H,2025,44.3126,-119.2787,NA,Matthew Cozart,"cdc,cdround",upload,20125
+5216133379,Pinus ponderosa var. ponderosa,H,2025,44.3878,-119.3109,NA,Matthew Cozart,"cdc,cdround",upload,20126
+5216796316,Pinus ponderosa var. ponderosa,H,2025,44.3094,-119.2774,NA,Matthew Cozart,"cdc,cdround",upload,20127
+5216996383,Pinus ponderosa var. ponderosa,H,2025,44.375,-119.3103,NA,Matthew Cozart,"cdc,cdround",upload,20128
+5217112348,Pinus ponderosa var. ponderosa,H,2025,44.3113,-119.2784,NA,Matthew Cozart,"cdc,cdround",upload,20129
+5217446375,Pinus ponderosa var. ponderosa,H,2025,44.2981,-119.2745,NA,Matthew Cozart,"cdc,cdround",upload,20130
+5217515315,Pinus ponderosa var. ponderosa,H,2025,44.3171,-119.2796,NA,Matthew Cozart,"cdc,cdround",upload,20131
+5230044048,Pinus ponderosa var. ponderosa,H,2025,45.3413,-117.2797,NA,Matthew Cozart,"cdc,cdround",upload,20132
+5230051198,Pinus ponderosa var. ponderosa,H,2025,44.612,-118.5483,NA,Matthew Cozart,"cdc,cdround",upload,20133
+5230060085,Pinus ponderosa var. ponderosa,H,2025,45.3433,-117.2749,NA,Matthew Cozart,"cdc,cdround",upload,20134
+5230061029,Pinus ponderosa var. ponderosa,H,2025,45.3512,-117.2405,NA,Matthew Cozart,"cdc,cdround",upload,20135
+5230072041,Pinus ponderosa var. ponderosa,H,2025,45.3362,-117.2959,NA,Matthew Cozart,"cdc,cdround",upload,20136
+5230084083,Pinus ponderosa var. ponderosa,H,2025,45.3481,-117.2677,NA,Matthew Cozart,"cdc,cdround",upload,20137
+5230146348,Pinus ponderosa var. ponderosa,H,2025,44.6424,-118.6627,NA,Matthew Cozart,"cdc,cdround",upload,20138
+5230168386,Pinus ponderosa var. ponderosa,H,2025,44.7648,-118.8669,NA,Matthew Cozart,"cdc,cdround",upload,20139
+5230218301,Pinus ponderosa var. ponderosa,H,2025,44.6782,-118.7404,NA,Matthew Cozart,"cdc,cdround",upload,20140
+5230233397,Pinus ponderosa var. ponderosa,H,2025,45.149,-119.0199,NA,Matthew Cozart,"cdc,cdround",upload,20141
+5230248317,Pinus ponderosa var. ponderosa,H,2025,44.626,-118.587,NA,Matthew Cozart,"cdc,cdround",upload,20142
+5230268319,Pinus ponderosa var. ponderosa,H,2025,45.1446,-119.006,NA,Matthew Cozart,"cdc,cdround",upload,20143
+5230328062,Pinus ponderosa var. ponderosa,H,2025,45.3413,-117.2831,NA,Matthew Cozart,"cdc,cdround",upload,20144
+5230364065,Pinus ponderosa var. ponderosa,H,2025,45.3421,-117.2766,NA,Matthew Cozart,"cdc,cdround",upload,20145
+5230379039,Pinus ponderosa var. ponderosa,H,2025,45.3397,-117.292,NA,Matthew Cozart,"cdc,cdround",upload,20146
+5230412025,Pinus ponderosa var. ponderosa,H,2025,45.3485,-117.2632,NA,Matthew Cozart,"cdc,cdround",upload,20147
+5230412280,Pinus ponderosa var. ponderosa,H,2025,45.1585,-119.0384,NA,Matthew Cozart,"cdc,cdround",upload,20148
+5230437057,Pinus ponderosa var. ponderosa,H,2025,44.7975,-118.199,NA,Matthew Cozart,"cdc,cdround",upload,20149
+5230441277,Pinus ponderosa var. ponderosa,H,2025,44.6688,-118.7185,NA,Matthew Cozart,"cdc,cdround",upload,20150
+5230476042,Pinus ponderosa var. ponderosa,H,2025,45.3413,-117.2824,NA,Matthew Cozart,"cdc,cdround",upload,20151
+5230495309,Pinus ponderosa var. ponderosa,H,2025,44.5879,-118.5062,NA,Matthew Cozart,"cdc,cdround",upload,20152
+5230508336,Pinus ponderosa var. ponderosa,H,2025,44.7097,-118.8151,NA,Matthew Cozart,"cdc,cdround",upload,20153
+5230529320,Pinus ponderosa var. ponderosa,H,2025,44.7322,-118.8358,NA,Matthew Cozart,"cdc,cdround",upload,20154
+5230560059,Pinus ponderosa var. ponderosa,H,2025,45.3469,-117.2714,NA,Matthew Cozart,"cdc,cdround",upload,20155
+5230579049,Pinus ponderosa var. ponderosa,H,2025,45.3453,-117.2723,NA,Matthew Cozart,"cdc,cdround",upload,20156
+5230583051,Pinus ponderosa var. ponderosa,H,2025,45.3445,-117.2732,NA,Matthew Cozart,"cdc,cdround",upload,20157
+5230592035,Pinus ponderosa var. ponderosa,H,2025,45.3344,-117.2987,NA,Matthew Cozart,"cdc,cdround",upload,20158
+5230592296,Pinus ponderosa var. ponderosa,H,2025,45.1566,-119.0332,NA,Matthew Cozart,"cdc,cdround",upload,20159
+5230606300,Pinus ponderosa var. ponderosa,H,2025,45.1427,-118.9692,NA,Matthew Cozart,"cdc,cdround",upload,20160
+5230610339,Pinus ponderosa var. ponderosa,H,2025,45.1471,-119.0163,NA,Matthew Cozart,"cdc,cdround",upload,20161
+5230625351,Pinus ponderosa var. ponderosa,H,2025,45.272,-119.355,NA,Matthew Cozart,"cdc,cdround",upload,20162
+5230625355,Pinus ponderosa var. ponderosa,H,2025,44.7059,-118.8102,NA,Matthew Cozart,"cdc,cdround",upload,20163
+5230628350,Pinus ponderosa var. ponderosa,H,2025,44.7633,-118.8708,NA,Matthew Cozart,"cdc,cdround",upload,20164
+5230649381,Pinus ponderosa var. ponderosa,H,2025,44.7311,-118.8409,NA,Matthew Cozart,"cdc,cdround",upload,20165
+5230662121,Pinus ponderosa var. ponderosa,H,2025,45.3366,-117.2952,NA,Matthew Cozart,"cdc,cdround",upload,20166
+5230695391,Pinus ponderosa var. ponderosa,H,2025,44.6128,-118.5539,NA,Matthew Cozart,"cdc,cdround",upload,20167
+5230753358,Pinus ponderosa var. ponderosa,H,2025,45.1481,-118.9774,NA,Matthew Cozart,"cdc,cdround",upload,20168
+5230766067,Pinus ponderosa var. ponderosa,H,2025,45.3411,-117.2864,NA,Matthew Cozart,"cdc,cdround",upload,20169
+5230835270,Pinus ponderosa var. ponderosa,H,2025,45.1493,-118.9867,NA,Matthew Cozart,"cdc,cdround",upload,20170
+5230884357,Pinus ponderosa var. ponderosa,H,2025,44.7734,-118.8837,NA,Matthew Cozart,"cdc,cdround",upload,20171
+5230893305,Pinus ponderosa var. ponderosa,H,2025,44.7072,-118.8143,NA,Matthew Cozart,"cdc,cdround",upload,20172
+5230908991,Pinus ponderosa var. ponderosa,H,2025,45.3412,-117.2791,NA,Matthew Cozart,"cdc,cdround",upload,20173
+5230909242,Pinus ponderosa var. ponderosa,H,2025,44.7313,-118.8272,NA,Matthew Cozart,"cdc,cdround",upload,20174
+5230971131,Pinus ponderosa var. ponderosa,H,2025,45.3413,-117.2846,NA,Matthew Cozart,"cdc,cdround",upload,20175
+5231001215,Pinus ponderosa var. ponderosa,H,2025,44.7652,-118.8736,NA,Matthew Cozart,"cdc,cdround",upload,20176
+5231008271,Pinus ponderosa var. ponderosa,H,2025,45.1547,-119.0299,NA,Matthew Cozart,"cdc,cdround",upload,20177
+5231033040,Pinus ponderosa var. ponderosa,H,2025,44.7929,-118.1956,NA,Matthew Cozart,"cdc,cdround",upload,20178
+5231040373,Pinus ponderosa var. ponderosa,H,2025,44.6269,-118.5897,NA,Matthew Cozart,"cdc,cdround",upload,20179
+5231058294,Pinus ponderosa var. ponderosa,H,2025,44.6187,-118.5627,NA,Matthew Cozart,"cdc,cdround",upload,20180
+5231060030,Pinus ponderosa var. ponderosa,H,2025,45.3381,-117.2927,NA,Matthew Cozart,"cdc,cdround",upload,20181
+5231072000,Pinus ponderosa var. ponderosa,H,2025,45.3429,-117.2751,NA,Matthew Cozart,"cdc,cdround",upload,20182
+5231072237,Pinus ponderosa var. ponderosa,H,2025,44.6221,-118.5799,NA,Matthew Cozart,"cdc,cdround",upload,20183
+5231115084,Pinus ponderosa var. ponderosa,H,2025,45.3413,-117.2808,NA,Matthew Cozart,"cdc,cdround",upload,20184
+5231120041,Pinus ponderosa var. ponderosa,H,2025,45.3404,-117.289,NA,Matthew Cozart,"cdc,cdround",upload,20185
+5231154086,Pinus ponderosa var. ponderosa,H,2025,45.3446,-117.273,NA,Matthew Cozart,"cdc,cdround",upload,20186
+5231158317,Pinus ponderosa var. ponderosa,H,2025,44.6222,-118.5721,NA,Matthew Cozart,"cdc,cdround",upload,20187
+5231196263,Pinus ponderosa var. ponderosa,H,2025,44.7724,-118.8804,NA,Matthew Cozart,"cdc,cdround",upload,20188
+5231230317,Pinus ponderosa var. ponderosa,H,2025,44.7703,-118.8771,NA,Matthew Cozart,"cdc,cdround",upload,20189
+5231243349,Pinus ponderosa var. ponderosa,H,2025,45.1454,-118.9731,NA,Matthew Cozart,"cdc,cdround",upload,20190
+5231315307,Pinus ponderosa var. ponderosa,H,2025,45.1518,-119.0252,NA,Matthew Cozart,"cdc,cdround",upload,20191
+5231326322,Pinus ponderosa var. ponderosa,H,2025,45.1622,-119.0474,NA,Matthew Cozart,"cdc,cdround",upload,20192
+5231338281,Pinus ponderosa var. ponderosa,H,2025,44.6306,-118.5968,NA,Matthew Cozart,"cdc,cdround",upload,20193
+5231351292,Pinus ponderosa var. ponderosa,H,2025,45.1454,-119.0016,NA,Matthew Cozart,"cdc,cdround",upload,20194
+5231384994,Pinus ponderosa var. ponderosa,H,2025,44.7777,-118.1975,NA,Matthew Cozart,"cdc,cdround",upload,20195
+5231400343,Pinus ponderosa var. ponderosa,H,2025,44.7434,-118.8506,NA,Matthew Cozart,"cdc,cdround",upload,20196
+5231416332,Pinus ponderosa var. ponderosa,H,2025,45.1493,-118.981,NA,Matthew Cozart,"cdc,cdround",upload,20197
+5231428072,Pinus ponderosa var. ponderosa,H,2025,45.3419,-117.2767,NA,Matthew Cozart,"cdc,cdround",upload,20198
+5231503243,Pinus ponderosa var. ponderosa,H,2025,44.5882,-118.5047,NA,Matthew Cozart,"cdc,cdround",upload,20199
