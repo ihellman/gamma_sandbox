@@ -61,8 +61,7 @@ DT_tableModuleServer <- function(
   moduleServer(id, function(input, output, session) {
     # 1. Helper Reactive
     table_data <- reactive({
-      # Standardize the data retrieval
-      # We check for existence, but we let the filter handle the 0-row case
+      # Check for existence, but let the filter handle the 0-row case
       # so that column names are preserved (crucial for replaceData).
       data <- analysis_data()
 
@@ -153,12 +152,11 @@ DT_tableModuleServer <- function(
           autoWidth = FALSE,
           deferRender = TRUE,
           columnDefs = list(
-            # 1. HIDE THE NEW HELPER COLUMN HERE
-            # list(
-            #   targets = c('source', 'index', 'germplasm_color'),
-            #   visible = FALSE
-            # ),
-            # Existing createdCell definition
+            # hide helper columns
+            list(
+              targets = c('source', 'index', 'germplasm_color'),
+              visible = FALSE
+            ),
             list(
               targets = '_all',
               className = 'dt-left',

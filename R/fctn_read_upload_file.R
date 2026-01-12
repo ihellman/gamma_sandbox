@@ -1,108 +1,79 @@
-# fctn_read_upload_file.R
-
 read_upload_file <- function(file_info) {
-  # 1. Remove Lat/Lon from strict requirements
-  required_cols <- c(
-    "Accession Number",
-    "Taxon Name",
-    "Current Germplasm Type",
-    "Collection Date",
-    "Locality",
-    "Collector",
-    "issues"
-  )
-
-  # Validate file was provided
-  if (is.null(file_info)) {
+  
+  # --- 1. Validation: File Extension ---
+  if (tools::file_ext(file_info$name) != "csv") {
     return(list(
-      success = FALSE,
-      data = NULL,
-      message = "⚠️ No file provided"
+      status  = "validation_error", 
+      message = "Invalid file type. Please upload a .csv file."
     ))
   }
 
-  file_ext <- tools::file_ext(file_info$name)
+  # --- 2. Safe Execution Block ---
+  tryCatch({
+    
+    # A. Read File (All columns as text initially)
+    data <- readr::read_csv(
+      file_info$datapath, 
+      col_types = readr::cols(.default = "c")
+    )
 
-  # Validate file type
-  if (!file_ext %in% c("csv")) {
-    return(list(
-      success = FALSE,
-      data = NULL,
-      message = "❌ Unsupported file type. Please upload a CSV file."
-    ))
-  }
-
-  # Try to read the file
-  result <- tryCatch(
-    {
-      if (file_ext == "csv") {
-        data <- read_csv(
-          file_info$datapath,
-          col_types = cols(.default = "c")
-        )
-      } else {
-        stop("Unsupported file type")
-      }
-
-      # 2. Ensure Lat/Lon columns exist (fill with NA if missing)
-      if (!"Latitude" %in% names(data)) data$Latitude <- NA
-      if (!"Longitude" %in% names(data)) data$Longitude <- NA
-
-      # Validate required columns
-      missing_cols <- setdiff(required_cols, names(data))
-
-      if (length(missing_cols) > 0) {
-        return(list(
-          success = FALSE,
-          data = NULL,
-          message = paste(
-            "❌ Missing required columns:",
-            paste(missing_cols, collapse = ", ")
-          )
-        ))
-      }
-
-      # 3. Check for missing or invalid coordinates
-      # We check if they are NA or cannot be converted to numbers
-      n_missing_coords <- data %>%
-        dplyr::filter(
-          is.na(suppressWarnings(as.numeric(Latitude))) | 
-          is.na(suppressWarnings(as.numeric(Longitude)))
-        ) %>%
-        nrow()
-
-      # Add index and source
-      data <- data %>%
-        dplyr::mutate(index = dplyr::row_number(), source = "upload")
-
-      # 4. Construct Message
-      base_msg <- paste("✅ Successfully loaded", nrow(data), "records")
-      
-      if (n_missing_coords > 0) {
-        final_message <- paste0(
-          "⚠️ NOTE: ", n_missing_coords, " records are missing valid Latitude/Longitude data.\n",
-          "These records will be included in the GAP analysis, but cannot be displayed on the map."
-        )
-      } else {
-        final_message <- base_msg
-      }
-
-      # Success!
-      list(
-        success = TRUE,
-        data = data,
-        message = final_message
-      )
-    },
-    # What to return if there's an error
-    error = function(e) {
-      list(
-        success = FALSE,
-        data = NULL,
-        message = paste("🚫 Error reading file:", e$message)
-      )
+    # B. Validation: Required Columns
+    # Note: Ensure these match your CSV headers exactly (case-sensitive)
+    required_cols <- c(
+      "Accession Number", "Taxon Name", "Current Germplasm Type", 
+      "Collection Date", "Locality", "Collector", "issues"
+    )
+    
+    missing_cols <- setdiff(required_cols, names(data))
+    
+    if (length(missing_cols) > 0) {
+      return(list(
+        status  = "validation_error",
+        message = paste("Missing columns:", paste(missing_cols, collapse = ", "))
+      ))
     }
-  )
 
-  return(result)
+    # C. Processing: Coordinates & Metadata
+    data <- data %>%
+      dplyr::mutate(
+        # Create Lat/Lon as NA if they don't exist
+        Latitude  = if ("Latitude" %in% names(.)) Latitude else NA_character_,
+        Longitude = if ("Longitude" %in% names(.)) Longitude else NA_character_,
+        
+        # Coerce to numeric
+        Latitude  = suppressWarnings(as.numeric(Latitude)),
+        Longitude = suppressWarnings(as.numeric(Longitude)),
+        
+        # Add Metadata
+        index  = dplyr::row_number(), 
+        source = "upload"
+      )
+
+    # D. Quality Check: Missing Coordinates
+    n_missing_coords <- sum(is.na(data$Latitude) | is.na(data$Longitude))
+    
+    if (n_missing_coords > 0) {
+      msg_type <- "warning"
+      msg_text <- paste0("Loaded ", nrow(data), " records. Note: ", n_missing_coords, 
+                         " records have invalid coordinates and won't appear on the map.")
+    } else {
+      msg_type <- "message"
+      msg_text <- paste("Successfully loaded", nrow(data), "records.")
+    }
+
+    # E. Return Success
+    list(
+      status = "success",
+      data = data,
+      message = msg_text,
+      message_type = msg_type
+    )
+
+  }, error = function(e) {
+    # System Crash Handler
+    list(
+      status  = "system_error", 
+      message = paste("Critical error reading file:", e$message)
+    )
+  })
 }

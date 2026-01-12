@@ -130,71 +130,97 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     observeEvent(input$uploadData, {
       req(input$uploadData)
 
-      # 1. Read and Validate
-      upload_result <- read_upload_file(file_info = input$uploadData)
+      # --- Config: Notification Durations (seconds) ---
+      durations <- list(
+        validation = 8,    # User error (e.g wrong columns)
+        success    = 5,    # Clean load
+        warning    = 10,   # Load with missing coords
+        system     = NULL  # Code crash
+      )
 
-      if (!upload_result$success) {
-        showNotification(upload_result$message, type = "error", duration = 10)
+      # 1. Run logic to upload file and check for issues
+      res <- read_upload_file(input$uploadData)
+
+      # 2. Handle Errors (Guard Clauses)
+      if (res$status == "validation_error") {
+        showNotification(res$message, type = "warning", duration = durations$validation)
+        return()
+      }
+      
+      if (res$status == "system_error") {
+        showNotification(res$message, type = "error", duration = durations$system)
         return()
       }
 
-      new_points <- upload_result$data
-      current <- analysis_data()
-
-      # 2. Check for conflict
-      # Check if we have existing data specifically from "upload" source
-      has_existing_upload <- nrow(current) > 0 &&
-        any(current$source == "upload")
-
-      if (has_existing_upload) {
-        # 3a. CONFLICT: Store temp data and ask user
-        uploadData_temp(new_points)
-
+      # 3. Handle Success
+      # Logic: Check for overwrite conflict -> Merge -> Notify
+      new_points <- res$data
+      current    <- analysis_data()
+      
+      # Check if "upload" data already exists
+      if (nrow(current) > 0 && "upload" %in% current$source) {
+        
+        # Conflict: Hold data in temp reactive and ask user
+        # Store the ENTIRE 'res' object, not just 'new_points'
+        uploadData_temp(res) 
+        
         showModal(modalDialog(
           title = "Overwrite Upload Data?",
           "Upload data is already loaded. Do you want to overwrite it?",
           footer = tagList(
-            # Use actionButton for Cancel so we can clear temp data explicitly
             actionButton(session$ns("cancelUpload"), "Cancel"),
-            actionButton(
-              session$ns("confirmloadUpload"),
-              "Overwrite",
-              class = "btn-primary"
-            )
+            actionButton(session$ns("confirmloadUpload"), "Overwrite", class = "btn-primary")
           )
         ))
+        
       } else {
-        # 3b. NO CONFLICT: Update immediately
+        
+        # No Conflict: Load immediately
         updated_df <- merge_and_index(current, new_points)
         analysis_data(updated_df)
-
-        showNotification(upload_result$message, type = "message", duration = 3)
-      }
+        
+        # Determine duration based on whether we have a warning (missing coords)
+        dur <- if (res$message_type == "warning") {
+          durations$warning
+        } else {
+          durations$success
+        }
+        showNotification(res$message, type = res$message_type, duration = dur)
+        }
     })
 
-    # Handle Confirmation
+    # Handle confirmation in modal to overwrite data
     observeEvent(input$confirmloadUpload, {
       req(uploadData_temp()) # Ensure we actually have data waiting
 
+      # 1. Retrieve the FULL result object (Data + Messages)
+      res <- uploadData_temp() 
+      
       current <- analysis_data()
-      new_points <- uploadData_temp()
+      new_points <- res$data # Extract just the dataframe
 
-      # Filter out OLD upload data
+      # 2. Filter out OLD upload data
       current_clean <- current %>% filter(source != "upload")
 
-      # Merge NEW upload data using the helper function
+      # 3. Merge NEW upload data
       updated_df <- merge_and_index(current_clean, new_points)
       analysis_data(updated_df)
 
-      # Cleanup
+      # 4. Cleanup
       selected_points(numeric(0))
-      uploadData_temp(NULL) # Clear memory
+      uploadData_temp(NULL) 
       removeModal()
 
+      # 5. Show the SPECIFIC message passed from the read function
+      # Use the specific message (e.g., "Missing Lat/Lon") and specific type (Warning vs Message)
+      
+      # Define duration based on type
+      dur <- if(res$message_type == "warning") 10 else 5
+      
       showNotification(
-        paste("Successfully uploaded", nrow(new_points), "records"),
-        type = "message",
-        duration = 3
+        res$message,        # "Loaded 50 records. Note: 3 missing coords..."
+        type = res$message_type, # "warning" or "message"
+        duration = dur
       )
     })
 
