@@ -2,14 +2,34 @@
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
-    actionButton(inputId = ns("loadGBIF"), label = "Load GBIF"),
-    actionButton(inputId = ns("loadUpload"), label = "Load Upload"),
-    fileInput(
-      inputId = ns("uploadData"),
-      label = "Upload Data",
-      accept = c(".csv"),
-      buttonLabel = "Browse...",
-      placeholder = "No file selected"
+    accordion(
+      multiple = TRUE,
+      open = TRUE,
+      accordion_panel(
+        title = "Download GBIF Data",
+        icon = icon("download"),
+        actionButton(inputId = ns("loadGBIF"), label = "Load GBIF")
+      ),
+      accordion_panel(
+        title = "Upload Data",
+        icon = icon("upload"),
+        fileInput(
+          inputId = ns("uploadData"),
+          label = tagList(
+            "Upload a file",
+            actionLink(
+              inputId = ns("viewDataFormat"),
+              label = icon("circle-question"),
+              title = "Click to view data format requirements",
+              style = "margin-left: 8px; cursor: help;"
+            )
+          ),
+          accept = c(".csv"),
+          buttonLabel = "Browse...",
+          placeholder = "No file selected"
+        ),
+        actionButton(inputId = ns("loadUpload"), label = "Load Upload (debug)")
+      )
     )
   )
 }
@@ -26,11 +46,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         "appData/Magnolia_acuminata_data.csv",
         col_types = cols(.default = "c")
       ) %>%
-        # sf::st_as_sf(
-        #   coords = c("Longitude", "Latitude"),
-        #   crs = 4326,
-        #   remove = FALSE
-        # ) %>%
         mutate(index = dplyr::row_number(), source = "GBIF")
     }
 
@@ -40,11 +55,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         "appData/upload_sample.csv",
         col_types = cols(.default = "c")
       ) %>%
-        # sf::st_as_sf(
-        #   coords = c("Longitude", "Latitude"),
-        #   crs = 4326,
-        #   remove = FALSE
-        # ) %>%
         mutate(index = dplyr::row_number(), source = "upload", issues = "") # !!!! Placeholder to allow tables to join
     }
 
@@ -228,6 +238,47 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     observeEvent(input$cancelUpload, {
       uploadData_temp(NULL) # Clear the pending data
       removeModal()
+    })
+    
+    # Data Format Requirements Modal --------------------------------------------------------
+    observeEvent(input$viewDataFormat, {
+      showModal(modalDialog(
+        title = "Data Format Requirements",
+        tagList(
+          tags$h5("Required Columns:"),
+          tags$ul(
+            tags$li(tags$strong("Accession Number")),
+            tags$li(tags$strong("Taxon Name")),
+            tags$li(tags$strong("Current Germplasm Type")),
+            tags$li(tags$strong("Collection Date")),
+            tags$li(tags$strong("Latitude"), " - Decimal degrees (required for map display)"),
+            tags$li(tags$strong("Longitude"), " - Decimal degrees (required for map display)"),
+            tags$li(tags$strong("Locality")),
+            tags$li(tags$strong("Collector"))
+          ),
+          tags$h5("Optional Columns:"),
+          tags$ul(
+            tags$li(tags$strong("issues"), " - Optional notes or data quality flags")
+          ),
+          tags$p(
+            tags$strong("Important:"),
+            tags$ul(
+              tags$li("Do not include additional columns beyond those listed above."),
+              tags$li("If you do not provide coordinates (Latitude/Longitude), your data will still be included in the analysis but will not appear on the map.")
+            )
+          ),
+          tags$p(
+            tags$strong("Example CSV:"),
+            tags$a(
+              href = "upload_example.csv",
+              download = "upload_example.csv",
+              "Download example file"
+            )
+          )
+        ),
+        footer = modalButton("Close"),
+        size = "m"
+      ))
     })
   })
 }

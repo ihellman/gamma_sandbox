@@ -21,7 +21,7 @@ read_upload_file <- function(file_info) {
     # Note: Ensure these match your CSV headers exactly (case-sensitive)
     required_cols <- c(
       "Accession Number", "Taxon Name", "Current Germplasm Type", 
-      "Collection Date", "Locality", "Collector", "issues"
+      "Collection Date", "Locality", "Collector"
     )
     
     missing_cols <- setdiff(required_cols, names(data))
@@ -43,6 +43,9 @@ read_upload_file <- function(file_info) {
         # Coerce to numeric
         Latitude  = suppressWarnings(as.numeric(Latitude)),
         Longitude = suppressWarnings(as.numeric(Longitude)),
+
+        # Issues not required in upload, set to NA if missing
+        issues = if ("issues" %in% names(.)) issues else NA_character_,
         
         # Add Metadata
         index  = dplyr::row_number(), 
