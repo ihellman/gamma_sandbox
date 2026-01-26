@@ -9,7 +9,7 @@ gapAnalysisUI <- function(id) {
         inputId = ns("buffer_dist"),
         label = "Buffer Distance (km)",
         choices = c(5, 10, 25, 50, 100),
-        selected = 50
+        selected = 10
       ),
 
       actionButton(
@@ -19,18 +19,18 @@ gapAnalysisUI <- function(id) {
         class = "btn-primary w-100 mb-3"
       ),
       actionButton(
-        inputId = ns("generate_gapAnalysis"),
-        label = "Produce Gap Analysis Metrics",
+        inputId = ns("render_gapAnalysis"),
+        label = "Run Gap Analysis",
         icon = icon("layer-group"),
         class = "btn-primary w-100 mb-3"
       ),
 
-      actionButton(
-        inputId = ns("refresh"),
-        label = "Refresh Data",
-        icon = icon("sync"),
-        class = "w-100"
-      )
+      # actionButton(
+      #   inputId = ns("refresh"),
+      #   label = "Refresh Data",
+      #   icon = icon("sync"),
+      #   class = "w-100"
+      # )
     ),
 
     card(
@@ -50,21 +50,8 @@ gapAnalysisUI <- function(id) {
 # server
 gapAnalysisServer <- function(id, analysis_data) {
   moduleServer(id, function(input, output, session) {
-    # Gap Analysis related
-    counts_data <- reactiveVal(data.frame())
-    srs_ex <- reactiveVal(data.frame())
-
-    # helper function
-    ## we prep the analysis_data a few different times so make the process a function
-    prepLatLon <- function(data) {
-      vals <- as.data.frame(data) |>
-        dplyr::filter(!is.na(Longitude)) |>
-        dplyr::mutate(
-          Longitude = as.numeric(Longitude),
-          Latitude = as.numeric(Latitude),
-        )
-      return(vals)
-    }
+    # reactive values for storing data
+    srs_ex <- shiny::reactiveVal(NULL)
 
     # --- 0. Reactive Buffer Distance ---
     buffer_dist_km <- reactive({
@@ -75,6 +62,16 @@ gapAnalysisServer <- function(id, analysis_data) {
       }
       return(val)
     })
+    # helper function for processing the lat lon values
+    prepLatLon <- function(data) {
+      vals <- as.data.frame(data) |>
+        dplyr::filter(!is.na(Longitude)) |>
+        dplyr::mutate(
+          Longitude = as.numeric(Longitude),
+          Latitude = as.numeric(Latitude),
+        )
+      return(vals)
+    }
 
     # --- 1. Render Base Map with Z-Index Panes ---
     output$gap_map <- leaflet::renderLeaflet({
@@ -91,10 +88,13 @@ gapAnalysisServer <- function(id, analysis_data) {
       # Check if gap_map is rendered or not before plotting points.  Otherwise,
       # map will render with no points on initial load of data into analysis_data().
       req(analysis_data(), input$gap_map_bounds)
-
-      # added a muated to cast the lat lon values to numeric before attemping to map
+      # prep the lat long values
       data <- analysis_data() |>
         prepLatLon()
+
+      # run the SRSex function
+      srsMetrics <- SRSex(taxon = data$`Taxon Name`[1], occurrence_Data = data)
+      srs_ex(srsMetrics)
 
       if (is.data.frame(data) && nrow(data) > 0) {
         col_name <- if ("Current Germplasm Type" %in% names(data)) {
@@ -112,6 +112,8 @@ gapAnalysisServer <- function(id, analysis_data) {
           leaflet::clearGroup("Reference Records") %>%
           leaflet::addCircleMarkers(
             data = ref_points,
+            lng = ~Longitude,
+            lat = ~Latitude,
             group = "Reference Records",
             radius = 5,
             color = "white",
@@ -146,14 +148,6 @@ gapAnalysisServer <- function(id, analysis_data) {
       }
     })
 
-    # render the gap analysis methods  ---------------------------------------
-
-    ## SRSEX
-
-    ## GRSEX
-
-    ## ERSEX
-
     # --- Render Table ---
     output$gap_table <- DT::renderDT({
       req(is.data.frame(analysis_data()) && nrow(analysis_data()) > 0)
@@ -180,8 +174,7 @@ gapAnalysisServer <- function(id, analysis_data) {
         {
           incProgress(0.2, detail = "Calculating geometry...")
 
-          df_base <- data |>
-            prepLatLon()
+          df_base <- prepLatLon(data)
 
           v <- terra::vect(
             df_base,

@@ -3,21 +3,26 @@
 generateCounts <- function(taxon, occurrence_Data) {
   # define presence of usable lat long values
   dataThin <- occurrence_Data |>
-    dplyr::filter(species == taxon) |>
-    dplyr::select(c("species", "latitude", "longitude", "type")) |>
+    dplyr::filter(`Taxon Name` == taxon) |>
+    dplyr::select(c(
+      "Taxon Name",
+      "Latitude",
+      "Longitude",
+      "Current Germplasm Type"
+    )) |>
     dplyr::mutate(
-      hasLat = !is.na(latitude) &
-        latitude != "\\N" &
-        latitude != "" &
-        !is.null(latitude) &
-        latitude != "NULL"
+      hasLat = !is.na(Latitude) &
+        Latitude != "\\N" &
+        Latitude != "" &
+        !is.null(Latitude) &
+        Latitude != "NULL"
     ) |>
     dplyr::mutate(
-      hasLong = !is.na(longitude) &
-        longitude != "\\N" &
-        longitude != "" &
-        !is.null(longitude) &
-        longitude != "NULL"
+      hasLong = !is.na(Longitude) &
+        Longitude != "\\N" &
+        Longitude != "" &
+        !is.null(Longitude) &
+        Longitude != "NULL"
     ) |>
     dplyr::mutate(hasLatLong = hasLat & hasLong)
 
@@ -35,7 +40,7 @@ generateCounts <- function(taxon, occurrence_Data) {
   )
   # summarize data
   tbl <- dataThin |>
-    dplyr::group_by(type, hasLatLong) |>
+    dplyr::group_by(`Current Germplasm Type`, hasLatLong) |>
     dplyr::summarize(total = dplyr::n())
 
   # generate counts df
@@ -45,13 +50,17 @@ generateCounts <- function(taxon, occurrence_Data) {
   countsData$species <- taxon
   countsData$totalRecords <- nrow(dataThin)
   countsData$totalUseful <- sum((subset(tbl, hasLatLong == TRUE))$total)
-  countsData$totalGRecords <- sum((subset(tbl, type == "G"))$total)
-  countsData$totalGUseful <- sum(
-    (subset(tbl, type == "G" & hasLatLong == TRUE))$total
+  countsData$totalGRecords <- sum(
+    (subset(tbl, `Current Germplasm Type` == "G"))$total
   )
-  countsData$totalHRecords <- sum((subset(tbl, type == "H"))$total)
+  countsData$totalGUseful <- sum(
+    (subset(tbl, `Current Germplasm Type` == "G" & hasLatLong == TRUE))$total
+  )
+  countsData$totalHRecords <- sum(
+    (subset(tbl, `Current Germplasm Type` == "H"))$total
+  )
   countsData$totalHUseful <- sum(
-    (subset(tbl, type == "H" & hasLatLong == TRUE))$total
+    (subset(tbl, `Current Germplasm Type` == "H" & hasLatLong == TRUE))$total
   )
   countsData$hasLat <- sum(dataThin$hasLat)
   countsData$hasLong <- sum(dataThin$hasLong)
