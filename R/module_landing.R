@@ -235,6 +235,16 @@ landingServer <- function(id, landing_text) {
       }
     })
 
+    # Visual cue for Find Gaps box
+    output$find_indicator <- renderUI({
+      req(find_box_open())
+      div(
+        style = "margin-top: 10px; color: #198754; font-weight: bold; animation: fadeIn 0.3s;",
+        icon("arrow-down"),
+        " See details below"
+      )
+    })
+
     # --- BOX 3: Modal (Legacy) ---
     observeEvent(input$show_share, {
       showModal(modalDialog(

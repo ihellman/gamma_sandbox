@@ -9,12 +9,18 @@ gapAnalysisUI <- function(id) {
         inputId = ns("buffer_dist"),
         label = "Buffer Distance (km)",
         choices = c(5, 10, 25, 50, 100),
-        selected = 10
+        selected = 50
       ),
 
       actionButton(
         inputId = ns("generate_buffers"),
         label = "Generate Buffers",
+        icon = icon("layer-group"),
+        class = "btn-primary w-100 mb-3"
+      ),
+      actionButton(
+        inputId = ns("generate_gapAnalysis"),
+        label = "Produce Gap Analysis Metrics",
         icon = icon("layer-group"),
         class = "btn-primary w-100 mb-3"
       ),
@@ -44,6 +50,22 @@ gapAnalysisUI <- function(id) {
 # server
 gapAnalysisServer <- function(id, analysis_data) {
   moduleServer(id, function(input, output, session) {
+    # Gap Analysis related
+    counts_data <- reactiveVal(data.frame())
+    srs_ex <- reactiveVal(data.frame())
+
+    # helper function
+    ## we prep the analysis_data a few different times so make the process a function
+    prepLatLon <- function(data) {
+      vals <- as.data.frame(data) |>
+        dplyr::filter(!is.na(Longitude)) |>
+        dplyr::mutate(
+          Longitude = as.numeric(Longitude),
+          Latitude = as.numeric(Latitude),
+        )
+      return(vals)
+    }
+
     # --- 0. Reactive Buffer Distance ---
     buffer_dist_km <- reactive({
       req(input$buffer_dist)
@@ -67,10 +89,12 @@ gapAnalysisServer <- function(id, analysis_data) {
     # --- 2. Update Map Points (Runs when data changes) ---
     observe({
       # Check if gap_map is rendered or not before plotting points.  Otherwise,
-      # map will render with no points on initial load of data into analysis_data().  
+      # map will render with no points on initial load of data into analysis_data().
       req(analysis_data(), input$gap_map_bounds)
 
-      data <- analysis_data()
+      # added a muated to cast the lat lon values to numeric before attemping to map
+      data <- analysis_data() |>
+        prepLatLon()
 
       if (is.data.frame(data) && nrow(data) > 0) {
         col_name <- if ("Current Germplasm Type" %in% names(data)) {
@@ -102,6 +126,8 @@ gapAnalysisServer <- function(id, analysis_data) {
           leaflet::clearGroup("Germplasm Records") %>%
           leaflet::addCircleMarkers(
             data = germ_points,
+            lng = ~Longitude,
+            lat = ~Latitude,
             group = "Germplasm Records",
             radius = 5,
             color = "white",
@@ -119,6 +145,14 @@ gapAnalysisServer <- function(id, analysis_data) {
           leaflet::clearGroup("Germplasm Records")
       }
     })
+
+    # render the gap analysis methods  ---------------------------------------
+
+    ## SRSEX
+
+    ## GRSEX
+
+    ## ERSEX
 
     # --- Render Table ---
     output$gap_table <- DT::renderDT({
@@ -146,12 +180,8 @@ gapAnalysisServer <- function(id, analysis_data) {
         {
           incProgress(0.2, detail = "Calculating geometry...")
 
-          df_base <- as.data.frame(data) |>
-            dplyr::filter(!is.na(Longitude)) |>
-            dplyr::mutate(
-              Longitude = as.numeric(Longitude),
-              Latitude = as.numeric(Latitude),
-            )
+          df_base <- data |>
+            prepLatLon()
 
           v <- terra::vect(
             df_base,

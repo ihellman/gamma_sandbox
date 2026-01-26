@@ -38,9 +38,9 @@ ui <- tagList(
 
 # MAIN SERVER -------------------------------------------------------------------------------
 server <- function(input, output, session) {
+  # assign some storage reactive values for functions
   analysis_data <- reactiveVal(data.frame())
   selected_points <- reactiveVal(numeric(0))
-
   # Landing page module
   launch_actions <- landingServer("landing", landing_text = landing_text)
 
