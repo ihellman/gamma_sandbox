@@ -27,8 +27,7 @@ controlsModuleUI <- function(id) {
           accept = c(".csv"),
           buttonLabel = "Browse...",
           placeholder = "No file selected"
-        ),
-        actionButton(inputId = ns("loadUpload"), label = "Load Upload (debug)")
+        )
       )
     )
   )
@@ -104,35 +103,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       },
       ignoreInit = TRUE
     )
-
-    # Load sample upload data ---------------------------------------------------------------------
-    observeEvent(input$loadUpload, {
-      current <- analysis_data()
-      uploadPoints <- load_upload_sample()
-
-      # Check if upload data already exists
-      has_upload <- nrow(current) > 0 && any(current$source == "upload")
-
-      if (has_upload) {
-        uploadData_temp(uploadPoints)
-        showModal(modalDialog(
-          title = "Overwrite Upload Data?",
-          "Upload data is already loaded. Do you want to overwrite it with new data?",
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton(
-              session$ns("confirmloadUpload"), # No automatic namespacing in modals withtin module.
-              "Overwrite",
-              class = "btn-primary"
-            )
-          )
-        ))
-      } else {
-        # If no Upload data exists, load directly, else merge with current
-        updated_df <- merge_and_index(current, uploadPoints)
-        analysis_data(updated_df)
-      }
-    })
 
     # Upload file logic ---------------------------------------------------------------------
     uploadData_temp <- reactiveVal(NULL)
