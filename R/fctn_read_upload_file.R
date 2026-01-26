@@ -28,8 +28,8 @@ read_upload_file <- function(file_info) {
     
     if (length(missing_cols) > 0) {
       return(list(
-        status  = "validation_error",
-        message = paste("Missing columns:", paste(missing_cols, collapse = ", "))
+        status  = "system_error",
+        message = paste("Data not loaded.  Missing columns:", paste(missing_cols, collapse = ", "))
       ))
     }
 
