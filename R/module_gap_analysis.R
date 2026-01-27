@@ -3,60 +3,41 @@ gapAnalysisUI <- function(id) {
   ns <- NS(id)
 
   tagList(
-    # Main Content Layout
     layout_sidebar(
       sidebar = sidebar(
         title = "Controls",
-
         selectInput(
           inputId = ns("buffer_dist"),
           label = "Buffer Distance (km)",
           choices = c(5, 10, 25, 50, 100),
           selected = 10
         ),
-
-        # UPDATED: Button Label
         actionButton(
-          inputId = ns("generate_buffers"), # Keeping ID same for logic, changing label
+          inputId = ns("generate_buffers"),
           label = "Run Gap Analysis",
           icon = icon("play-circle"),
           class = "btn-primary w-100 mb-3"
         )
       ),
-
-      # Map Card
       card(
         card_header("Spatial Distribution"),
         leaflet::leafletOutput(ns("gap_map"), height = "400px"),
         full_screen = TRUE
       ),
-
-      # Tabbed Data & Figures
       bslib::navset_card_underline(
-        id = ns("results_tabs"), # Added ID for potential programmatic switching
+        id = ns("results_tabs"),
         title = "Gap Analysis Results",
-
-        # Tab 1: Records (Default view)
         bslib::nav_panel(
           title = "Occurrence Records",
           DT::DTOutput(ns("records_table"))
         ),
-
-        # Tab 2: Metrics Summary
         bslib::nav_panel(
           title = "Metrics Summary",
           DT::DTOutput(ns("metrics_table"))
         ),
-
-        # Tab 3: Visual Figure
-        bslib::nav_panel(
-          title = "Scores Plot",
-          plotOutput(ns("metrics_plot"))
-        )
+        bslib::nav_panel(title = "Scores Plot", plotOutput(ns("metrics_plot")))
       )
     ),
-
-    # Footer Element (Appended to the bottom of the module UI)
     footer_ui()
   )
 }
@@ -64,12 +45,10 @@ gapAnalysisUI <- function(id) {
 # --- Module Server ---
 gapAnalysisServer <- function(id, analysis_data) {
   moduleServer(id, function(input, output, session) {
-    # reactive values
     srs_ex <- shiny::reactiveVal(NULL)
     grs_ex <- shiny::reactiveVal(NULL)
     ers_ex <- shiny::reactiveVal(NULL)
 
-    # 0. Reactive Buffer
     buffer_dist_km <- reactive({
       req(input$buffer_dist)
       val <- as.numeric(input$buffer_dist)
@@ -79,8 +58,24 @@ gapAnalysisServer <- function(id, analysis_data) {
       return(val)
     })
 
-    # Helper: Prep Data
+    # --- FIX 1: Robust Helper Function ---
     prepLatLon <- function(data) {
+      # Check if data is valid
+      if (is.null(data) || !is.data.frame(data)) {
+        return(data.frame())
+      }
+
+      # Check for required columns to avoid "object 'Latitude' not found"
+      if (!all(c("Longitude", "Latitude") %in% names(data))) {
+        return(data.frame())
+      }
+
+      # Check for rows
+      if (nrow(data) == 0) {
+        return(data.frame())
+      }
+
+      # Safe processing
       vals <- as.data.frame(data) |>
         dplyr::filter(!is.na(Longitude)) |>
         dplyr::mutate(
@@ -90,77 +85,80 @@ gapAnalysisServer <- function(id, analysis_data) {
       return(vals)
     }
 
-    # 1. Base Map
     output$gap_map <- leaflet::renderLeaflet({
       gap_base_map() %>%
         leaflet::addMapPane("buffers", zIndex = 410) %>%
         leaflet::addMapPane("points", zIndex = 420)
     })
 
-    # 2. Initial Data Load (Map Points & SRS Pre-calculation)
+    # --- FIX 2: Safe Observer ---
     observe({
       req(analysis_data(), input$gap_map_bounds)
-      data <- analysis_data() |> prepLatLon()
 
-      # Calculate SRS immediately
-      srsMetrics <- SRSex(taxon = data$`Taxon Name`[1], occurrence_Data = data)
-      srs_ex(srsMetrics)
+      # Process data safely
+      data <- prepLatLon(analysis_data())
 
-      if (is.data.frame(data) && nrow(data) > 0) {
-        col_name <- if ("Current Germplasm Type" %in% names(data)) {
-          "Current Germplasm Type"
-        } else if ("type" %in% names(data)) {
-          "type"
-        } else {
-          return()
-        }
+      # STOP here if prepLatLon returned empty DF (prevents downstream errors)
+      req(nrow(data) > 0)
 
-        ref_points <- data %>% dplyr::filter(.data[[col_name]] == "H")
-        germ_points <- data %>% dplyr::filter(.data[[col_name]] == "G")
-
-        leaflet::leafletProxy("gap_map", session) %>%
-          leaflet::clearGroup("Reference Records") %>%
-          leaflet::addCircleMarkers(
-            data = ref_points,
-            lng = ~Longitude,
-            lat = ~Latitude,
-            group = "Reference Records",
-            radius = 5,
-            color = "white",
-            fillColor = combinedColor[1],
-            fillOpacity = 0.8,
-            weight = 1,
-            stroke = TRUE,
-            label = point_labels(ref_points),
-            options = leaflet::pathOptions(pane = "points")
-          ) %>%
-          leaflet::clearGroup("Germplasm Records") %>%
-          leaflet::addCircleMarkers(
-            data = germ_points,
-            lng = ~Longitude,
-            lat = ~Latitude,
-            group = "Germplasm Records",
-            radius = 5,
-            color = "white",
-            fillColor = combinedColor[2],
-            fillOpacity = 0.8,
-            weight = 1,
-            stroke = TRUE,
-            label = point_labels(germ_points),
-            options = leaflet::pathOptions(pane = "points")
-          )
-      } else {
-        leaflet::leafletProxy("gap_map", session) %>%
-          leaflet::clearGroup("Reference Records") %>%
-          leaflet::clearGroup("Germplasm Records")
+      # Calculate SRS
+      if (!is.null(data$`Taxon Name`)) {
+        srsMetrics <- SRSex(
+          taxon = data$`Taxon Name`[1],
+          occurrence_Data = data
+        )
+        srs_ex(srsMetrics)
       }
+
+      # Proceed with Mapping
+      col_name <- if ("Current Germplasm Type" %in% names(data)) {
+        "Current Germplasm Type"
+      } else if ("type" %in% names(data)) {
+        "type"
+      } else {
+        return()
+      }
+
+      ref_points <- data %>% dplyr::filter(.data[[col_name]] == "H")
+      germ_points <- data %>% dplyr::filter(.data[[col_name]] == "G")
+
+      leaflet::leafletProxy("gap_map", session) %>%
+        leaflet::clearGroup("Reference Records") %>%
+        leaflet::addCircleMarkers(
+          data = ref_points,
+          lng = ~Longitude,
+          lat = ~Latitude,
+          group = "Reference Records",
+          radius = 5,
+          color = "white",
+          fillColor = combinedColor[1],
+          fillOpacity = 0.8,
+          weight = 1,
+          stroke = TRUE,
+          label = point_labels(ref_points),
+          options = leaflet::pathOptions(pane = "points")
+        ) %>%
+        leaflet::clearGroup("Germplasm Records") %>%
+        leaflet::addCircleMarkers(
+          data = germ_points,
+          lng = ~Longitude,
+          lat = ~Latitude,
+          group = "Germplasm Records",
+          radius = 5,
+          color = "white",
+          fillColor = combinedColor[2],
+          fillOpacity = 0.8,
+          weight = 1,
+          stroke = TRUE,
+          label = point_labels(germ_points),
+          options = leaflet::pathOptions(pane = "points")
+        )
     })
 
     # 3. Reactive Dataframe for Summary Table/Plot
     gap_scores_df <- reactive({
       req(srs_ex(), grs_ex(), ers_ex())
 
-      # Extract Values using correct column names from your functions
       srs_data <- srs_ex()
       srs_val <- if ("SRS exsitu" %in% names(srs_data)) {
         srs_data[["SRS exsitu"]]
@@ -184,7 +182,6 @@ gapAnalysisServer <- function(id, analysis_data) {
         NA
       }
 
-      # Create Summary DF with UPDATED NAMES
       dplyr::tibble(
         Metric = c(
           "SRS sampling score",
@@ -192,17 +189,12 @@ gapAnalysisServer <- function(id, analysis_data) {
           "ERS ecological score"
         ),
         Score = as.numeric(c(srs_val, grs_val, ers_val)),
-        # Short codes for color mapping if needed, or just use the full string
         Type = c("SRS", "GRS", "ERS")
       ) |>
-        dplyr::mutate(
-          Score = round(Score, 1)
-        )
+        dplyr::mutate(Score = round(Score, 1))
     })
 
-    # 4. Render Tables & Plot
-
-    # Tab 1: Records
+    # 4. Render Outputs
     output$records_table <- DT::renderDT({
       req(analysis_data())
       DT::datatable(
@@ -212,21 +204,16 @@ gapAnalysisServer <- function(id, analysis_data) {
       )
     })
 
-    # Tab 2: Metrics Summary
     output$metrics_table <- DT::renderDT({
       req(gap_scores_df())
-
       df <- gap_scores_df()
       fcs <- mean(df$Score, na.rm = TRUE)
-
-      # Bind FCS row
       df_display <- df |>
         dplyr::select(Metric, Score) |>
         dplyr::bind_rows(dplyr::tibble(
           Metric = "FCS (Final Conservation Score)",
           Score = round(fcs, 1)
         ))
-
       DT::datatable(
         df_display,
         options = list(dom = 't', ordering = FALSE),
@@ -235,15 +222,9 @@ gapAnalysisServer <- function(id, analysis_data) {
       )
     })
 
-    # Tab 3: Plot
     output$metrics_plot <- renderPlot({
       req(gap_scores_df())
-
       df <- gap_scores_df()
-
-      # Use the "Type" column for color mapping to match your theme
-      # SRS = combinedColor[1], GRS = grsexColor, ERS = ersexColors[2]
-
       ggplot2::ggplot(df, ggplot2::aes(x = Metric, y = Score, fill = Type)) +
         ggplot2::geom_col(width = 0.5) +
         ggplot2::geom_text(
@@ -274,10 +255,12 @@ gapAnalysisServer <- function(id, analysis_data) {
         )
     })
 
-    # 5. Run Gap Analysis Action
+    # 5. Run Gap Analysis
     observeEvent(input$generate_buffers, {
-      data <- analysis_data()
-      req(is.data.frame(data) && nrow(data) > 0)
+      # Use robust prep here too
+      data <- prepLatLon(analysis_data())
+      req(nrow(data) > 0)
+
       dist_km <- buffer_dist_km()
       req(dist_km)
 
@@ -298,7 +281,8 @@ gapAnalysisServer <- function(id, analysis_data) {
           land <- terra::vect("appData/land_simple.gpkg")
 
           incProgress(0.2, detail = "Buffering points...")
-          df_base <- prepLatLon(data)
+          # prepLatLon already run above
+          df_base <- data
           if (!is.null(target_col)) {
             df_base$processing_type <- df_base[[target_col]]
           } else {
@@ -316,7 +300,6 @@ gapAnalysisServer <- function(id, analysis_data) {
           land_proj <- terra::project(land, terra::crs(v_buffer))
           v_clipped <- terra::intersect(v_buffer, land_proj)
 
-          # --- GRSex Calculation ---
           incProgress(0.4, detail = "Calculating GRSex...")
           gBuff <- v_clipped[v_clipped$processing_type == "G", ]
           hBuff <- v_clipped[v_clipped$processing_type == "H", ]
@@ -326,23 +309,17 @@ gapAnalysisServer <- function(id, analysis_data) {
           } else {
             grsMap_element <- hBuff
           }
-
-          # Call GRSex
           grsMetrics <- GRSex(
             allBuffers = v_clipped,
             outsideGBuffers = grsMap_element
           )
           grs_ex(grsMetrics)
 
-          # --- ERSex Calculation ---
           incProgress(0.5, detail = "Calculating ERSex...")
           ersMetrics <- ERSex(gapPoints = v, g_buffer = gBuff)
           ers_ex(ersMetrics)
 
-          # --- Prep Visualization Layers ---
           incProgress(0.7, detail = "Preparing visualization...")
-
-          # 1. Dissolve Standard Buffers
           sf_buffers_raw <- sf::st_as_sf(v_clipped)
           sf_buffers <- sf_buffers_raw |>
             sf::st_make_valid() |>
@@ -352,7 +329,6 @@ gapAnalysisServer <- function(id, analysis_data) {
               .groups = "drop"
             )
 
-          # 2. Convert GRS Gap Area (Aggregated inside Terra to fix topology errors)
           if (length(grsMap_element) > 0) {
             grs_clean <- terra::makeValid(grsMap_element)
             grs_agg <- terra::aggregate(grs_clean)
@@ -361,14 +337,12 @@ gapAnalysisServer <- function(id, analysis_data) {
             sf_grs_gap <- NULL
           }
 
-          # 3. ERS Regions
           if (!is.null(ersMetrics$spatial)) {
             sf_ers_regions <- sf::st_as_sf(ersMetrics$spatial)
           } else {
             sf_ers_regions <- NULL
           }
 
-          # --- Rendering ---
           incProgress(0.9, detail = "Updating Map...")
           proxy <- leaflet::leafletProxy("gap_map", session) %>%
             leaflet::clearGroup("Buffers") %>%
@@ -434,7 +408,6 @@ gapAnalysisServer <- function(id, analysis_data) {
               )
           }
 
-          # Add Layer Control
           proxy %>%
             leaflet::addLayersControl(
               baseGroups = c("Positron", "Satellite"),
@@ -449,8 +422,6 @@ gapAnalysisServer <- function(id, analysis_data) {
             ) %>%
             leaflet::hideGroup("GRS Gap") %>%
             leaflet::hideGroup("ERS Regions")
-
-          # OPTIONAL: Switch focus to Summary tab automatically
           bslib::nav_select(id = "results_tabs", selected = "Metrics Summary")
         }
       )

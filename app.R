@@ -8,6 +8,7 @@ library(sf)
 library(dplyr)
 library(DT)
 library(yaml)
+library(markdown) # fail on shinyapp.io so adding back 
 sf::sf_use_s2(FALSE)
 
 # Load text from YAML file

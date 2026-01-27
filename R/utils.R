@@ -57,6 +57,11 @@ footer_ui <- function() {
               tags$img(src = "usbg.jpg", alt = "USBG Logo")
             ),
             tags$a(
+              href = "https://www.imls.gov/",
+              target = "_blank",
+              tags$img(src = "imls_logo_2c.jpg", alt = "IMLS Logo")
+            ),
+            tags$a(
               href = "https://atlantabg.org/",
               target = "_blank",
               tags$img(src = "abg.jpg", alt = "ABG Logo")
