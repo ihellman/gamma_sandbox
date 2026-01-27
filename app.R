@@ -8,6 +8,7 @@ library(sf)
 library(dplyr)
 library(DT)
 library(yaml)
+sf::sf_use_s2(FALSE)
 
 # Load text from YAML file
 landing_text <- read_yaml("appData/landing_text.yml")

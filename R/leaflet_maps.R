@@ -10,6 +10,10 @@ combinedColor <- c("#f1a340", "#542788")
 grsexColor <- c("#ef8a62")
 ersexColor <- c("#d1e5f0")
 
+# Ers gaps
+ersexColors <- c("#8ae6c7", "#728587")
+
+
 # --- Legend Shapes Helper ---
 # Creates CSS strings for custom legend markers
 make_shapes <- function(colors, sizes, borders, shapes) {
@@ -132,15 +136,15 @@ render_base_points <- function(mapID, allPoints) {
   if (nrow(allPoints) == 0) {
     leafletProxy(mapID) %>% clearMarkers()
     return(invisible(NULL))
-  } 
-  
+  }
+
   # Filter for valid coordinates
   mappable_data <- allPoints %>%
-      mutate(
-        Latitude = as.numeric(Latitude),
-        Longitude = as.numeric(Longitude)
-      ) %>%
-      filter(!is.na(Latitude) & !is.na(Longitude))
+    mutate(
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude)
+    ) %>%
+    filter(!is.na(Latitude) & !is.na(Longitude))
 
   if (nrow(mappable_data) == 0) {
     leafletProxy(mapID) %>% clearMarkers()
@@ -149,12 +153,12 @@ render_base_points <- function(mapID, allPoints) {
 
   # Convert to sf object
   mappable_data <- mappable_data %>%
-      sf::st_as_sf(
-        coords = c("Longitude", "Latitude"),
-        crs = 4326,
-        remove = FALSE
-      )
-  
+    sf::st_as_sf(
+      coords = c("Longitude", "Latitude"),
+      crs = 4326,
+      remove = FALSE
+    )
+
   # Assign Colors (using mappable_data)
   data <- mappable_data %>%
     dplyr::mutate(
@@ -195,20 +199,19 @@ render_base_points <- function(mapID, allPoints) {
 
 # 3. Update Selection
 update_selection_highlights <- function(mapID, allPoints, selected_ids) {
-  
   if (nrow(allPoints) == 0 || length(selected_ids) == 0) {
     leafletProxy(mapID) |> clearGroup("GBIF Selection")
     return(invisible(NULL))
-  } 
-    
-  # Filter for valid coordinates 
+  }
+
+  # Filter for valid coordinates
   mappable_data <- allPoints %>%
-      filter(index %in% selected_ids) %>% # Filter by ID first for efficiency
-      mutate(
-        Latitude = as.numeric(Latitude),
-        Longitude = as.numeric(Longitude)
-      ) %>%
-      filter(!is.na(Latitude) & !is.na(Longitude))
+    filter(index %in% selected_ids) %>% # Filter by ID first for efficiency
+    mutate(
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude)
+    ) %>%
+    filter(!is.na(Latitude) & !is.na(Longitude))
 
   if (nrow(mappable_data) == 0) {
     leafletProxy(mapID) |> clearGroup("GBIF Selection")
@@ -217,12 +220,12 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
   # -----------------------------------------
 
   mappable_data <- mappable_data %>%
-      sf::st_as_sf(
-        coords = c("Longitude", "Latitude"),
-        crs = 4326,
-        remove = FALSE
-      )
-  
+    sf::st_as_sf(
+      coords = c("Longitude", "Latitude"),
+      crs = 4326,
+      remove = FALSE
+    )
+
   proxy <- leafletProxy(mapID)
 
   # Clear previous highlights

@@ -7,7 +7,7 @@ dataAnalysisUI <- function(id) {
     layout_columns(
       col_widths = c(6, 6),
       fillable = TRUE,
-      
+
       # Map card - left side
       card(
         full_screen = TRUE,
@@ -17,24 +17,31 @@ dataAnalysisUI <- function(id) {
             style = "position: relative; height: 100%;",
             mapModuleUI(ns("map")),
             absolutePanel(
-              bottom = 30, right = 10,
+              bottom = 30,
+              right = 10,
               style = "background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000;",
               div(
-                actionButton(ns("deleteSelection"), "Delete Selection",
+                actionButton(
+                  ns("deleteSelection"),
+                  "Delete Selection",
                   icon = icon("trash-can"),
                   style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5b; color: white; border: none;"
                 ),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(ns("undoLastDelete"), "Undo Delete",
+                actionButton(
+                  ns("undoLastDelete"),
+                  "Undo Delete",
                   icon = icon("rotate-left"),
                   style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
                 ),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(ns("clearSelection"), "Clear Selection",
+                actionButton(
+                  ns("clearSelection"),
+                  "Clear Selection",
                   icon = icon("square-minus"),
                   style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
                 )
@@ -48,7 +55,7 @@ dataAnalysisUI <- function(id) {
       layout_columns(
         col_widths = 12,
         fillable = TRUE,
-        
+
         card(
           full_screen = TRUE,
           card_header(
@@ -77,6 +84,8 @@ dataAnalysisUI <- function(id) {
       )
     )
   )
+  # add the footer - which is breaking things...
+  # footer_ui()
 }
 
 dataAnalysisServer <- function(id, analysis_data, selected_points) {
@@ -87,8 +96,18 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
     # Load Internal Modules ------------------------------------------------------
     controlsModuleServer("controls")
     mapModuleServer("map", analysis_data, selected_points)
-    DT_tableModuleServer("DT_table_GBIF", analysis_data, selected_points, data_source = "GBIF")
-    DT_tableModuleServer("DT_table_upload", analysis_data, selected_points, data_source = "upload")
+    DT_tableModuleServer(
+      "DT_table_GBIF",
+      analysis_data,
+      selected_points,
+      data_source = "GBIF"
+    )
+    DT_tableModuleServer(
+      "DT_table_upload",
+      analysis_data,
+      selected_points,
+      data_source = "upload"
+    )
 
     # Render row selection counts ------------------------------------------------
     # Render GBIF row count
@@ -158,21 +177,25 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
 
       # Clear the selection
       selected_points(numeric(0))
-      
+
       # Show success notification
       showNotification(
         paste0(
           "Successfully deleted ",
-          length(current_selection), 
+          length(current_selection),
           " record",
           if (length(current_selection) > 1) "s"
-        ), 
-        type = "message")
+        ),
+        type = "message"
+      )
     })
 
     # Enable/disable Undo button based on backup existence ------------------------
     observe({
-      shinyjs::toggleState("undoLastDelete", condition = nrow(analysis_data_backup()) > 0)
+      shinyjs::toggleState(
+        "undoLastDelete",
+        condition = nrow(analysis_data_backup()) > 0
+      )
     })
 
     # Undo last delete -------------------------------------------------------------
