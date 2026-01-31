@@ -47,8 +47,9 @@ DT_tableModuleUI <- function(id) {
       "
       ))
     ),
-
-    DTOutput(outputId = ns("DT_pointsTable"))
+    
+    # fill = TRUE allows the widget to expand to the bslib card size (helps frozen headers)
+    DTOutput(outputId = ns("DT_pointsTable"), fill = TRUE)
   )
 }
 
@@ -82,8 +83,6 @@ DT_tableModuleServer <- function(
         )
       data %>%
         filter(source == data_source)
-      # st_drop_geometry(data) %>%
-      #   filter(source == data_source)
     })
 
     # 2. Initialization Latch
@@ -119,7 +118,6 @@ DT_tableModuleServer <- function(
         sprintf(
           "function(data, type, rowData, meta) {
              var accessionNumber = data;
-             // rowData[%d] gets the value from the 'source' column in this row.
              var source = rowData[%d]; 
              var base_url = 'https://www.gbif.org/occurrence/';
 
@@ -134,23 +132,23 @@ DT_tableModuleServer <- function(
                return accessionNumber;
              }
            }",
-          source_col_index,
           source_col_index
         )
       )
 
       # Render the datatable
-
       datatable(
         data,
         rownames = FALSE,
         selection = list(mode = 'multiple', selected = initial_rows),
         filter = 'none',
+        fillContainer = TRUE, # Automatically calculates scrollY to fill the card
         options = list(
-          dom = 't',
-          paging = FALSE,
-          autoWidth = FALSE,
+          dom = 't',       # Only show table (no search/entries)
+          paging = FALSE,  # Show ALL rows (scrolling handled by fillContainer)
+          scrollX = TRUE,  # Force horizontal scrollbar
           deferRender = TRUE,
+          autoWidth = FALSE,
           columnDefs = list(
             # hide helper columns
             list(
