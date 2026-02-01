@@ -127,7 +127,20 @@ data_eval_base_map <- function() {
       polygonOptions = TRUE,
       markerOptions = FALSE,
       circleMarkerOptions = FALSE
-    )
+    ) |>
+    # Remove drawn layer after creation.  Currently, there is not an R-only way to do this.
+    htmlwidgets::onRender("
+      function(el, x) {
+        var map = this;
+        map.on('draw:created', function(e) {
+          var layer = e.layer;
+          // Remove the drawn layer immediately after it's created
+          setTimeout(function() {
+            map.removeLayer(layer);
+          }, 0);
+        });
+      }
+    ")
 }
 
 # 2. Render Main Points
