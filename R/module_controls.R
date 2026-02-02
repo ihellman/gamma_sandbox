@@ -3,30 +3,67 @@ controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
     accordion(
-      multiple = TRUE,
-      open = TRUE,
+      multiple = FALSE,
+      open = "panel_gbif",
       accordion_panel(
-        title = "Download GBIF Data",
-        icon = icon("download"),
-        actionButton(inputId = ns("loadGBIF"), label = "Load GBIF")
+        title = "GBIF Data",
+        value = "panel_gbif",
+        icon = icon("database"),
+        tagList(
+          p(
+            class = "text-muted small mb-3",
+            "Load specimen occurrence data from the Global Biodiversity Information Facility."
+          ),
+          actionButton(
+            inputId = ns("loadGBIF"),
+            label = "Load GBIF Dataset",
+            icon = icon("download"),
+            class = "btn-primary w-100",
+            style = "font-weight: 500;"
+          )
+        )
       ),
       accordion_panel(
-        title = "Upload Data",
-        icon = icon("upload"),
-        fileInput(
-          inputId = ns("uploadData"),
-          label = tagList(
-            "Upload a file",
+        title = "Custom Data",
+        value = "panel_upload",
+        icon = icon("file-import"),
+        tagList(
+          p(
+            class = "text-muted small mb-2",
+            "Upload your own specimen data in CSV format."
+          ),
+          p(
+            class = "mb-3",
             actionLink(
               inputId = ns("viewDataFormat"),
-              label = icon("circle-question"),
-              title = "Click to view data format requirements",
-              style = "margin-left: 8px; cursor: help;"
+              label = "View format requirements",
+              icon = icon("circle-info"),
+              style = "font-size: 0.875rem;"
             )
           ),
-          accept = c(".csv"),
-          buttonLabel = "Browse...",
-          placeholder = "No file selected"
+          fileInput(
+            inputId = ns("uploadData"),
+            label = NULL,
+            accept = c(".csv", "text/csv"),
+            buttonLabel = tagList(icon("folder-open"), "Browse"),
+            placeholder = "No file selected",
+            width = "100%"
+          ),
+          hr(style = "margin: 1.5rem 0;"),
+          div(
+            class = "d-grid",
+            downloadButton(
+              outputId = ns("exportData"),
+              label = "Export Analysis Data",
+              icon = icon("file-arrow-down"),
+              class = "btn-outline-secondary",
+              style = "font-weight: 500;"
+            )
+          ),
+          p(
+            class = "text-muted small mt-2 mb-0",
+            "Download the current working dataset including all loaded records."
+          )
         )
       )
     )
@@ -36,8 +73,6 @@ controlsModuleUI <- function(id) {
 # CONTROLS SERVER ----------------------------------------------------------------------
 controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    # Empty reactive for backup of analysis_data() for undo functionality
-    #analysis_data_backup <- reactiveVal(data.frame())
 
     # Load sample GBIF data (for testing) ----------------------------------------------
     load_gbif_sample <- function() {
@@ -209,6 +244,16 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       uploadData_temp(NULL) # Clear the pending data
       removeModal()
     })
+    
+    # Export analysis data --------------------------------------------------------
+    output$exportData <- downloadHandler(
+      filename = function() {
+        paste0("analysis_data_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")
+      },
+      content = function(file) {
+        write.csv(analysis_data(), file, row.names = FALSE)
+      }
+    )
     
     # Data Format Requirements Modal --------------------------------------------------------
     observeEvent(input$viewDataFormat, {
