@@ -38,7 +38,7 @@ gapAnalysisUI <- function(id) {
         bslib::nav_panel(title = "Scores Plot", plotOutput(ns("metrics_plot")))
       )
     ),
-    footer_ui()
+    # footer_ui()
   )
 }
 

@@ -45,7 +45,6 @@ server <- function(input, output, session) {
   selected_points <- reactiveVal(numeric(0))
   # Landing page module
   launch_actions <- landingServer("landing", landing_text = landing_text)
-
   # Observe launch button (Get Started)
   observeEvent(launch_actions$launch(), {
     req(launch_actions$launch() > 0)

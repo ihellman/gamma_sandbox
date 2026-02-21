@@ -5,6 +5,8 @@ controlsModuleUI <- function(id) {
     accordion(
       multiple = FALSE,
       open = "panel_gbif",
+      
+      # --- GBIF PANEL ---
       accordion_panel(
         title = "GBIF Data",
         value = "panel_gbif",
@@ -12,17 +14,64 @@ controlsModuleUI <- function(id) {
         tagList(
           p(
             class = "text-muted small mb-3",
-            "Load specimen occurrence data from the Global Biodiversity Information Facility."
+            "Select taxonomic criteria to query and download occurrence records directly from GBIF."
           ),
-          actionButton(
-            inputId = ns("loadGBIF"),
-            label = "Load GBIF Dataset",
-            icon = icon("download"),
-            class = "btn-primary w-100",
-            style = "font-weight: 500;"
+          selectizeInput(
+            inputId = ns("taxon_genus"),
+            label = "Genus",
+            choices = NULL,
+            width = "100%"
+          ),
+          selectizeInput(
+            inputId = ns("taxon_species"),
+            label = "Specific Epithet",
+            choices = NULL,
+            width = "100%"
+          ),
+          selectizeInput(
+            inputId = ns("taxon_rank"),
+            label = "Taxon Rank",
+            choices = NULL,
+            width = "100%"
+          ),
+          selectizeInput(
+            inputId = ns("taxon_infra"),
+            label = "Infraspecific Epithet",
+            choices = NULL,
+            width = "100%"
+          ),
+          hr(style = "margin: 1.5rem 0;"),
+          sliderInput(
+            inputId = ns("gbif_limit"),
+            label = "Max Occurrences",
+            min = 0,
+            max = 500,
+            value = 200,
+            step = 50,
+            width = "100%"
+          ),
+          radioButtons(
+            inputId = ns("backfill_strategy"),
+            label = "Wild Record Prioritization",
+            choices = c("Most Recent" = "recent", "Random Selection" = "random"),
+            selected = "recent",
+            inline = TRUE
+          ),
+          hr(style = "margin: 1rem 0;"),
+          uiOutput(outputId = ns("taxon_id_display"), class = "mb-3 text-center fw-bold"),
+          shinyjs::disabled(
+            actionButton(
+              inputId = ns("loadGBIF"),
+              label = "Gather GBIF Occurrences",
+              icon = icon("cloud-arrow-down"),
+              class = "btn-primary w-100",
+              style = "font-weight: 500;"
+            )
           )
         )
       ),
+      
+      # --- UPLOAD PANEL ---
       accordion_panel(
         title = "Custom Data",
         value = "panel_upload",
@@ -74,111 +123,260 @@ controlsModuleUI <- function(id) {
 controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
 
-    # Load sample GBIF data (for testing) ----------------------------------------------
-    load_gbif_sample <- function() {
-      read_csv(
-        "appData/Magnolia_acuminata_data.csv",
-        col_types = cols(.default = "c")
-      ) %>%
-        mutate(index = dplyr::row_number(), source = "GBIF")
-    }
+    # 1. Initialize Parquet Dataset ----------------------------------------------------
+    taxonomy_ds <- arrow::open_dataset("appData/plant_taxonomy_lean.parquet")
 
-    # Load sample upload data (for testing) ----------------------------------------------
-    load_upload_sample <- function() {
-      read_csv(
-        "appData/upload_sample.csv",
-        col_types = cols(.default = "c")
-      ) %>%
-        mutate(index = dplyr::row_number(), source = "upload", issues = "") # !!!! Placeholder to allow tables to join
-    }
+    # 2. Populate Genus ----------------------------------------------------------------
+    observe({
+      genera <- taxonomy_ds %>%
+        select(genericName) %>%
+        distinct() %>%
+        collect() %>%
+        filter(!is.na(genericName)) %>%
+        arrange(genericName) %>%
+        pull(genericName)
+      
+      updateSelectizeInput(session, "taxon_genus", choices = c("Select Genus" = "", genera), server = TRUE)
+    })
 
-    # Load GBIF data Button --------------------------------------------------------------
-    observeEvent(input$loadGBIF, {
-      current <- analysis_data()
-      gbifPoints <- load_gbif_sample()
+    # 3. Populate Specific Epithet -----------------------------------------------------
+    observeEvent(input$taxon_genus, {
+      req(input$taxon_genus)
+      species_epithets <- taxonomy_ds %>%
+        filter(genericName == input$taxon_genus) %>%
+        select(specificEpithet) %>%
+        distinct() %>%
+        collect() %>%
+        filter(!is.na(specificEpithet)) %>%
+        arrange(specificEpithet) %>%
+        pull(specificEpithet)
+      
+      updateSelectizeInput(session, "taxon_species", choices = c("Select Epithet" = "", species_epithets), server = TRUE)
+      updateSelectizeInput(session, "taxon_rank", choices = character(0))
+      updateSelectizeInput(session, "taxon_infra", choices = character(0))
+    })
 
-      # Check if GBIF data already exists
-      has_gbif <- nrow(current) > 0 && any(current$source == "GBIF")
+    # 4. Populate Taxon Rank -----------------------------------------------------------
+    observeEvent(input$taxon_species, {
+      req(input$taxon_genus, input$taxon_species)
+      ranks <- taxonomy_ds %>%
+        filter(genericName == input$taxon_genus, specificEpithet == input$taxon_species) %>%
+        select(taxonRank) %>%
+        distinct() %>%
+        collect() %>%
+        filter(!is.na(taxonRank)) %>%
+        arrange(taxonRank) %>%
+        pull(taxonRank)
+      
+      updateSelectizeInput(session, "taxon_rank", choices = c("Select Rank" = "", ranks), server = TRUE)
+      updateSelectizeInput(session, "taxon_infra", choices = character(0))
+    })
 
-      if (has_gbif) {
-        showModal(modalDialog(
-          title = "Overwrite GBIF Data?",
-          "GBIF data is already loaded. Do you want to overwrite it with new data?",
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton(
-              session$ns("confirmLoadGBIF"), # No automatic namespacing in modals withtin module.
-              "Overwrite",
-              class = "btn-primary"
-            )
-          )
-        ))
+    # 5. Populate Infraspecific Epithet ------------------------------------------------
+    observeEvent(input$taxon_rank, {
+      req(input$taxon_genus, input$taxon_species, input$taxon_rank)
+      infra_opts <- taxonomy_ds %>%
+        filter(
+          genericName == input$taxon_genus, 
+          specificEpithet == input$taxon_species,
+          taxonRank == input$taxon_rank
+        ) %>%
+        select(infraspecificEpithet) %>%
+        distinct() %>%
+        collect() %>%
+        mutate(infraspecificEpithet = tidyr::replace_na(infraspecificEpithet, "")) %>%
+        arrange(infraspecificEpithet) %>%
+        pull(infraspecificEpithet)
+      
+      if (length(infra_opts) == 1 && infra_opts == "") {
+        updateSelectizeInput(session, "taxon_infra", choices = c("N/A" = ""), selected = "")
       } else {
-        # If no GBIF data exists, load directly, else merge with current
-        updated_df <- merge_and_index(current, gbifPoints)
-        analysis_data(updated_df)
+        updateSelectizeInput(session, "taxon_infra", choices = c("Select Infra" = "", infra_opts), server = TRUE)
+      }
+    })
+    
+    # Enable/Disable the Gather button based on Taxon ID resolution
+    observe({
+      shinyjs::toggleState(
+        id = "loadGBIF", 
+        condition = !is.null(selected_taxon_id())
+      )
+    })
+
+    # 6. Resolve Target Taxon ID -------------------------------------------------------
+    selected_taxon_id <- reactive({
+      req(input$taxon_genus, input$taxon_species, input$taxon_rank)
+      query <- taxonomy_ds %>%
+        filter(
+          genericName == input$taxon_genus,
+          specificEpithet == input$taxon_species,
+          taxonRank == input$taxon_rank
+        )
+      
+      if (isTruthy(input$taxon_infra)) {
+        query <- query %>% filter(infraspecificEpithet == input$taxon_infra)
+      } else {
+        query <- query %>% filter(is.na(infraspecificEpithet) | infraspecificEpithet == "")
+      }
+      
+      res <- query %>% select(taxonID, taxonomicStatus) %>% collect()
+      if (nrow(res) == 0) return(NULL)
+      
+      accepted_res <- res %>% filter(toupper(taxonomicStatus) == "ACCEPTED")
+      if (nrow(accepted_res) > 0) return(accepted_res$taxonID[1])
+      return(res$taxonID[1])
+    })
+
+    output$taxon_id_display <- renderUI({
+      tid <- selected_taxon_id()
+      if (!is.null(tid)) {
+        tags$span(class = "text-success", paste("Target Taxon ID:", tid))
+      } else if (isTruthy(input$taxon_species)) {
+        tags$span(class = "text-danger", "No matching Taxon ID found.")
       }
     })
 
-    # Confirm GBIF overwrite
-    observeEvent(
-      input$confirmLoadGBIF,
-      {
-        current <- analysis_data()
-        gbifPoints <- load_gbif_sample()
+    # 7. Gather and Format Live GBIF Data -----------------------------------------------
+    gbifData_temp <- reactiveVal(NULL) 
+    
+    observeEvent(input$loadGBIF, {
+      tid <- selected_taxon_id()
+      req(tid)
+      
+      Gather_limit <- if (is.numeric(input$gbif_limit)) input$gbif_limit else 200
+      
+      shiny::withProgress(
+        message = "GBIF API Search",
+        detail = "Initializing...",
+        value = 0,
+        {
+          shiny::incProgress(0.2, detail = "Prioritizing living specimens...")
+          raw_living <- rgbif::occ_search(
+            taxonKey = as.numeric(tid), 
+            hasCoordinate = TRUE, 
+            basisOfRecord = "LIVING_SPECIMEN",
+            limit = Gather_limit
+          )
+          
+          living_data <- if (is.null(raw_living$data)) data.frame() else raw_living$data
+          
+          remaining_limit <- Gather_limit - nrow(living_data)
+          other_data <- data.frame()
+          
+          if (remaining_limit > 0) {
+            pool_size <- min(remaining_limit * 5, 2000)
+            
+            shiny::incProgress(0.4, detail = paste("Gathering reference records", remaining_limit, "remaining..."))
+            raw_all <- rgbif::occ_search(
+              taxonKey = as.numeric(tid), 
+              hasCoordinate = TRUE, 
+              limit = pool_size
+            )
+            
+            if (!is.null(raw_all$data)) {
+              other_data <- raw_all$data
+              
+              if (nrow(living_data) > 0) {
+                other_data <- other_data %>% dplyr::filter(!gbifID %in% living_data$gbifID)
+              }
+              
+              if (nrow(other_data) > remaining_limit) {
+                if (input$backfill_strategy == "recent") {
+                  other_data <- other_data %>% dplyr::arrange(desc(eventDate)) %>% head(remaining_limit)
+                } else if (input$backfill_strategy == "random") {
+                  other_data <- other_data %>% dplyr::slice_sample(n = remaining_limit)
+                }
+              }
+            }
+          }
+          
+          shiny::incProgress(0.6, detail = "Formatting downloaded records...")
+          combined_df <- dplyr::bind_rows(living_data, other_data)
+          
+          if (nrow(combined_df) == 0) {
+            showNotification("No records with coordinates found on GBIF for this taxon.", type = "warning")
+            return()
+          }
+          
+          safe_extract <- function(col_name) { 
+            if (col_name %in% names(combined_df)) combined_df[[col_name]] else NA_character_ 
+          }
+          
+          formatted_gbif <- data.frame(
+            `Accession Number` = as.character(combined_df$gbifID),
+            `Taxon Name` = combined_df$scientificName,
+            `Current Germplasm Type` = ifelse(safe_extract("basisOfRecord") == "LIVING_SPECIMEN", "G", "H"),
+            `Collection Date` = as.character(safe_extract("eventDate")),
+            Latitude = as.numeric(combined_df$decimalLatitude),
+            Longitude = as.numeric(combined_df$decimalLongitude),
+            Locality = as.character(safe_extract("stateProvince")),
+            Collector = as.character(safe_extract("recordedBy")),
+            source = "GBIF",
+            check.names = FALSE
+          ) %>% mutate(index = row_number())
+          
+          shiny::incProgress(0.9, detail = "Checking current dataset...")
+          
+          current <- analysis_data()
+          has_gbif <- nrow(current) > 0 && any(current$source == "GBIF")
+          
+          if (has_gbif) {
+            gbifData_temp(formatted_gbif)
+            showModal(modalDialog(
+              title = "Overwrite GBIF Data?",
+              "GBIF data is already loaded. Do you want to overwrite it with this new taxon?",
+              footer = tagList(
+                modalButton("Cancel"),
+                actionButton(session$ns("confirmLoadGBIF"), "Overwrite", class = "btn-primary")
+              )
+            ))
+          } else {
+            updated_df <- merge_and_index(current, formatted_gbif)
+            analysis_data(updated_df)
+            showNotification(paste("Successfully loaded", nrow(formatted_gbif), "records."), type = "message")
+          }
+        }
+      )
+    })
 
-        # Remove existing GBIF data and add new
-        filtered <- current %>% filter(source != "GBIF")
+    # 8. Confirm GBIF Overwrite Logic --------------------------------------------------
+    observeEvent(input$confirmLoadGBIF, {
+      req(gbifData_temp()) 
+      current <- analysis_data()
+      
+      filtered <- current %>% filter(source != "GBIF")
+      updated_df <- merge_and_index(filtered, gbifData_temp()) 
+      
+      analysis_data(updated_df)
+      gbifData_temp(NULL) 
+      selected_points(numeric(0)) 
+      
+      removeModal()
+      showNotification("GBIF data successfully updated.", type = "message")
+    }, ignoreInit = TRUE)
 
-        # If no GBIF data exists, load directly, else merge with current
-        updated_df <- merge_and_index(filtered, gbifPoints)
-        analysis_data(updated_df)
-
-        removeModal()
-      },
-      ignoreInit = TRUE
-    )
-
-    # Upload file logic ---------------------------------------------------------------------
+    # 9. Upload file logic -------------------------------------------------------------
     uploadData_temp <- reactiveVal(NULL)
 
     observeEvent(input$uploadData, {
       req(input$uploadData)
-
-      # --- Config: Notification Durations (seconds) ---
-      durations <- list(
-        validation = 8,    # User error (e.g wrong columns)
-        success    = 5,    # Clean load
-        warning    = 10,   # Load with missing coords
-        system     = NULL  # Code crash
-      )
-
-      # 1. Run logic to upload file and check for issues
+      durations <- list(validation = 8, success = 5, warning = 10, system = NULL)
       res <- read_upload_file(input$uploadData)
 
-      # 2. Handle Errors (Guard Clauses)
       if (res$status == "validation_error") {
         showNotification(res$message, type = "warning", duration = durations$validation)
         return()
       }
-      
       if (res$status == "system_error") {
         showNotification(res$message, type = "error", duration = durations$system)
         return()
       }
 
-      # 3. Handle Success
-      # Logic: Check for overwrite conflict -> Merge -> Notify
       new_points <- res$data
       current    <- analysis_data()
       
-      # Check if "upload" data already exists
       if (nrow(current) > 0 && "upload" %in% current$source) {
-        
-        # Conflict: Hold data in temp reactive and ask user
-        # Store the ENTIRE 'res' object, not just 'new_points'
         uploadData_temp(res) 
-        
         showModal(modalDialog(
           title = "Overwrite Upload Data?",
           "Upload data is already loaded. Do you want to overwrite it?",
@@ -187,65 +385,38 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
             actionButton(session$ns("confirmloadUpload"), "Overwrite", class = "btn-primary")
           )
         ))
-        
       } else {
-        
-        # No Conflict: Load immediately
         updated_df <- merge_and_index(current, new_points)
         analysis_data(updated_df)
-        
-        # Determine duration based on whether we have a warning (missing coords)
-        dur <- if (res$message_type == "warning") {
-          durations$warning
-        } else {
-          durations$success
-        }
+        dur <- if (res$message_type == "warning") durations$warning else durations$success
         showNotification(res$message, type = res$message_type, duration = dur)
-        }
+      }
     })
 
-    # Handle confirmation in modal to overwrite data
     observeEvent(input$confirmloadUpload, {
-      req(uploadData_temp()) # Ensure we actually have data waiting
-
-      # 1. Retrieve the FULL result object (Data + Messages)
+      req(uploadData_temp()) 
       res <- uploadData_temp() 
-      
       current <- analysis_data()
-      new_points <- res$data # Extract just the dataframe
+      new_points <- res$data 
 
-      # 2. Filter out OLD upload data
       current_clean <- current %>% filter(source != "upload")
-
-      # 3. Merge NEW upload data
       updated_df <- merge_and_index(current_clean, new_points)
       analysis_data(updated_df)
 
-      # 4. Cleanup
       selected_points(numeric(0))
       uploadData_temp(NULL) 
       removeModal()
 
-      # 5. Show the SPECIFIC message passed from the read function
-      # Use the specific message (e.g., "Missing Lat/Lon") and specific type (Warning vs Message)
-      
-      # Define duration based on type
       dur <- if(res$message_type == "warning") 10 else 5
-      
-      showNotification(
-        res$message,        # "Loaded 50 records. Note: 3 missing coords..."
-        type = res$message_type, # "warning" or "message"
-        duration = dur
-      )
+      showNotification(res$message, type = res$message_type, duration = dur)
     })
 
-    # Handle Cancel
     observeEvent(input$cancelUpload, {
-      uploadData_temp(NULL) # Clear the pending data
+      uploadData_temp(NULL) 
       removeModal()
     })
     
-    # Export analysis data --------------------------------------------------------
+    # 10. Export analysis data ---------------------------------------------------------
     output$exportData <- downloadHandler(
       filename = function() {
         paste0("analysis_data_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")
@@ -255,7 +426,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
     )
     
-    # Data Format Requirements Modal --------------------------------------------------------
+    # 11. Data Format Requirements Modal -----------------------------------------------
     observeEvent(input$viewDataFormat, {
       showModal(modalDialog(
         title = "Data Format Requirements",
@@ -284,11 +455,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
           ),
           tags$p(
             tags$strong("Example CSV:"),
-            tags$a(
-              href = "upload_example.csv",
-              download = "upload_example.csv",
-              "Download example file"
-            )
+            tags$a(href = "upload_example.csv", download = "upload_example.csv", "Download example file")
           )
         ),
         footer = modalButton("Close"),

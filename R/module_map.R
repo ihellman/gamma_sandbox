@@ -6,7 +6,7 @@ mapModuleUI <- function(id) {
   )
 }
 
-mapModuleServer <- function(id, analysis_data, selected_points) {
+mapModuleServer <- function(id, analysis_data, selected_points) { 
   moduleServer(id, function(input, output, session) {
     
     # Initial map render

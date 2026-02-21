@@ -1,8 +1,9 @@
 # DATA ANALYSIS MODULE ------------------------------------------------------------------
 dataAnalysisUI <- function(id) {
   ns <- NS(id)
+  
   layout_sidebar(
-    sidebar = controlsModuleUI("controls"),
+    sidebar = controlsModuleUI(ns("controls")), 
     fillable = TRUE,
     layout_columns(
       col_widths = c(6, 6),
@@ -21,30 +22,15 @@ dataAnalysisUI <- function(id) {
               right = 10,
               style = "background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000;",
               div(
-                actionButton(
-                  ns("deleteSelection"),
-                  "Delete Selection",
-                  icon = icon("trash-can"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5b; color: white; border: none;"
-                ),
+                actionButton(ns("deleteSelection"), "Delete Selection", icon = icon("trash-can"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5b; color: white; border: none;"),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(
-                  ns("undoLastDelete"),
-                  "Undo Delete",
-                  icon = icon("rotate-left"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
-                ),
+                actionButton(ns("undoLastDelete"), "Undo Delete", icon = icon("rotate-left"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"),
                 style = "margin-bottom: 5px;"
               ),
               div(
-                actionButton(
-                  ns("clearSelection"),
-                  "Clear Selection",
-                  icon = icon("square-minus"),
-                  style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"
-                )
+                actionButton(ns("clearSelection"), "Clear Selection", icon = icon("square-minus"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;")
               )
             )
           )
@@ -55,7 +41,6 @@ dataAnalysisUI <- function(id) {
       layout_columns(
         col_widths = 12,
         fillable = TRUE,
-
         card(
           full_screen = TRUE,
           card_header(
@@ -68,7 +53,6 @@ dataAnalysisUI <- function(id) {
             DT_tableModuleUI(ns("DT_table_GBIF"))
           )
         ),
-
         card(
           full_screen = TRUE,
           card_header(
@@ -84,146 +68,73 @@ dataAnalysisUI <- function(id) {
       )
     )
   )
-  # add the footer - which is breaking things...
-  # footer_ui()
 }
 
+# --- SERVER ---
 dataAnalysisServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
-    # Empty reactive for backup of analysis_data() for undo functionality
     analysis_data_backup <- reactiveVal(data.frame())
 
     # Load Internal Modules ------------------------------------------------------
-    controlsModuleServer("controls")
+    controlsModuleServer("controls", analysis_data, selected_points) 
+    
     mapModuleServer("map", analysis_data, selected_points)
+    
     DT_tableModuleServer(
       "DT_table_GBIF",
       analysis_data,
       selected_points,
       data_source = "GBIF"
     )
+    
     DT_tableModuleServer(
       "DT_table_upload",
       analysis_data,
       selected_points,
-      data_source = "upload"
-    )
+      data_source = "upload"    )
 
     # Render row selection counts ------------------------------------------------
-    # Render GBIF row count
     output$row_count_gbif <- renderUI({
       req(nrow(analysis_data()) > 0)
-
-      selected <- analysis_data() %>%
-        filter(source == "GBIF", index %in% selected_points()) %>%
-        nrow()
-
-      if (selected > 0) {
-        HTML(paste0(
-          "&nbsp;&nbsp;&nbsp;(",
-          selected,
-          " row",
-          if (selected != 1) "s",
-          " selected)"
-        ))
-      } else {
-        ""
-      }
+      selected <- analysis_data() %>% filter(source == "GBIF", index %in% selected_points()) %>% nrow()
+      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
     })
 
-    # Render Upload row count
     output$row_count_upload <- renderUI({
       req(nrow(analysis_data()) > 0)
-
-      selected <- analysis_data() %>%
-        filter(source == "upload", index %in% selected_points()) %>%
-        nrow()
-
-      if (selected > 0) {
-        HTML(paste0(
-          "&nbsp;&nbsp;&nbsp;(",
-          selected,
-          " row",
-          if (selected != 1) "s",
-          " selected)"
-        ))
-      } else {
-        ""
-      }
+      selected <- analysis_data() %>% filter(source == "upload", index %in% selected_points()) %>% nrow()
+      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
     })
 
-    # Delete selected points ---------------------------------------------------------
+    # Data management observers --------------------------------------------------
     observeEvent(input$deleteSelection, {
       req(nrow(analysis_data()) > 0)
-
-      # Backup before deletion
       analysis_data_backup(analysis_data())
-
       current_data <- analysis_data()
       current_selection <- selected_points()
 
-      # Only proceed if there are selected points
       if (length(current_selection) == 0) {
         showNotification("No records selected to delete", type = "warning")
         return()
       }
-      # Remove selected rows
-      updated_data <- current_data %>%
-        filter(!index %in% current_selection) %>%
-        mutate(index = row_number()) # Re-index after deletion
-
-      # Update the data
+      updated_data <- current_data %>% filter(!index %in% current_selection) %>% mutate(index = row_number()) 
       analysis_data(updated_data)
-
-      # Clear the selection
       selected_points(numeric(0))
-
-      # Show success notification
-      showNotification(
-        paste0(
-          "Successfully deleted ",
-          length(current_selection),
-          " record",
-          if (length(current_selection) > 1) "s"
-        ),
-        type = "message"
-      )
+      showNotification(paste0("Successfully deleted ", length(current_selection), " record", if (length(current_selection) > 1) "s"), type = "message")
     })
 
-    # Enable/disable Undo button based on backup existence ------------------------
     observe({
-      shinyjs::toggleState(
-        "undoLastDelete",
-        condition = nrow(analysis_data_backup()) > 0
-      )
+      shinyjs::toggleState("undoLastDelete", condition = nrow(analysis_data_backup()) > 0)
     })
 
-    # Undo last delete -------------------------------------------------------------
     observeEvent(input$undoLastDelete, {
       req(nrow(analysis_data_backup()) > 0)
-
-      # Calculate number of restored records
       numRestoredRecords <- nrow(analysis_data_backup()) - nrow(analysis_data())
-
-      # Restore from backup
       analysis_data(analysis_data_backup())
-
-      # Show success notification
-      showNotification(
-        paste0(
-          "Successfully restored ",
-          numRestoredRecords,
-          " record",
-          if (numRestoredRecords > 1) "s"
-        ),
-        type = "message"
-      )
-
-      # Clear the backup
+      showNotification(paste0("Successfully restored ", numRestoredRecords, " record", if (numRestoredRecords > 1) "s"), type = "message")
       analysis_data_backup(data.frame())
     })
 
-    # Clear selection ---------------------------------------------------------------
     observeEvent(input$clearSelection, {
       selected_points(numeric(0))
     })

@@ -53,10 +53,11 @@ landingUI <- function(id, landing_text) {
       div(
         class = "features-container",
 
-        # BOX 1: Triggers Modal
+        # BOX 1: Gather
         actionLink(
           ns("show_gather"),
           label = div(
+            id = ns("box_gather"), # Added ID for active state styling
             class = "feature-box",
             tags$img(
               src = "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
@@ -66,11 +67,11 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # BOX 2: Triggers Expandable Panel (Hybrid)
+        # BOX 2: Find
         actionLink(
           ns("show_find"),
           label = div(
-            id = ns("box_find"), # ID needed for adding 'active' class
+            id = ns("box_find"), 
             class = "feature-box",
             tags$img(
               src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"
@@ -80,10 +81,11 @@ landingUI <- function(id, landing_text) {
           )
         ),
 
-        # BOX 3: Triggers Modal
+        # BOX 3: Share
         actionLink(
           ns("show_share"),
           label = div(
+            id = ns("box_share"), # Added ID for active state styling
             class = "feature-box",
             tags$img(
               src = "https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -94,91 +96,12 @@ landingUI <- function(id, landing_text) {
         )
       ),
 
-      # --- DETAILS SECTION (Only used by Box 2) ---
+      # --- DETAILS SECTION (Shared by all boxes) ---
       uiOutput(ns("feature_details"))
     ),
 
-    # ... inside landingUI ...
-
     # --- FOOTER ---
     footer_ui()
-    # tags$footer(
-    #   class = "footer-modern",
-    #   div(
-    #     class = "container",
-    #     div(
-    #       class = "row",
-    #       # COLUMN 1: Partners & Logos
-    #       div(
-    #         class = "col-md-5 footer-col",
-    #         h5("Supported By"),
-    #         div(
-    #           class = "footer-logos",
-    #           tags$a(
-    #             href = "https://www.bgci.org/",
-    #             target = "_blank",
-    #             tags$img(src = "bgci.png", alt = "BGCI Logo")
-    #           ),
-    #           tags$a(
-    #             href = "https://www.usbg.gov/",
-    #             target = "_blank",
-    #             tags$img(src = "usbg.jpg", alt = "USBG Logo")
-    #           ),
-    #           tags$a(
-    #             href = "https://atlantabg.org/",
-    #             target = "_blank",
-    #             tags$img(src = "abg.jpg", alt = "USBG Logo")
-    #           )
-    #         )
-    #       ),
-
-    #       # COLUMN 2: About the Tool
-    #       div(
-    #         class = "col-md-4 footer-col",
-    #         h5("About This Tool"),
-    #         p(
-    #           "This dashboard supports global conservation efforts by providing gap analysis and data exploration tools for prioritized taxa."
-    #         ),
-    #         p(tags$a(href = "#", "Read Documentation", class = "footer-link"))
-    #       ),
-
-    #       # COLUMN 3: Contact / Links
-    #       div(
-    #         class = "col-md-3 footer-col",
-    #         h5("Contact"),
-    #         tags$ul(
-    #           class = "list-unstyled",
-    #           tags$li(tags$i(class = "bi bi-envelope"), " contact@example.org"),
-    #           tags$li(
-    #             tags$i(class = "bi bi-github"),
-    #             tags$a(href = "#", " View Source Code", class = "footer-link")
-    #           ),
-    #           tags$li(
-    #             tags$i(class = "bi bi-bug"),
-    #             tags$a(href = "#", " Report an Issue", class = "footer-link")
-    #           )
-    #         )
-    #       )
-    #     ),
-
-    #     # Bottom Copyright Row
-    #     div(
-    #       class = "row mt-4 pt-3 border-top border-secondary",
-    #       div(
-    #         class = "col-md-6 text-muted small",
-    #         paste(
-    #           "©",
-    #           format(Sys.Date(), "%Y"),
-    #           "Global Conservation Consortia. All rights reserved."
-    #         )
-    #       ),
-    #       div(
-    #         class = "col-md-6 text-end text-muted small",
-    #         "Version 1.0.0"
-    #       )
-    #     )
-    #   )
-    # )
   )
 }
 
@@ -186,33 +109,46 @@ landingServer <- function(id, landing_text) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
-    # Track selection ONLY for the expandable box (Box 2)
-    # TRUE = Open, FALSE = Closed
-    find_box_open <- reactiveVal(FALSE)
+    # Track which section is currently active
+    # Values: NULL (closed), "gather", "find", "share"
+    active_section <- reactiveVal(NULL)
 
-    # --- BOX 1: Modal (Legacy) ---
-    observeEvent(input$show_gather, {
-      showModal(modalDialog(
-        title = landing_text$gather$modal_title,
-        includeMarkdown("appData/gather_modal.md"),
-        footer = modalButton("Close"),
-        easyClose = TRUE,
-        size = "xl"
-      ))
-    })
+    # --- Toggle Logic Helper ---
+    toggle_section <- function(section_name) {
+      current <- active_section()
+      if (!is.null(current) && current == section_name) {
+        # If clicking the already open section, close it
+        active_section(NULL)
+      } else {
+        # Otherwise, open the new section
+        active_section(section_name)
+      }
+    }
 
-    # --- BOX 2: Expandable Panel (New Method) ---
-    observeEvent(input$show_find, {
-      # Toggle the state
-      find_box_open(!find_box_open())
-    })
+    # --- Observers for Clicks ---
+    observeEvent(input$show_gather, { toggle_section("gather") })
+    observeEvent(input$show_find,   { toggle_section("find") })
+    observeEvent(input$show_share,  { toggle_section("share") })
 
+    # --- Render the Expandable Panel ---
     output$feature_details <- renderUI({
-      req(find_box_open()) # Only render if True
+      req(active_section()) # Only render if a section is active
+      
+      section <- active_section()
+      
+      # Determine content based on active section
+      content <- switch(section,
+        "gather" = includeMarkdown("appData/gather_modal.md"),
+        "find"   = includeMarkdown("appData/find_gaps.md"),
+        "share"  = div(
+                     h3(landing_text$share$modal_title),
+                     p(landing_text$share$modal_text, style = "font-size: 1.1rem; line-height: 1.6;")
+                   )
+      )
 
       div(
         class = "feature-details-panel slide-down",
-        includeMarkdown("appData/find_gaps.md"),
+        content,
         # Internal Close Button
         actionButton(
           ns("close_details"),
@@ -222,38 +158,26 @@ landingServer <- function(id, landing_text) {
       )
     })
 
-    # Handle the internal close button
+    # --- Handle Close Button ---
     observeEvent(input$close_details, {
-      find_box_open(FALSE)
+      active_section(NULL)
     })
 
-    # Handle visual "Active" state for Box 2
+    # --- Visual "Active" State Management ---
     observe({
-      if (find_box_open()) {
-        shinyjs::addClass(id = "box_find", class = "active-feature-box")
-      } else {
-        shinyjs::removeClass(id = "box_find", class = "active-feature-box")
+      current <- active_section()
+      
+      # Reset all boxes first
+      shinyjs::removeClass(id = "box_gather", class = "active-feature-box")
+      shinyjs::removeClass(id = "box_find",   class = "active-feature-box")
+      shinyjs::removeClass(id = "box_share",  class = "active-feature-box")
+      
+      # Highlight the active one
+      if (!is.null(current)) {
+        if (current == "gather") shinyjs::addClass(id = "box_gather", class = "active-feature-box")
+        if (current == "find")   shinyjs::addClass(id = "box_find",   class = "active-feature-box")
+        if (current == "share")  shinyjs::addClass(id = "box_share",  class = "active-feature-box")
       }
-    })
-
-    # Visual cue for Find Gaps box
-    output$find_indicator <- renderUI({
-      req(find_box_open())
-      div(
-        style = "margin-top: 10px; color: #198754; font-weight: bold; animation: fadeIn 0.3s;",
-        icon("arrow-down"),
-        " See details below"
-      )
-    })
-
-    # --- BOX 3: Modal (Legacy) ---
-    observeEvent(input$show_share, {
-      showModal(modalDialog(
-        title = landing_text$share$modal_title,
-        p(landing_text$share$modal_text),
-        footer = modalButton("Close"),
-        easyClose = TRUE,
-      ))
     })
 
     return(list(
