@@ -408,7 +408,44 @@ gapAnalysisServer <- function(id, analysis_data) {
 
           proxy %>%
             leaflet::showGroup(c("Buffers", "GRS Gap", "ERS Regions"))
-
+          
+          # --- NEW: Dynamic Map Legend ---
+          legend_colors <- c()
+          legend_labels <- c()
+          
+          # 1. Add GRS mapping if it exists
+          if (!is.null(sf_grs_gap)) {
+            legend_colors <- c(legend_colors, grsexColor)
+            legend_labels <- c(legend_labels, "Geographic Gap (GRS)")
+          }
+          
+          # 2. Add ERS mapping if it exists
+          if (!is.null(sf_ers_regions)) {
+            # Extract the actual unique statuses present in the spatial data
+            ers_statuses <- sort(unique(sf_ers_regions$gap_status))
+            
+            # Use your existing pal_ers color mapping function to get the exact hex colors
+            legend_colors <- c(legend_colors, pal_ers(ers_statuses))
+            legend_labels <- c(legend_labels, paste("ERS:", ers_statuses))
+          }
+          
+          # 3. Push to proxy
+          if (length(legend_labels) > 0) {
+            proxy %>%
+              leaflet::addLegend(
+                layerId = "gap_legend", # Prevents duplicate legends on re-runs
+                position = "bottomleft",
+                colors = legend_colors,
+                labels = legend_labels,
+                title = "Gap Elements",
+                opacity = 0.7
+              )
+          } else {
+            # Optional cleanup if an analysis results in zero GRS/ERS elements
+            proxy %>% leaflet::removeControl("gap_legend")
+          }
+          # -------------------------------
+          
           bslib::nav_select(id = "results_tabs", selected = "Metrics Summary")
         }
       )

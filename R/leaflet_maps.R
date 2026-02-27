@@ -284,7 +284,8 @@ gap_base_map <- function() {
     # Optional: Hide them on initial load so the map isn't cluttered
     leaflet::hideGroup(c("GRS Gap", "ERS Regions", "Buffers"))|> 
     addLegend(
-      position = "topright",
+      title = "Species Observations",
+      position = "bottomleft",
       colors = combinedColor,
       labels = c("Reference", "Germplasm"),
       group = "all records"
