@@ -1,4 +1,5 @@
 # CONTROLS UI ----------------------------------------------------------------------
+# CONTROLS UI ----------------------------------------------------------------------
 controlsModuleUI <- function(id) {
   ns <- NS(id)
   tagList(
@@ -16,40 +17,12 @@ controlsModuleUI <- function(id) {
             class = "text-muted small mb-3",
             "Select taxonomic criteria to query and download occurrence records directly from GBIF."
           ),
-          selectizeInput(
-            inputId = ns("taxon_genus"),
-            label = "Genus",
-            choices = NULL,
-            width = "100%"
-          ),
-          selectizeInput(
-            inputId = ns("taxon_species"),
-            label = "Specific Epithet",
-            choices = NULL,
-            width = "100%"
-          ),
-          selectizeInput(
-            inputId = ns("taxon_rank"),
-            label = "Taxon Rank",
-            choices = NULL,
-            width = "100%"
-          ),
-          selectizeInput(
-            inputId = ns("taxon_infra"),
-            label = "Infraspecific Epithet",
-            choices = NULL,
-            width = "100%"
-          ),
+          selectizeInput(ns("taxon_genus"), "Genus", choices = NULL, width = "100%"),
+          selectizeInput(ns("taxon_species"), "Specific Epithet", choices = NULL, width = "100%"),
+          selectizeInput(ns("taxon_rank"), "Taxon Rank", choices = NULL, width = "100%"),
+          selectizeInput(ns("taxon_infra"), "Infraspecific Epithet", choices = NULL, width = "100%"),
           hr(style = "margin: 1.5rem 0;"),
-          sliderInput(
-            inputId = ns("gbif_limit"),
-            label = "Max Occurrences",
-            min = 0,
-            max = 500,
-            value = 200,
-            step = 50,
-            width = "100%"
-          ),
+          sliderInput(ns("gbif_limit"), "Max Occurrences", min = 0, max = 500, value = 200, step = 50, width = "100%"),
           radioButtons(
             inputId = ns("backfill_strategy"),
             label = "Wild Record Prioritization",
@@ -97,24 +70,19 @@ controlsModuleUI <- function(id) {
             buttonLabel = tagList(icon("folder-open"), "Browse"),
             placeholder = "No file selected",
             width = "100%"
-          ),
-          hr(style = "margin: 1.5rem 0;"),
-          div(
-            class = "d-grid",
-            downloadButton(
-              outputId = ns("exportData"),
-              label = "Export Analysis Data",
-              icon = icon("file-arrow-down"),
-              class = "btn-outline-secondary",
-              style = "font-weight: 500;"
-            )
-          ),
-          p(
-            class = "text-muted small mt-2 mb-0",
-            "Download the current working dataset including all loaded records."
           )
         )
       )
+    ),
+    
+    # --- EXPORT SECTION (Moved outside accordion) ---
+    div(
+      class = "d-grid px-2",
+      uiOutput(ns("export_button_ui")) # <-- Dynamically render the button here
+    ),
+    p(
+      class = "text-muted small mt-2 mb-0 text-center",
+      "Download the current working dataset including all loaded records."
     )
   )
 }
@@ -358,40 +326,40 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     # 9. Upload file logic -------------------------------------------------------------
     uploadData_temp <- reactiveVal(NULL)
 
-    observeEvent(input$uploadData, {
-      req(input$uploadData)
-      durations <- list(validation = 8, success = 5, warning = 10, system = NULL)
-      res <- read_upload_file(input$uploadData)
-
-      if (res$status == "validation_error") {
-        showNotification(res$message, type = "warning", duration = durations$validation)
-        return()
-      }
-      if (res$status == "system_error") {
-        showNotification(res$message, type = "error", duration = durations$system)
-        return()
-      }
-
-      new_points <- res$data
-      current    <- analysis_data()
-      
-      if (nrow(current) > 0 && "upload" %in% current$source) {
-        uploadData_temp(res) 
-        showModal(modalDialog(
-          title = "Overwrite Upload Data?",
-          "Upload data is already loaded. Do you want to overwrite it?",
-          footer = tagList(
-            actionButton(session$ns("cancelUpload"), "Cancel"),
-            actionButton(session$ns("confirmloadUpload"), "Overwrite", class = "btn-primary")
-          )
-        ))
-      } else {
-        updated_df <- merge_and_index(current, new_points)
-        analysis_data(updated_df)
-        dur <- if (res$message_type == "warning") durations$warning else durations$success
-        showNotification(res$message, type = res$message_type, duration = dur)
-      }
-    })
+      observeEvent(input$uploadData, {
+        req(input$uploadData)
+        durations <- list(validation = 8, success = 5, warning = 10, system = NULL)
+        res <- read_upload_file(input$uploadData)
+  
+        if (res$status == "validation_error") {
+          showNotification(res$message, type = "warning", duration = durations$validation)
+          return()
+        }
+        if (res$status == "system_error") {
+          showNotification(res$message, type = "error", duration = durations$system)
+          return()
+        }
+  
+        new_points <- res$data
+        current    <- analysis_data()
+        
+        if (nrow(current) > 0 && "upload" %in% current$source) {
+          uploadData_temp(res) 
+          showModal(modalDialog(
+            title = "Overwrite Upload Data?",
+            "Upload data is already loaded. Do you want to overwrite it?",
+            footer = tagList(
+              actionButton(session$ns("cancelUpload"), "Cancel"),
+              actionButton(session$ns("confirmloadUpload"), "Overwrite", class = "btn-primary")
+            )
+          ))
+        } else {
+          updated_df <- merge_and_index(current, new_points)
+          analysis_data(updated_df)
+          dur <- if (res$message_type == "warning") durations$warning else durations$success
+          showNotification(res$message, type = res$message_type, duration = dur)
+        }
+      })
 
     observeEvent(input$confirmloadUpload, {
       req(uploadData_temp()) 
@@ -416,7 +384,37 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       removeModal()
     })
     
-    # 10. Export analysis data ---------------------------------------------------------
+    # 10. Dynamic Export Button UI -----------------------------------------------------
+    output$export_button_ui <- renderUI({
+      current_data <- analysis_data()
+      
+      # Check if we have valid data
+      has_data <- isTruthy(current_data) && is.data.frame(current_data) && nrow(current_data) > 0
+      
+      if (has_data) {
+        # If data exists, render the actual download button
+        downloadButton(
+          outputId = session$ns("exportData"), 
+          label = "Export Analysis Data",
+          icon = icon("file-arrow-down"),
+          class = "btn-outline-secondary",
+          style = "font-weight: 500;"
+        )
+      } else {
+        # If no data, render a completely disabled action button that looks identical
+        shinyjs::disabled(
+          actionButton(
+            inputId = session$ns("dummy_export"),
+            label = "Export Analysis Data",
+            icon = icon("file-arrow-down"),
+            class = "btn-outline-secondary",
+            style = "font-weight: 500;"
+          )
+        )
+      }
+    })
+    
+    # 11. Export analysis data Handler -------------------------------------------------
     output$exportData <- downloadHandler(
       filename = function() {
         paste0("analysis_data_", format(Sys.time(), "%Y%m%d_%H%M"), ".csv")
