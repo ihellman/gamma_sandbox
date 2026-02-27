@@ -48,6 +48,59 @@ gapAnalysisServer <- function(id, analysis_data) {
     srs_ex <- shiny::reactiveVal(NULL)
     grs_ex <- shiny::reactiveVal(NULL)
     ers_ex <- shiny::reactiveVal(NULL)
+    # State tracking variables
+    analysis_active <- shiny::reactiveVal(FALSE)
+    pending_warning <- shiny::reactiveVal(FALSE)
+    
+    # Helper function to show the modal (keeps code DRY)
+    show_invalid_data_modal <- function() {
+      showModal(modalDialog(
+        title = "Dataset Modified",
+        "The underlying dataset has been changed. Previous gap analysis results have been cleared from the map to prevent inaccuracies.",
+        br(), br(),
+        "Please click ", strong("Run Gap Analysis"), " again to calculate metrics for the new data.",
+        easyClose = TRUE,
+        footer = modalButton("Understood"),
+        size = "m"
+      ))
+    }
+    
+    # Watch for changes in the underlying data
+    observeEvent(analysis_data(), {
+      # ONLY trigger this cleanup if an analysis was previously run and is on screen
+      req(analysis_active()) 
+      
+      # 1. Update state
+      analysis_active(FALSE)
+      
+      # 2. Clear spatial results from the map
+      leaflet::leafletProxy("gap_map", session) %>%
+        leaflet::clearGroup("Buffers") %>%
+        leaflet::clearGroup("GRS Gap") %>%
+        leaflet::clearGroup("ERS Regions") %>%
+        leaflet::removeControl("gap_legend")
+      
+      # 3. Clear data tables and plots by wiping the metric reactives
+      srs_ex(NULL)
+      grs_ex(NULL)
+      ers_ex(NULL)
+      
+      # 4. Highlight the Run button (swap from primary blue to warning yellow)
+      shinyjs::removeClass(id = "generate_buffers", class = "btn-primary")
+      shinyjs::addClass(id = "generate_buffers", class = "btn-warning")
+      
+      # 5. Show popup notification
+      showModal(modalDialog(
+        title = "Dataset Modified",
+        "The underlying dataset has been changed. Previous gap analysis results have been cleared from the map to prevent inaccuracies.",
+        br(), br(),
+        "Please click ", strong("Run Gap Analysis"), " again to calculate metrics for the new data.",
+        easyClose = TRUE,
+        footer = modalButton("Understood"),
+        size = "m"
+      ))
+    }, ignoreInit = TRUE)
+    
 
     buffer_dist_km <- reactive({
       req(input$buffer_dist)
@@ -449,6 +502,12 @@ gapAnalysisServer <- function(id, analysis_data) {
           bslib::nav_select(id = "results_tabs", selected = "Metrics Summary")
         }
       )
+      # --- NEW: Reset state and button styling on successful run ---
+      analysis_active(TRUE)
+      shinyjs::removeClass(id = "generate_buffers", class = "btn-warning")
+      shinyjs::addClass(id = "generate_buffers", class = "btn-primary")
+      # -------------------------------------------------------------
+      
       showNotification(paste("Gap Analysis Complete"), type = "message")
     })
   })

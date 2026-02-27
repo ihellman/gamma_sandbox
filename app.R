@@ -17,7 +17,7 @@ landing_text <- read_yaml("appData/landing_text.yml")
 # MAIN UI ----------------------------------------------------------------------------------
 ui <- tagList(
   page_navbar(
-    title = "GAMMA - Mapping the Metacollection",
+    title = "GAMMA",
     id = "navbar",
     theme = bs_theme(version = 5),
     # LINKING THE CSS FILE HERE
