@@ -5,9 +5,9 @@ account: atlantabg
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16521929
-bundleId: 11502018
+bundleId: 11611737
 url: https://atlantabg.shinyapps.io/GAMMA_dev/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: gap_speed_testing.R|preprocessing/downloadWater.R|temp/library(sf).R
+ignoredFiles: temp/library(sf).R
