@@ -262,26 +262,27 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
 # Gap Analysis Map Setup
 # Renders the empty basemap with controls and legends
 gap_base_map <- function() {
-  leaflet::leaflet(options = leafletOptions(minZoom = 3, maxZoom = 16)) |>
-    setView(lng = "-97.511993", lat = "40.023401", zoom = 4) |>
-    # Base Layers
-    addProviderTiles("OpenStreetMap", group = "OpenStreetMap") |>
-    addProviderTiles("Esri.WorldTopoMap", group = "Topography") |>
-    addProviderTiles("Esri.WorldImagery", group = "Imagery") |>
-    # Controls
-    addLayersControl(
-      position = "topleft",
+  leaflet::leaflet() %>%
+    leaflet::addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+    leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
+    leaflet::addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
+    
+    leaflet::addMapPane("buffers", zIndex = 410) %>%
+    leaflet::addMapPane("points", zIndex = 420) %>%
+    
+    leaflet::addLayersControl(
+      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
       overlayGroups = c(
         "Reference Records",
         "Germplasm Records",
         "Buffers",
-        "GRS gaps",
-        "ERS gaps"
+        "GRS Gap",       # <- MUST BE LISTED HERE
+        "ERS Regions"    # <- MUST BE LISTED HERE
       ),
-      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
-      options = layersControlOptions(collapsed = TRUE)
-    ) |>
-    # Legends
+      options = leaflet::layersControlOptions(collapsed = FALSE)
+    ) %>%
+    # Optional: Hide them on initial load so the map isn't cluttered
+    leaflet::hideGroup(c("GRS Gap", "ERS Regions", "Buffers"))|> 
     addLegend(
       position = "topright",
       colors = combinedColor,

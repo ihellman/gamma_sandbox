@@ -4,7 +4,7 @@ controlsModuleUI <- function(id) {
   tagList(
     accordion(
       multiple = FALSE,
-      open = "panel_gbif",
+      open = FALSE,
       
       # --- GBIF PANEL ---
       accordion_panel(

@@ -86,9 +86,7 @@ gapAnalysisServer <- function(id, analysis_data) {
     }
 
     output$gap_map <- leaflet::renderLeaflet({
-      gap_base_map() %>%
-        leaflet::addMapPane("buffers", zIndex = 410) %>%
-        leaflet::addMapPane("points", zIndex = 420)
+      gap_base_map()
     })
 
     # --- FIX 2: Safe Observer ---
@@ -409,19 +407,8 @@ gapAnalysisServer <- function(id, analysis_data) {
           }
 
           proxy %>%
-            leaflet::addLayersControl(
-              baseGroups = c("Positron", "Satellite"),
-              overlayGroups = c(
-                "Buffers",
-                "GRS Gap",
-                "ERS Regions",
-                "Reference Records",
-                "Germplasm Records"
-              ),
-              options = leaflet::layersControlOptions(collapsed = FALSE)
-            ) %>%
-            leaflet::hideGroup("GRS Gap") %>%
-            leaflet::hideGroup("ERS Regions")
+            leaflet::showGroup(c("Buffers", "GRS Gap", "ERS Regions"))
+
           bslib::nav_select(id = "results_tabs", selected = "Metrics Summary")
         }
       )
