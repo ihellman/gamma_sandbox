@@ -108,78 +108,87 @@ landingUI <- function(id, landing_text) {
 landingServer <- function(id, landing_text) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
-    # Track which section is currently active
-    # Values: NULL (closed), "gather", "find", "share"
-    active_section <- reactiveVal(NULL)
-
+    
+    # Track which sections are currently active as a character vector
+    # Values: character(0) (all closed), or any combination of "gather", "find", "share"
+    active_sections <- reactiveVal(character(0))
+    
     # --- Toggle Logic Helper ---
     toggle_section <- function(section_name) {
-      current <- active_section()
-      if (!is.null(current) && current == section_name) {
-        # If clicking the already open section, close it
-        active_section(NULL)
+      current <- active_sections()
+      
+      if (section_name %in% current) {
+        # If it's already open, remove it from the list
+        active_sections(setdiff(current, section_name))
       } else {
-        # Otherwise, open the new section
-        active_section(section_name)
+        # If it's closed, add it to the list
+        active_sections(c(current, section_name))
       }
     }
-
+    
     # --- Observers for Clicks ---
     observeEvent(input$show_gather, { toggle_section("gather") })
     observeEvent(input$show_find,   { toggle_section("find") })
     observeEvent(input$show_share,  { toggle_section("share") })
-
+    
     # --- Render the Expandable Panel ---
     output$feature_details <- renderUI({
-      req(active_section()) # Only render if a section is active
+      current <- active_sections()
+      req(length(current) > 0) # Only render if at least one section is active
       
-      section <- active_section()
+      # --- THE FIX: Force the display order ---
+      master_order <- c("gather", "find", "share")
+      ordered_sections <- intersect(master_order, current)
       
-      # Determine content based on active section
-      content <- switch(section,
-        "gather" = includeMarkdown("appData/gather_modal.md"),
-        "find"   = includeMarkdown("appData/find_gaps.md"),
-        "share"  = div(
-                     h3(landing_text$share$modal_title),
-                     p(landing_text$share$modal_text, style = "font-size: 1.1rem; line-height: 1.6;")
-                   )
-      )
-
+      # Build a list of UI elements for all active sections
+      # Notice we now loop over 'ordered_sections' instead of 'current'
+      stacked_content <- lapply(ordered_sections, function(section) {
+        content <- switch(section,
+                          "gather" = includeMarkdown("appData/gather_modal.md"),
+                          "find"   = includeMarkdown("appData/find_gaps.md"),
+                          "share"  = includeMarkdown("appData/share_results.md")
+        )
+        
+        # Wrap each section in a div with a bottom border to separate them
+        div(class = "mb-4 pb-3 border-bottom", content)
+      })
+      
       div(
         class = "feature-details-panel slide-down",
-        content,
-        # Internal Close Button
+        tagList(stacked_content),
+        # Internal Close Button 
         actionButton(
           ns("close_details"),
-          "Close Section",
+          "Close All Sections",
           class = "btn btn-sm btn-outline-secondary mt-3"
         )
       )
     })
-
+    
     # --- Handle Close Button ---
     observeEvent(input$close_details, {
-      active_section(NULL)
+      # Clear all selections
+      active_sections(character(0)) 
     })
-
+    
     # --- Visual "Active" State Management ---
     observe({
-      current <- active_section()
+      current <- active_sections()
       
-      # Reset all boxes first
-      shinyjs::removeClass(id = "box_gather", class = "active-feature-box")
-      shinyjs::removeClass(id = "box_find",   class = "active-feature-box")
-      shinyjs::removeClass(id = "box_share",  class = "active-feature-box")
-      
-      # Highlight the active one
-      if (!is.null(current)) {
-        if (current == "gather") shinyjs::addClass(id = "box_gather", class = "active-feature-box")
-        if (current == "find")   shinyjs::addClass(id = "box_find",   class = "active-feature-box")
-        if (current == "share")  shinyjs::addClass(id = "box_share",  class = "active-feature-box")
+      # Helper function to toggle classes based on presence in the 'current' vector
+      toggle_box_class <- function(box_id, sec_name) {
+        if (sec_name %in% current) {
+          shinyjs::addClass(id = box_id, class = "active-feature-box")
+        } else {
+          shinyjs::removeClass(id = box_id, class = "active-feature-box")
+        }
       }
+      
+      toggle_box_class("box_gather", "gather")
+      toggle_box_class("box_find", "find")
+      toggle_box_class("box_share", "share")
     })
-
+    
     return(list(
       launch = reactive(input$launch),
       learn_more = reactive(input$learn_more)
