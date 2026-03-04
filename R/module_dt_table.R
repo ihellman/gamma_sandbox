@@ -65,14 +65,14 @@ DT_tableModuleServer <- function(
       if (is.null(data) || nrow(data) == 0 && ncol(data) == 0) {
         return(data.frame())
       }
-
+      # replaces the color assignment to the objects defined in the leaflet module
       data <- data %>%
         mutate(
           germplasm_color = case_when(
-            source == 'GBIF' & `Current Germplasm Type` == 'H' ~ '#a6dba0',
-            source == 'GBIF' & `Current Germplasm Type` == 'G' ~ '#008837',
-            source == 'upload' & `Current Germplasm Type` == 'H' ~ '#c2a5cf',
-            source == 'upload' & `Current Germplasm Type` == 'G' ~ '#7b3294',
+            source == 'GBIF' & `Current Germplasm Type` == 'H' ~ gbifColor[1],
+            source == 'GBIF' & `Current Germplasm Type` == 'G' ~ gbifColor[2],
+            source == 'upload' & `Current Germplasm Type` == 'H' ~ uploadColor[1],
+            source == 'upload' & `Current Germplasm Type` == 'G' ~ uploadColor[2],
             TRUE ~ 'transparent' 
           )
         )

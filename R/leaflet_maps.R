@@ -2,14 +2,12 @@
 
 # --- Color Palettes ---
 # Data Eval map - Input data
-uploadColor <- c("#c2a5cf", "#7b3294") #(upload H, upload G)
-gbifColor <- c("#a6dba0", "#008837") #(GBIF H, GBIF G)
-
+uploadColor <- c("#fdae61", "#f46d43") #(upload H, upload G)
+gbifColor <- c("#92c5de", "#0571b0")
 # GAP Map
 combinedColor <- c("#f1a340", "#542788")
 grsexColor <- c("#ef8a62")
 ersexColor <- c("#d1e5f0")
-
 # Ers gaps
 ersexColors <- c("#8ae6c7", "#728587")
 
@@ -184,21 +182,43 @@ render_base_points <- function(mapID, allPoints) {
       )
     )
 
-  # Draw Points
-  leafletProxy(mapID) |>
-    clearMarkers() |>
-    addCircleMarkers(
-      data = data,
-      layerId = ~index, # The index ensures we can link clicks back to the full dataset
+  proxy <- leafletProxy(mapID) |> clearMarkers()
+
+  # Draw GBIF Points
+  data_gbif <- data %>% filter(source == "GBIF")
+  if(nrow(data_gbif) > 0) {
+    proxy <- proxy |> addCircleMarkers(
+      data = data_gbif,
+      layerId = ~index,
+      group = "GBIF", # ASSIGNED TO TOGGLE
       radius = 5,
       color = "white",
       fillColor = ~color,
       stroke = TRUE,
       weight = 1,
       fillOpacity = 1,
-      label = point_labels(data)
+      label = point_labels(data_gbif)
     )
+  }
 
+  # Draw Upload Points
+  data_upload <- data %>% filter(source == "upload")
+  if(nrow(data_upload) > 0) {
+    proxy <- proxy |> addCircleMarkers(
+      data = data_upload,
+      layerId = ~index,
+      group = "Upload", # ASSIGNED TO TOGGLE
+      radius = 5,
+      color = "white",
+      fillColor = ~color,
+      stroke = TRUE,
+      weight = 1,
+      fillOpacity = 1,
+      label = point_labels(data_upload)
+    )
+  }
+
+  # Fit Bounds
   if (nrow(allPoints) > 0) {
     leafletProxy(mapID) |>
       fitBounds(
@@ -213,13 +233,13 @@ render_base_points <- function(mapID, allPoints) {
 # 3. Update Selection
 update_selection_highlights <- function(mapID, allPoints, selected_ids) {
   if (nrow(allPoints) == 0 || length(selected_ids) == 0) {
-    leafletProxy(mapID) |> clearGroup("GBIF Selection")
+    leafletProxy(mapID) |> clearGroup("GBIF Selection") |> clearGroup("Upload Selection")
     return(invisible(NULL))
   }
 
   # Filter for valid coordinates
   mappable_data <- allPoints %>%
-    filter(index %in% selected_ids) %>% # Filter by ID first for efficiency
+    filter(index %in% selected_ids) %>% 
     mutate(
       Latitude = as.numeric(Latitude),
       Longitude = as.numeric(Longitude)
@@ -227,10 +247,9 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
     filter(!is.na(Latitude) & !is.na(Longitude))
 
   if (nrow(mappable_data) == 0) {
-    leafletProxy(mapID) |> clearGroup("GBIF Selection")
+    leafletProxy(mapID) |> clearGroup("GBIF Selection") |> clearGroup("Upload Selection")
     return(invisible(NULL))
   }
-  # -----------------------------------------
 
   mappable_data <- mappable_data %>%
     sf::st_as_sf(
@@ -241,13 +260,14 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
 
   proxy <- leafletProxy(mapID)
 
-  # Clear previous highlights
-  proxy |> clearGroup("GBIF Selection")
+  # Clear previous highlights for BOTH groups
+  proxy |> clearGroup("GBIF Selection") |> clearGroup("Upload Selection")
 
-  # Add Halo Effect for Selection
-  proxy |>
-    addCircleMarkers(
-      data = mappable_data,
+  # Add Halo Effect for GBIF Selection
+  data_gbif_sel <- mappable_data %>% filter(source == "GBIF")
+  if(nrow(data_gbif_sel) > 0) {
+    proxy <- proxy |> addCircleMarkers(
+      data = data_gbif_sel,
       group = "GBIF Selection",
       radius = 12,
       color = "transparent",
@@ -256,8 +276,23 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
       stroke = FALSE,
       options = pathOptions(interactive = FALSE)
     )
-}
+  }
 
+  # Add Halo Effect for Upload Selection
+  data_upload_sel <- mappable_data %>% filter(source == "upload")
+  if(nrow(data_upload_sel) > 0) {
+    proxy <- proxy |> addCircleMarkers(
+      data = data_upload_sel,
+      group = "Upload Selection",
+      radius = 12,
+      color = "transparent",
+      fillColor = "#025c8f",
+      fillOpacity = 0.3,
+      stroke = FALSE,
+      options = pathOptions(interactive = FALSE)
+    )
+  }
+}
 
 # Gap Analysis Map Setup
 # Renders the empty basemap with controls and legends

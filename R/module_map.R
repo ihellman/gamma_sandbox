@@ -13,6 +13,7 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
     output$dataEvalMap <- renderLeaflet({
       data_eval_base_map()
     })
+    
 
     # Handle data handling of GBIF/uploaded data
     observeEvent(analysis_data(), {
