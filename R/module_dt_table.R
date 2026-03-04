@@ -149,13 +149,14 @@ DT_tableModuleServer <- function(
           `overflow` = 'hidden',
           `text-overflow` = 'ellipsis',
           fontSize = '13px'
-        ) %>%
-        formatStyle(
+        ) %>% formatStyle(
           'Current Germplasm Type',
           valueColumns = 'germplasm_color', 
           backgroundColor = styleEqual(
-            c('#a6dba0', '#008837', '#c2a5cf', '#7b3294'), 
-            c('#a6dba066', '#00883766', '#c2a5cf66', '#7b329466') 
+            # Look for the current exact hex codes assigned to the R objects
+            c(gbifColor, uploadColor), 
+            # Append '66' to the hex codes to add that nice 40% transparency
+            paste0(c(gbifColor, uploadColor), "66") 
           ),
           fontWeight = 'bold'
         ) %>%
