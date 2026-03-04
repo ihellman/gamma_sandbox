@@ -4,8 +4,11 @@ gapAnalysisUI <- function(id) {
 
   tagList(
     layout_sidebar(
+      fillable = TRUE,
+      class = "p-0", # Removes padding so the map is flush with the edges
       sidebar = sidebar(
         title = "Controls",
+        open = "always",
         selectInput(
           inputId = ns("buffer_dist"),
           label = "Buffer Distance (km)",
@@ -17,28 +20,36 @@ gapAnalysisUI <- function(id) {
           label = "Run Gap Analysis",
           icon = icon("play-circle"),
           class = "btn-primary w-100 mb-3"
+        ),
+        # Inactive Download Button
+        actionButton(
+          inputId = ns("download_report"),
+          label = "Download Report",
+          icon = icon("download"),
+          style = "background-color: white; color: #a9a9a9; border: 1px solid #ddd; width: 100%; cursor: not-allowed;",
+          disabled = "disabled" # HTML attribute to fully disable click events
         )
       ),
-      card(
-        card_header("Spatial Distribution"),
-        leaflet::leafletOutput(ns("gap_map"), height = "400px"),
-        full_screen = TRUE
-      ),
-      bslib::navset_card_underline(
-        id = ns("results_tabs"),
-        title = "Gap Analysis Results",
-        bslib::nav_panel(
-          title = "Occurrence Records",
-          DT::DTOutput(ns("records_table"))
-        ),
-        bslib::nav_panel(
-          title = "Metrics Summary",
-          DT::DTOutput(ns("metrics_table"))
-        ),
-        bslib::nav_panel(title = "Scores Plot", plotOutput(ns("metrics_plot")))
+      
+      # Main area: Full screen map container with inset plot
+      div(
+        style = "position: relative; width: 100%; height: 100%; min-height: 80vh;",
+        
+        # Base Map
+        leaflet::leafletOutput(ns("gap_map"), width = "100%", height = "100%"),
+        
+        # Floating Inset Plot (Hidden by default until analysis runs)
+        shinyjs::hidden(
+          div(
+            id = ns("plot_inset"),
+            style = "position: absolute; bottom: 30px; right: 60px; z-index: 1000; 
+                     background: white; padding: 15px; border-radius: 8px; 
+                     box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 380px; height: 180px;",
+            plotOutput(ns("metrics_plot"), width = "100%", height = "100%")
+          )
+        )
       )
-    ),
-    # footer_ui()
+    )
   )
 }
 
@@ -48,48 +59,32 @@ gapAnalysisServer <- function(id, analysis_data) {
     srs_ex <- shiny::reactiveVal(NULL)
     grs_ex <- shiny::reactiveVal(NULL)
     ers_ex <- shiny::reactiveVal(NULL)
+    
     # State tracking variables
     analysis_active <- shiny::reactiveVal(FALSE)
     pending_warning <- shiny::reactiveVal(FALSE)
     
-    # Helper function to show the modal (keeps code DRY)
-    show_invalid_data_modal <- function() {
-      showModal(modalDialog(
-        title = "Dataset Modified",
-        "The underlying dataset has been changed. Previous gap analysis results have been cleared from the map to prevent inaccuracies.",
-        br(), br(),
-        "Please click ", strong("Run Gap Analysis"), " again to calculate metrics for the new data.",
-        easyClose = TRUE,
-        footer = modalButton("Understood"),
-        size = "m"
-      ))
-    }
-    
     # Watch for changes in the underlying data
     observeEvent(analysis_data(), {
-      # ONLY trigger this cleanup if an analysis was previously run and is on screen
       req(analysis_active()) 
       
-      # 1. Update state
       analysis_active(FALSE)
       
-      # 2. Clear spatial results from the map
       leaflet::leafletProxy("gap_map", session) %>%
         leaflet::clearGroup("Buffers") %>%
         leaflet::clearGroup("GRS Gap") %>%
         leaflet::clearGroup("ERS Regions") %>%
         leaflet::removeControl("gap_legend")
       
-      # 3. Clear data tables and plots by wiping the metric reactives
+      shinyjs::hide("plot_inset")
+      
       srs_ex(NULL)
       grs_ex(NULL)
       ers_ex(NULL)
       
-      # 4. Highlight the Run button (swap from primary blue to warning yellow)
       shinyjs::removeClass(id = "generate_buffers", class = "btn-primary")
       shinyjs::addClass(id = "generate_buffers", class = "btn-warning")
       
-      # 5. Show popup notification
       showModal(modalDialog(
         title = "Dataset Modified",
         "The underlying dataset has been changed. Previous gap analysis results have been cleared from the map to prevent inaccuracies.",
@@ -111,24 +106,12 @@ gapAnalysisServer <- function(id, analysis_data) {
       return(val)
     })
 
-    # --- FIX 1: Robust Helper Function ---
+    # --- Robust Helper Function ---
     prepLatLon <- function(data) {
-      # Check if data is valid
-      if (is.null(data) || !is.data.frame(data)) {
-        return(data.frame())
-      }
+      if (is.null(data) || !is.data.frame(data)) return(data.frame())
+      if (!all(c("Longitude", "Latitude") %in% names(data))) return(data.frame())
+      if (nrow(data) == 0) return(data.frame())
 
-      # Check for required columns to avoid "object 'Latitude' not found"
-      if (!all(c("Longitude", "Latitude") %in% names(data))) {
-        return(data.frame())
-      }
-
-      # Check for rows
-      if (nrow(data) == 0) {
-        return(data.frame())
-      }
-
-      # Safe processing
       vals <- as.data.frame(data) |>
         dplyr::filter(!is.na(Longitude)) |>
         dplyr::mutate(
@@ -142,17 +125,13 @@ gapAnalysisServer <- function(id, analysis_data) {
       gap_base_map()
     })
 
-    # --- FIX 2: Safe Observer ---
+    # --- Safe Observer for Base Points ---
     observe({
       req(analysis_data(), input$gap_map_bounds)
 
-      # Process data safely
       data <- prepLatLon(analysis_data())
-
-      # STOP here if prepLatLon returned empty DF (prevents downstream errors)
       req(nrow(data) > 0)
 
-      # Calculate SRS
       if (!is.null(data$`Taxon Name`)) {
         srsMetrics <- SRSex(
           taxon = data$`Taxon Name`[1],
@@ -161,7 +140,6 @@ gapAnalysisServer <- function(id, analysis_data) {
         srs_ex(srsMetrics)
       }
 
-      # Proceed with Mapping
       col_name <- if ("Current Germplasm Type" %in% names(data)) {
         "Current Germplasm Type"
       } else if ("type" %in% names(data)) {
@@ -206,109 +184,71 @@ gapAnalysisServer <- function(id, analysis_data) {
         )
     })
 
-    # 3. Reactive Dataframe for Summary Table/Plot
+    # Reactive Dataframe for Inset Plot
     gap_scores_df <- reactive({
       req(srs_ex(), grs_ex(), ers_ex())
 
       srs_data <- srs_ex()
-      srs_val <- if ("SRS exsitu" %in% names(srs_data)) {
-        srs_data[["SRS exsitu"]]
-      } else {
-        NA
-      }
+      srs_val <- if ("SRS exsitu" %in% names(srs_data)) srs_data[["SRS exsitu"]] else NA
 
       grs_data <- grs_ex()
-      grs_val <- if ("GRS exsitu" %in% names(grs_data)) {
-        grs_data[["GRS exsitu"]]
-      } else {
-        NA
-      }
+      grs_val <- if ("GRS exsitu" %in% names(grs_data)) grs_data[["GRS exsitu"]] else NA
 
       ers_list <- ers_ex()
-      ers_val <- if (
-        !is.null(ers_list$summary) && "ERS exsitu" %in% names(ers_list$summary)
-      ) {
+      ers_val <- if (!is.null(ers_list$summary) && "ERS exsitu" %in% names(ers_list$summary)) {
         ers_list$summary[["ERS exsitu"]]
-      } else {
-        NA
-      }
+      } else NA
+      
+      # Calculate Final Conservation Score
+      fcs_val <- mean(c(srs_val, grs_val, ers_val), na.rm = TRUE)
 
       dplyr::tibble(
-        Metric = c(
-          "SRS sampling score",
-          "GRS geographic score",
-          "ERS ecological score"
-        ),
-        Score = as.numeric(c(srs_val, grs_val, ers_val)),
-        Type = c("SRS", "GRS", "ERS")
+        # Convert to factor so ggplot maintains the exact order on the X-axis
+        Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
+        Score = as.numeric(c(srs_val, grs_val, ers_val, fcs_val)),
+        Type = c("SRS", "GRS", "ERS", "FCS")
       ) |>
         dplyr::mutate(Score = round(Score, 1))
     })
 
-    # 4. Render Outputs
-    output$records_table <- DT::renderDT({
-      req(analysis_data())
-      DT::datatable(
-        analysis_data(),
-        options = list(pageLength = 10, scrollX = TRUE),
-        rownames = FALSE
-      )
-    })
-
-    output$metrics_table <- DT::renderDT({
-      req(gap_scores_df())
-      df <- gap_scores_df()
-      fcs <- mean(df$Score, na.rm = TRUE)
-      df_display <- df |>
-        dplyr::select(Metric, Score) |>
-        dplyr::bind_rows(dplyr::tibble(
-          Metric = "FCS (Final Conservation Score)",
-          Score = round(fcs, 1)
-        ))
-      DT::datatable(
-        df_display,
-        options = list(dom = 't', ordering = FALSE),
-        rownames = FALSE,
-        class = "cell-border stripe"
-      )
-    })
-
+    # Render Inset Plot
     output$metrics_plot <- renderPlot({
       req(gap_scores_df())
       df <- gap_scores_df()
       ggplot2::ggplot(df, ggplot2::aes(x = Metric, y = Score, fill = Type)) +
-        ggplot2::geom_col(width = 0.5) +
+        ggplot2::geom_col(width = 0.6) +
         ggplot2::geom_text(
           ggplot2::aes(label = Score),
           vjust = -0.5,
-          size = 6,
-          fontface = "bold"
+          size = 5,
+          fontface = "bold",
+          color = "#2c3e50"
         ) +
-        ggplot2::scale_y_continuous(limits = c(0, 110), expand = c(0, 0)) +
+        ggplot2::scale_y_continuous(limits = c(0, 115), expand = c(0, 0)) +
         ggplot2::scale_fill_manual(
           values = c(
             "SRS" = combinedColor[1],
             "GRS" = grsexColor,
-            "ERS" = ersexColors[2]
+            "ERS" = ersexColors[2],
+            "FCS" = "#2c3e50" # A distinct, bold navy blue for the final score
           )
         ) +
-        ggplot2::theme_minimal(base_size = 14) +
+        ggplot2::theme_minimal(base_size = 12) +
         ggplot2::labs(
           y = "Score (0-100)",
           x = "",
-          title = "Conservation Gap Analysis"
+          title = "Conservation Gap Scores"
         ) +
         ggplot2::theme(
           legend.position = "none",
           panel.grid.major.x = ggplot2::element_blank(),
-          axis.text.x = ggplot2::element_text(size = 12, face = "bold"),
-          plot.title = ggplot2::element_text(hjust = 0.5, size = 18)
+          axis.text.x = ggplot2::element_text(size = 11, face = "bold"),
+          plot.title = ggplot2::element_text(hjust = 0.5, size = 15, face = "bold", color = "#2c3e50")
         )
     })
 
     # 5. Run Gap Analysis
     observeEvent(input$generate_buffers, {
-      # Use robust prep here too
       data <- prepLatLon(analysis_data())
       req(nrow(data) > 0)
 
@@ -332,7 +272,6 @@ gapAnalysisServer <- function(id, analysis_data) {
           land <- terra::vect("appData/land_simple.gpkg")
 
           incProgress(0.2, detail = "Buffering points...")
-          # prepLatLon already run above
           df_base <- data
           if (!is.null(target_col)) {
             df_base$processing_type <- df_base[[target_col]]
@@ -462,31 +401,25 @@ gapAnalysisServer <- function(id, analysis_data) {
           proxy %>%
             leaflet::showGroup(c("Buffers", "GRS Gap", "ERS Regions"))
           
-          # --- NEW: Dynamic Map Legend ---
+          # Dynamic Map Legend
           legend_colors <- c()
           legend_labels <- c()
           
-          # 1. Add GRS mapping if it exists
           if (!is.null(sf_grs_gap)) {
             legend_colors <- c(legend_colors, grsexColor)
             legend_labels <- c(legend_labels, "Geographic Gap (GRS)")
           }
           
-          # 2. Add ERS mapping if it exists
           if (!is.null(sf_ers_regions)) {
-            # Extract the actual unique statuses present in the spatial data
             ers_statuses <- sort(unique(sf_ers_regions$gap_status))
-            
-            # Use your existing pal_ers color mapping function to get the exact hex colors
             legend_colors <- c(legend_colors, pal_ers(ers_statuses))
             legend_labels <- c(legend_labels, paste("ERS:", ers_statuses))
           }
           
-          # 3. Push to proxy
           if (length(legend_labels) > 0) {
             proxy %>%
               leaflet::addLegend(
-                layerId = "gap_legend", # Prevents duplicate legends on re-runs
+                layerId = "gap_legend", 
                 position = "bottomleft",
                 colors = legend_colors,
                 labels = legend_labels,
@@ -494,19 +427,16 @@ gapAnalysisServer <- function(id, analysis_data) {
                 opacity = 0.7
               )
           } else {
-            # Optional cleanup if an analysis results in zero GRS/ERS elements
             proxy %>% leaflet::removeControl("gap_legend")
           }
-          # -------------------------------
-          
-          bslib::nav_select(id = "results_tabs", selected = "Metrics Summary")
         }
       )
-      # --- NEW: Reset state and button styling on successful run ---
+      
+      # Reveal the inset plot and reset UI elements
+      shinyjs::show("plot_inset")
       analysis_active(TRUE)
       shinyjs::removeClass(id = "generate_buffers", class = "btn-warning")
       shinyjs::addClass(id = "generate_buffers", class = "btn-primary")
-      # -------------------------------------------------------------
       
       showNotification(paste("Gap Analysis Complete"), type = "message")
     })

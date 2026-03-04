@@ -301,7 +301,7 @@ gap_base_map <- function() {
     leaflet::addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
     leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
     leaflet::addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
-    
+    # map pane elements 
     leaflet::addMapPane("buffers", zIndex = 410) %>%
     leaflet::addMapPane("points", zIndex = 420) %>%
     
