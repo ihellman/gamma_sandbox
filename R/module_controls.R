@@ -66,7 +66,9 @@ controlsModuleUI <- function(id) {
           fileInput(
             inputId = ns("uploadData"),
             label = NULL,
-            accept = c(".csv", "text/csv"),
+            accept = c(".csv", "text/csv", ".xlsx", ".xls",
+                       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                       "application/vnd.ms-excel"),
             buttonLabel = tagList(icon("folder-open"), "Browse"),
             placeholder = "No file selected",
             width = "100%"
