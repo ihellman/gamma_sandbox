@@ -1,4 +1,4 @@
-### Methodology: Identifying Conservation Gaps
+### Step 2: Find the gaps
 We a conservation gap analysis framework to inform collection actions and the state of the metacollection for a specific species. This process evaluates the extent to which *ex situ* (genebank/living collection), are present across the estimated distribution of the species.
 
 #### Key Metrics

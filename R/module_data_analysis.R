@@ -43,10 +43,11 @@ dataAnalysisUI <- function(id) {
         fillable = TRUE,
         card(
           full_screen = TRUE,
+          # addding the gbifColor object to avoid hard coding the color
           card_header(
             tags$strong("GBIF"),
             uiOutput(ns("row_count_gbif"), inline = TRUE),
-            style = "background-color: #57b16b; color: white;"
+            style = paste0("background-color: ", gbifColor[1], "; color: #2c3e50;") 
           ),
           card_body(
             padding = 0,
@@ -58,7 +59,7 @@ dataAnalysisUI <- function(id) {
           card_header(
             tags$strong("Upload"),
             uiOutput(ns("row_count_upload"), inline = TRUE),
-            style = "background-color: #9e6cb1; color: white;"
+            style = paste0("background-color: ", uploadColor[1], "; color: #2c3e50;")
           ),
           card_body(
             padding = 0,
