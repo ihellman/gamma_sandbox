@@ -1,10 +1,11 @@
 read_upload_file <- function(file_info) {
   
   # --- 1. Validation: File Extension ---
-  if (tools::file_ext(file_info$name) != "csv") {
+  file_ext <- tolower(tools::file_ext(file_info$name))
+  if (!file_ext %in% c("csv", "xlsx", "xls")) {
     return(list(
       status  = "validation_error", 
-      message = "Invalid file type. Please upload a .csv file."
+      message = "Invalid file type. Please upload a .csv, .xlsx, or .xls file."
     ))
   }
 
@@ -12,10 +13,19 @@ read_upload_file <- function(file_info) {
   tryCatch({
     
     # A. Read File (All columns as text initially)
-    data <- readr::read_csv(
-      file_info$datapath, 
-      col_types = readr::cols(.default = "c")
-    )
+    if (file_ext == "csv") {
+      data <- readr::read_csv(
+        file_info$datapath, 
+        col_types = readr::cols(.default = "c")
+      )
+    } else {
+      # Excel: read first sheet only, coerce all columns to character
+      data <- readxl::read_excel(
+        file_info$datapath,
+        sheet = 1,
+        col_types = "text"
+      )
+    }
 
     # B. Validation: Required Columns
     # Note: Ensure these match your CSV headers exactly (case-sensitive)
@@ -55,13 +65,15 @@ read_upload_file <- function(file_info) {
     # D. Quality Check: Missing Coordinates
     n_missing_coords <- sum(is.na(data$Latitude) | is.na(data$Longitude))
     
+    excel_note <- if (file_ext %in% c("xlsx", "xls")) " (first sheet only)" else ""
+    
     if (n_missing_coords > 0) {
       msg_type <- "warning"
-      msg_text <- paste0("Loaded ", nrow(data), " records. Note: ", n_missing_coords, 
+      msg_text <- paste0("Loaded ", nrow(data), " records", excel_note, ". Note: ", n_missing_coords, 
                          " records have invalid coordinates and won't appear on the map.")
     } else {
       msg_type <- "message"
-      msg_text <- paste("Successfully loaded", nrow(data), "records.")
+      msg_text <- paste0("Successfully loaded ", nrow(data), " records", excel_note, ".")
     }
 
     # E. Return Success
