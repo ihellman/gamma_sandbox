@@ -38,32 +38,38 @@ dataAnalysisUI <- function(id) {
       ),
 
       # Tables - right side
-      layout_columns(
-        col_widths = 12,
-        fillable = TRUE,
-        card(
-          full_screen = TRUE,
-          # addding the gbifColor object to avoid hard coding the color
-          card_header(
-            tags$strong("GBIF"),
-            uiOutput(ns("row_count_gbif"), inline = TRUE),
-            style = paste0("background-color: ", gbifColor[1], "; color: #2c3e50;") 
-          ),
-          card_body(
-            padding = 0,
-            DT_tableModuleUI(ns("DT_table_GBIF"))
+      div(
+        class = "table-flex-container html-fill-item html-fill-container",
+        div(
+          id = ns("gbif_card_wrapper"),
+          class = "table-card-wrapper",
+          card(
+            full_screen = TRUE,
+            card_header(
+              tags$strong("GBIF"),
+              uiOutput(ns("row_count_gbif"), inline = TRUE),
+              style = paste0("background-color: ", gbifColor[1], "; color: #2c3e50;") 
+            ),
+            card_body(
+              padding = 0,
+              DT_tableModuleUI(ns("DT_table_GBIF"))
+            )
           )
         ),
-        card(
-          full_screen = TRUE,
-          card_header(
-            tags$strong("Upload"),
-            uiOutput(ns("row_count_upload"), inline = TRUE),
-            style = paste0("background-color: ", uploadColor[1], "; color: #2c3e50;")
-          ),
-          card_body(
-            padding = 0,
-            DT_tableModuleUI(ns("DT_table_upload"))
+        div(
+          id = ns("upload_card_wrapper"),
+          class = "table-card-wrapper",
+          card(
+            full_screen = TRUE,
+            card_header(
+              tags$strong("Upload"),
+              uiOutput(ns("row_count_upload"), inline = TRUE),
+              style = paste0("background-color: ", uploadColor[1], "; color: #2c3e50;")
+            ),
+            card_body(
+              padding = 0,
+              DT_tableModuleUI(ns("DT_table_upload"))
+            )
           )
         )
       )
@@ -93,6 +99,53 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
       analysis_data,
       selected_points,
       data_source = "upload"    )
+
+    # Dynamic table card sizing ------------------------------------------------
+    # Reactively toggle CSS classes on the GBIF and Upload card wrappers
+    # based on how many rows each source has. This controls the flex layout:
+    #   - "hidden-card": collapses the card to zero height when the source has no data
+    #   - "small-card":  caps the card at a fixed height (~5 rows) when it has
+    #                    very few entries, letting the other card fill remaining space
+    #   - (no class):   both cards split 50/50 when each has enough data
+    observe({
+      data <- analysis_data()
+      
+      gbif_n <- if (nrow(data) > 0 && "source" %in% names(data)) {
+        sum(data$source == "GBIF")
+      } else {
+        0L
+      }
+      
+      upload_n <- if (nrow(data) > 0 && "source" %in% names(data)) {
+        sum(data$source == "upload")
+      } else {
+        0L
+      }
+      
+      # Hide card entirely when source has 0 rows; show it otherwise
+      shinyjs::toggleClass(
+        id = "gbif_card_wrapper",
+        class = "hidden-card",
+        condition = gbif_n == 0
+      )
+      # Cap card height when source has 1-5 rows
+      shinyjs::toggleClass(
+        id = "gbif_card_wrapper",
+        class = "small-card",
+        condition = gbif_n > 0 && gbif_n <= 5
+      )
+      
+      shinyjs::toggleClass(
+        id = "upload_card_wrapper",
+        class = "hidden-card",
+        condition = upload_n == 0
+      )
+      shinyjs::toggleClass(
+        id = "upload_card_wrapper",
+        class = "small-card",
+        condition = upload_n > 0 && upload_n <= 5
+      )
+    })
 
     # Render row selection counts ------------------------------------------------
     output$row_count_gbif <- renderUI({

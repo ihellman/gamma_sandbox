@@ -1,31 +1,40 @@
-# Merge new data into current data and re-index
+# Merge new data into current data, enforce schema, and re-index
 merge_and_index <- function(current_data, new_data) {
   # Defensive: ensure inputs exist
-  if (is.null(current_data)) {
-    current_data <- dplyr::tibble()
-  }
-  if (is.null(new_data)) {
-    new_data <- dplyr::tibble()
+  if (is.null(current_data)) current_data <- dplyr::tibble()
+  if (is.null(new_data)) new_data <- dplyr::tibble()
+
+  # 1. Combine data first (bind_rows safely handles non-matching columns)
+  combined <- dplyr::bind_rows(current_data, new_data)
+
+  # Early exit if empty
+  if (nrow(combined) == 0) return(dplyr::tibble())
+
+  # 2. Define the strict, master schema (excluding index, which we generate last)
+  expected_cols <- c(
+    "Accession Number", "Taxon Name", "Current Germplasm Type",
+    "Collection Date", "Latitude", "Longitude", "Locality",
+    "Collector", "issues", "source"
+  )
+
+  # 3. Inject any missing columns as NA (e.g., if 'issues' is missing)
+  missing_cols <- setdiff(expected_cols, names(combined))
+  if (length(missing_cols) > 0) {
+    combined[missing_cols] <- NA
   }
 
-  # Helper: coerce all columns to character (no-op for 0-col df)
-  coerce_to_char <- function(df) {
-    if (ncol(df) == 0) {
-      return(df)
-    }
-    df |> dplyr::mutate(dplyr::across(dplyr::everything(), ~ as.character(.x)))
-  }
-
-  current_char <- coerce_to_char(current_data)
-  new_char <- coerce_to_char(new_data)
-
-  # Combine and re-index (if current empty, return new with index)
-  if (nrow(current_char) == 0) {
-    new_char |> dplyr::mutate(index = dplyr::row_number())
-  } else {
-    dplyr::bind_rows(current_char, new_char) |>
-      dplyr::mutate(index = dplyr::row_number())
-  }
+  # 4. Enforce strict types, subset to only approved columns, and add index
+  combined |>
+    dplyr::mutate(
+      # Force everything except coordinates to character
+      dplyr::across(dplyr::all_of(setdiff(expected_cols, c("Latitude", "Longitude"))), as.character),
+      # Force coordinates to numeric
+      Latitude = as.numeric(Latitude),
+      Longitude = as.numeric(Longitude)
+    ) |>
+    # Drop any rogue columns uploaded by the user
+    dplyr::select(dplyr::all_of(expected_cols)) |>
+    dplyr::mutate(index = dplyr::row_number())
 }
 
 

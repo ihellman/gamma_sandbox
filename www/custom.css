@@ -383,3 +383,50 @@ body.on-home .navbar {
 .footer-modern .mt-4 {
   margin-top: 1rem !important; 
 }
+
+/* =========================================
+   DYNAMIC TABLE CARD LAYOUT
+   ========================================= */
+
+/* Flex column container for the two table cards */
+.table-flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 4px;
+}
+
+/* Each card wrapper participates in flex and fills equally by default */
+.table-card-wrapper {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The bslib card inside fills its wrapper */
+.table-card-wrapper > .card {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Hidden: no data for this source — collapse to 0 height instead of
+   display:none so DT's fillContainer can still initialize. */
+.table-card-wrapper.hidden-card {
+  flex: 0 0 0px !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Small: few rows — fixed height, gives remaining space to the other card */
+.table-card-wrapper.small-card {
+  flex: 0 0 auto;
+  height: 250px;
+  min-height: 250px;
+}
