@@ -42,41 +42,48 @@ controlsModuleUI <- function(id) {
             width = "100%"
           ),
           hr(style = "margin: 1.5rem 0;"),
-          sliderInput(
-            ns("gbif_limit"),
-            "Max Occurrences",
-            min = 0,
-            max = 1000,
-            value = 1000,
-            step = 50,
-            width = "100%"
-          ),
-          dateRangeInput(
-            ns("gbif_date_range"),
-            "Event Date Range",
-            start = NULL,
-            end = NULL,
-            width = "100%"
-          ),
-          checkboxInput(
-            ns("include_inat"),
-            "Include iNaturalist records",
-            value = TRUE
-          ),
-          radioButtons(
-            inputId = ns("backfill_strategy"),
-            label = "Wild Record Prioritization",
-            choices = c(
-              "Most Recent" = "recent",
-              "Random Selection" = "random"
-            ),
-            selected = "recent",
-            inline = TRUE
-          ),
-          hr(style = "margin: 1rem 0;"),
           uiOutput(
-            outputId = ns("gbif_count_display"),
+            outputId = ns("gbif_summary_display"),
             class = "mb-2 text-center"
+          ),
+          accordion(
+            multiple = FALSE,
+            open = FALSE,
+            accordion_panel(
+              title = "Advanced options",
+              value = "panel_gbif_advanced",
+              sliderInput(
+                ns("gbif_limit"),
+                "Max Occurrences",
+                min = 0,
+                max = 1000,
+                value = 200,
+                step = 50,
+                width = "100%"
+              ),
+              dateRangeInput(
+                ns("gbif_date_range"),
+                "Event Date Range",
+                start = NULL,
+                end = NULL,
+                width = "100%"
+              ),
+              checkboxInput(
+                ns("include_inat"),
+                "Include iNaturalist records",
+                value = TRUE
+              ),
+              radioButtons(
+                inputId = ns("backfill_strategy"),
+                label = "Wild Record Prioritization",
+                choices = c(
+                  "Most Recent" = "recent",
+                  "Random Selection" = "random"
+                ),
+                selected = "recent",
+                inline = TRUE
+              )
+            )
           ),
           uiOutput(
             outputId = ns("taxon_id_display"),
@@ -304,11 +311,11 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
     })
 
-    gbif_observation_count <- reactive({
+    gbif_observation_counts <- reactive({
       tid <- selected_taxon_id()
       req(tid)
 
-      count_all <- tryCatch(
+      count_total <- tryCatch(
         {
           rgbif::occ_search(
             taxonKey = as.numeric(tid),
@@ -320,35 +327,68 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         error = function(e) NA_integer_
       )
 
-      if (!isTRUE(input$include_inat) && !is.na(count_all)) {
-        count_inat <- tryCatch(
-          {
-            rgbif::occ_search(
-              taxonKey = as.numeric(tid),
-              datasetKey = inat_dataset_key,
-              hasCoordinate = TRUE,
-              eventDate = event_date_range(),
-              limit = 0
-            )$meta$count
-          },
-          error = function(e) 0L
-        )
-        return(max(count_all - count_inat, 0L))
-      }
+      count_living <- tryCatch(
+        {
+          rgbif::occ_search(
+            taxonKey = as.numeric(tid),
+            hasCoordinate = TRUE,
+            basisOfRecord = "LIVING_SPECIMEN",
+            eventDate = event_date_range(),
+            limit = 0
+          )$meta$count
+        },
+        error = function(e) NA_integer_
+      )
 
-      count_all
+      count_inat <- tryCatch(
+        {
+          rgbif::occ_search(
+            taxonKey = as.numeric(tid),
+            datasetKey = inat_dataset_key,
+            hasCoordinate = TRUE,
+            eventDate = event_date_range(),
+            limit = 0
+          )$meta$count
+        },
+        error = function(e) NA_integer_
+      )
+
+      list(total = count_total, living = count_living, inat = count_inat)
     })
 
-    output$gbif_count_display <- renderUI({
-      count <- gbif_observation_count()
-      if (is.na(count)) {
+    output$gbif_summary_display <- renderUI({
+      counts <- gbif_observation_counts()
+      if (is.na(counts$total)) {
         return(NULL)
       }
-      tags$span(
-        class = "text-muted",
-        paste(
-          "GBIF observations with coordinates:",
-          formatC(count, big.mark = ",", format = "d")
+
+      format_count <- function(value) {
+        if (is.na(value)) {
+          "—"
+        } else {
+          formatC(value, big.mark = ",", format = "d")
+        }
+      }
+
+      tags$div(
+        class = "text-muted small",
+        tags$div(
+          paste(
+            "GBIF observations with coordinates:",
+            format_count(counts$total)
+          )
+        ),
+        tags$div(
+          paste(
+            "Living records (Germplasm):",
+            format_count(counts$living)
+          )
+        ),
+        tags$div(
+          paste(
+            "iNaturalist records:",
+            format_count(counts$inat)
+          )
         )
       )
     })
@@ -363,7 +403,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       Gather_limit <- if (is.numeric(input$gbif_limit)) {
         input$gbif_limit
       } else {
-        1000
+        200
       }
 
       shiny::withProgress(
