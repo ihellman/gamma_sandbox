@@ -46,6 +46,15 @@ controlsModuleUI <- function(id) {
             outputId = ns("gbif_summary_display"),
             class = "mb-2 text-center"
           ),
+          sliderInput(
+            ns("gbif_limit"),
+            "Max Occurrences",
+            min = 0,
+            max = 1000,
+            value = 200,
+            step = 50,
+            width = "100%"
+          ),
           div(
             class = "gbif-advanced",
             accordion(
@@ -54,15 +63,6 @@ controlsModuleUI <- function(id) {
               accordion_panel(
                 title = "Advanced options",
                 value = "panel_gbif_advanced",
-                sliderInput(
-                  ns("gbif_limit"),
-                  "Max Occurrences",
-                  min = 0,
-                  max = 1000,
-                  value = 200,
-                  step = 50,
-                  width = "100%"
-                ),
                 checkboxInput(
                   ns("apply_date_filter"),
                   "Apply date filter",
@@ -79,19 +79,14 @@ controlsModuleUI <- function(id) {
                   )
                 ),
                 checkboxInput(
-                  ns("include_inat"),
-                  "Include iNaturalist records",
-                  value = TRUE
+                  ns("exclude_inat"),
+                  "Exclude iNaturalist records",
+                  value = FALSE
                 ),
-                radioButtons(
-                  inputId = ns("backfill_strategy"),
-                  label = "Wild Record Prioritization",
-                  choices = c(
-                    "Most Recent" = "recent",
-                    "Random Selection" = "random"
-                  ),
-                  selected = "recent",
-                  inline = TRUE
+                checkboxInput(
+                  ns("random_selection"),
+                  "Random selection",
+                  value = FALSE
                 ),
                 checkboxInput(
                   ns("maximize_geo_spread"),
@@ -186,21 +181,29 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     })
 
     geo_spread_prioritize <- function(data) {
-      required_cols <- c("countryCode", "stateProvince", "county")
-      missing_cols <- setdiff(required_cols, names(data))
-      if (length(missing_cols) > 0) {
+      admin_cols <- c("countryCode", "stateProvince", "county")
+      available <- intersect(admin_cols, names(data))
+      if (!"countryCode" %in% available) {
         return(data)
       }
 
       working <- data %>%
         mutate(
-          countryCode = dplyr::if_else(is.na(countryCode), "", countryCode),
-          stateProvince = dplyr::if_else(
-            is.na(stateProvince),
-            "",
-            stateProvince
-          ),
-          county = dplyr::if_else(is.na(county), "", county)
+          countryCode = dplyr::coalesce(.data$countryCode, ""),
+          stateProvince = if ("stateProvince" %in% names(data)) {
+            dplyr::coalesce(data$stateProvince, "")
+          } else {
+            ""
+          },
+          county = if ("county" %in% names(data)) {
+            dplyr::coalesce(data$county, "")
+          } else {
+            ""
+          }
+        ) %>%
+        mutate(
+          admin1 = stateProvince,
+          admin2 = county
         )
 
       pick_unique <- function(df, group_cols) {
@@ -211,9 +214,9 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
 
       ordered <- dplyr::bind_rows(
+        pick_unique(working, c("countryCode", "admin1", "admin2")),
+        pick_unique(working, c("countryCode", "admin1")),
         pick_unique(working, "countryCode"),
-        pick_unique(working, c("countryCode", "stateProvince")),
-        pick_unique(working, c("countryCode", "stateProvince", "county")),
         working
       ) %>%
         distinct(gbifID, .keep_all = TRUE)
@@ -455,24 +458,37 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       tid <- selected_taxon_id()
       req(tid)
 
-      Gather_limit <- if (is.numeric(input$gbif_limit)) {
+      selection_limit <- if (is.numeric(input$gbif_limit)) {
         input$gbif_limit
       } else {
         200
       }
+
+      advanced_selected <- isTRUE(input$apply_date_filter) ||
+        isTRUE(input$exclude_inat) ||
+        isTRUE(input$random_selection) ||
+        isTRUE(input$maximize_geo_spread)
 
       shiny::withProgress(
         message = "GBIF API Search",
         detail = "Initializing...",
         value = 0,
         {
+          if (advanced_selected) {
+            showNotification(
+              "Advanced download workflow is not implemented yet.",
+              type = "warning"
+            )
+            return()
+          }
+
           shiny::incProgress(0.2, detail = "Prioritizing living specimens...")
           raw_living <- rgbif::occ_search(
             taxonKey = as.numeric(tid),
             hasCoordinate = TRUE,
             basisOfRecord = "LIVING_SPECIMEN",
             eventDate = event_date_range(),
-            limit = Gather_limit
+            limit = selection_limit
           )
 
           living_data <- if (is.null(raw_living$data)) {
@@ -481,7 +497,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
             raw_living$data
           }
 
-          remaining_limit <- Gather_limit - nrow(living_data)
+          remaining_limit <- selection_limit - nrow(living_data)
           other_data <- data.frame()
 
           if (remaining_limit > 0) {
@@ -505,33 +521,26 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
             if (!is.null(raw_all$data)) {
               other_data <- raw_all$data
 
-              if (
-                !isTRUE(input$include_inat) &&
-                  "datasetKey" %in% names(other_data)
-              ) {
-                other_data <- other_data %>%
-                  dplyr::filter(
-                    is.na(datasetKey) | datasetKey != inat_dataset_key
-                  )
-              }
-
               if (nrow(living_data) > 0) {
                 other_data <- other_data %>%
                   dplyr::filter(!gbifID %in% living_data$gbifID)
               }
 
-              if (isTRUE(input$maximize_geo_spread)) {
-                other_data <- geo_spread_prioritize(other_data)
+              if ("basisOfRecord" %in% names(other_data)) {
+                other_data <- other_data %>%
+                  dplyr::filter(
+                    !basisOfRecord %in% c("LIVING_SPECIMEN", "FOSSIL_SPECIMEN")
+                  )
               }
 
               if (nrow(other_data) > remaining_limit) {
-                if (input$backfill_strategy == "recent") {
+                if (isTRUE(input$random_selection)) {
+                  other_data <- other_data %>%
+                    dplyr::slice_sample(n = remaining_limit)
+                } else {
                   other_data <- other_data %>%
                     dplyr::arrange(desc(eventDate)) %>%
                     head(remaining_limit)
-                } else if (input$backfill_strategy == "random") {
-                  other_data <- other_data %>%
-                    dplyr::slice_sample(n = remaining_limit)
                 }
               }
             }
@@ -539,13 +548,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
           shiny::incProgress(0.6, detail = "Formatting downloaded records...")
           combined_df <- dplyr::bind_rows(living_data, other_data)
-
-          if (
-            !isTRUE(input$include_inat) && "datasetKey" %in% names(combined_df)
-          ) {
-            combined_df <- combined_df %>%
-              dplyr::filter(is.na(datasetKey) | datasetKey != inat_dataset_key)
-          }
 
           if (nrow(combined_df) == 0) {
             showNotification(
