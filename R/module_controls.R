@@ -453,6 +453,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
     # 7. Gather and Format Live GBIF Data -----------------------------------------------
     gbifData_temp <- reactiveVal(NULL)
+    gbif_cache <- reactiveVal(NULL)
 
     observeEvent(input$loadGBIF, {
       tid <- selected_taxon_id()
@@ -475,79 +476,245 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         value = 0,
         {
           if (advanced_selected) {
-            showNotification(
-              "Advanced download workflow is not implemented yet.",
-              type = "warning"
-            )
-            return()
-          }
-
-          shiny::incProgress(0.2, detail = "Prioritizing living specimens...")
-          raw_living <- rgbif::occ_search(
-            taxonKey = as.numeric(tid),
-            hasCoordinate = TRUE,
-            basisOfRecord = "LIVING_SPECIMEN",
-            eventDate = event_date_range(),
-            limit = selection_limit
-          )
-
-          living_data <- if (is.null(raw_living$data)) {
-            data.frame()
-          } else {
-            raw_living$data
-          }
-
-          remaining_limit <- selection_limit - nrow(living_data)
-          other_data <- data.frame()
-
-          if (remaining_limit > 0) {
-            pool_size <- min(remaining_limit * 5, 2000)
-
-            shiny::incProgress(
-              0.4,
-              detail = paste(
-                "Gathering reference records",
-                remaining_limit,
-                "remaining..."
+            cached <- gbif_cache()
+            if (!is.null(cached) && identical(cached$tid, tid)) {
+              combined_df <- cached$data
+            } else {
+              shiny::incProgress(
+                0.2,
+                detail = "Downloading living specimens..."
               )
-            )
-            raw_all <- rgbif::occ_search(
-              taxonKey = as.numeric(tid),
-              hasCoordinate = TRUE,
-              eventDate = event_date_range(),
-              limit = pool_size
-            )
+              raw_living <- rgbif::occ_search(
+                taxonKey = as.numeric(tid),
+                hasCoordinate = TRUE,
+                basisOfRecord = "LIVING_SPECIMEN",
+                eventDate = event_date_range(),
+                limit = 10000
+              )
 
-            if (!is.null(raw_all$data)) {
-              other_data <- raw_all$data
+              living_data <- if (is.null(raw_living$data)) {
+                data.frame()
+              } else {
+                raw_living$data
+              }
+
+              remaining_limit <- max(0, 10000 - nrow(living_data))
+              other_data <- data.frame()
+
+              if (remaining_limit > 0) {
+                shiny::incProgress(
+                  0.3,
+                  detail = "Downloading reference records..."
+                )
+                raw_all <- rgbif::occ_search(
+                  taxonKey = as.numeric(tid),
+                  hasCoordinate = TRUE,
+                  eventDate = event_date_range(),
+                  limit = remaining_limit
+                )
+
+                if (!is.null(raw_all$data)) {
+                  other_data <- raw_all$data
+                }
+              }
+
+              combined_df <- dplyr::bind_rows(living_data, other_data)
+              gbif_cache(list(tid = tid, data = combined_df))
+            }
+
+            if (nrow(combined_df) == 0) {
+              showNotification(
+                "No records with coordinates found on GBIF for this taxon.",
+                type = "warning"
+              )
+              return()
+            }
+
+            combined_df <- combined_df %>%
+              filter(!is.na(decimalLatitude), !is.na(decimalLongitude))
+
+            if (
+              isTRUE(input$exclude_inat) && "datasetKey" %in% names(combined_df)
+            ) {
+              combined_df <- combined_df %>%
+                filter(is.na(datasetKey) | datasetKey != inat_dataset_key)
+            }
+
+            if ("basisOfRecord" %in% names(combined_df)) {
+              combined_df <- combined_df %>%
+                filter(!basisOfRecord %in% c("FOSSIL_SPECIMEN"))
+            }
+
+            living_data <- combined_df %>%
+              filter(basisOfRecord == "LIVING_SPECIMEN")
+            other_data <- combined_df %>%
+              filter(basisOfRecord != "LIVING_SPECIMEN")
+
+            if (nrow(living_data) > 0 && nrow(other_data) > 0) {
+              other_data <- other_data %>%
+                dplyr::filter(!gbifID %in% living_data$gbifID)
+            }
+
+            if (isTRUE(input$apply_date_filter)) {
+              start_date <- input$gbif_date_range[1]
+              end_date <- input$gbif_date_range[2]
+              parse_date <- function(x) {
+                suppressWarnings(as.Date(x))
+              }
 
               if (nrow(living_data) > 0) {
-                other_data <- other_data %>%
-                  dplyr::filter(!gbifID %in% living_data$gbifID)
+                living_data <- living_data %>%
+                  mutate(parsed_date = parse_date(eventDate)) %>%
+                  filter(
+                    !is.na(parsed_date),
+                    parsed_date >= start_date,
+                    parsed_date <= end_date
+                  ) %>%
+                  select(-parsed_date)
               }
 
-              if ("basisOfRecord" %in% names(other_data)) {
+              if (nrow(other_data) > 0) {
                 other_data <- other_data %>%
-                  dplyr::filter(
-                    !basisOfRecord %in% c("LIVING_SPECIMEN", "FOSSIL_SPECIMEN")
+                  mutate(
+                    parsed_date = parse_date(eventDate),
+                    year_val = suppressWarnings(as.integer(substr(
+                      eventDate,
+                      1,
+                      4
+                    )))
+                  ) %>%
+                  filter(
+                    !is.na(parsed_date),
+                    parsed_date >= start_date,
+                    parsed_date <= end_date
                   )
               }
+            }
 
-              if (nrow(other_data) > remaining_limit) {
-                if (isTRUE(input$random_selection)) {
+            if (isTRUE(input$maximize_geo_spread) && nrow(other_data) > 0) {
+              county_col <- if ("countyCode" %in% names(other_data)) {
+                "countyCode"
+              } else if ("county" %in% names(other_data)) {
+                "county"
+              } else {
+                NULL
+              }
+
+              if (
+                !is.null(county_col) && "stateProvince" %in% names(other_data)
+              ) {
+                other_data <- other_data %>%
+                  group_by(.data$stateProvince, .data[[county_col]]) %>%
+                  slice_head(n = 1) %>%
+                  ungroup()
+              }
+            }
+
+            remaining_slots <- max(0, selection_limit - nrow(living_data))
+
+            if (isTRUE(input$apply_date_filter) && nrow(other_data) > 0) {
+              yearly_unique <- other_data %>%
+                group_by(year_val) %>%
+                slice_head(n = 1) %>%
+                ungroup()
+
+              remainder <- other_data %>%
+                filter(!gbifID %in% yearly_unique$gbifID)
+
+              other_data <- dplyr::bind_rows(yearly_unique, remainder) %>%
+                slice_head(n = min(remaining_slots, nrow(.))) %>%
+                select(-parsed_date, -year_val)
+            }
+
+            if (isTRUE(input$random_selection)) {
+              if (remaining_slots > 0 && nrow(other_data) > 0) {
+                reference_pick <- other_data %>%
+                  slice_sample(n = min(remaining_slots, nrow(other_data)))
+                combined_df <- dplyr::bind_rows(living_data, reference_pick)
+              } else {
+                combined_df <- living_data %>%
+                  slice_head(n = min(selection_limit, nrow(living_data)))
+              }
+            } else {
+              if (remaining_slots > 0 && nrow(other_data) > 0) {
+                reference_pick <- other_data %>%
+                  dplyr::arrange(desc(eventDate)) %>%
+                  slice_head(n = min(remaining_slots, nrow(other_data)))
+                combined_df <- dplyr::bind_rows(living_data, reference_pick)
+              } else {
+                combined_df <- living_data %>%
+                  slice_head(n = min(selection_limit, nrow(living_data)))
+              }
+            }
+          } else {
+            shiny::incProgress(0.2, detail = "Prioritizing living specimens...")
+            raw_living <- rgbif::occ_search(
+              taxonKey = as.numeric(tid),
+              hasCoordinate = TRUE,
+              basisOfRecord = "LIVING_SPECIMEN",
+              eventDate = event_date_range(),
+              limit = selection_limit
+            )
+
+            living_data <- if (is.null(raw_living$data)) {
+              data.frame()
+            } else {
+              raw_living$data
+            }
+
+            remaining_limit <- selection_limit - nrow(living_data)
+            other_data <- data.frame()
+
+            if (remaining_limit > 0) {
+              pool_size <- min(remaining_limit * 5, 2000)
+
+              shiny::incProgress(
+                0.4,
+                detail = paste(
+                  "Gathering reference records",
+                  remaining_limit,
+                  "remaining..."
+                )
+              )
+              raw_all <- rgbif::occ_search(
+                taxonKey = as.numeric(tid),
+                hasCoordinate = TRUE,
+                eventDate = event_date_range(),
+                limit = pool_size
+              )
+
+              if (!is.null(raw_all$data)) {
+                other_data <- raw_all$data
+
+                if (nrow(living_data) > 0) {
                   other_data <- other_data %>%
-                    dplyr::slice_sample(n = remaining_limit)
-                } else {
+                    dplyr::filter(!gbifID %in% living_data$gbifID)
+                }
+
+                if ("basisOfRecord" %in% names(other_data)) {
                   other_data <- other_data %>%
-                    dplyr::arrange(desc(eventDate)) %>%
-                    head(remaining_limit)
+                    dplyr::filter(
+                      !basisOfRecord %in%
+                        c("LIVING_SPECIMEN", "FOSSIL_SPECIMEN")
+                    )
+                }
+
+                if (nrow(other_data) > remaining_limit) {
+                  if (isTRUE(input$random_selection)) {
+                    other_data <- other_data %>%
+                      dplyr::slice_sample(n = remaining_limit)
+                  } else {
+                    other_data <- other_data %>%
+                      dplyr::arrange(desc(eventDate)) %>%
+                      head(remaining_limit)
+                  }
                 }
               }
             }
-          }
 
-          shiny::incProgress(0.6, detail = "Formatting downloaded records...")
-          combined_df <- dplyr::bind_rows(living_data, other_data)
+            shiny::incProgress(0.6, detail = "Formatting downloaded records...")
+            combined_df <- dplyr::bind_rows(living_data, other_data)
+          }
 
           if (nrow(combined_df) == 0) {
             showNotification(
