@@ -46,42 +46,58 @@ controlsModuleUI <- function(id) {
             outputId = ns("gbif_summary_display"),
             class = "mb-2 text-center"
           ),
-          accordion(
-            multiple = FALSE,
-            open = FALSE,
-            accordion_panel(
-              title = "Advanced options",
-              value = "panel_gbif_advanced",
-              sliderInput(
-                ns("gbif_limit"),
-                "Max Occurrences",
-                min = 0,
-                max = 1000,
-                value = 200,
-                step = 50,
-                width = "100%"
-              ),
-              dateRangeInput(
-                ns("gbif_date_range"),
-                "Event Date Range",
-                start = NULL,
-                end = NULL,
-                width = "100%"
-              ),
-              checkboxInput(
-                ns("include_inat"),
-                "Include iNaturalist records",
-                value = TRUE
-              ),
-              radioButtons(
-                inputId = ns("backfill_strategy"),
-                label = "Wild Record Prioritization",
-                choices = c(
-                  "Most Recent" = "recent",
-                  "Random Selection" = "random"
+          div(
+            class = "gbif-advanced",
+            accordion(
+              multiple = FALSE,
+              open = FALSE,
+              accordion_panel(
+                title = "Advanced options",
+                value = "panel_gbif_advanced",
+                sliderInput(
+                  ns("gbif_limit"),
+                  "Max Occurrences",
+                  min = 0,
+                  max = 1000,
+                  value = 200,
+                  step = 50,
+                  width = "100%"
                 ),
-                selected = "recent",
-                inline = TRUE
+                checkboxInput(
+                  ns("apply_date_filter"),
+                  "Apply date filter",
+                  value = FALSE
+                ),
+                conditionalPanel(
+                  condition = sprintf("input['%s']", ns("apply_date_filter")),
+                  dateRangeInput(
+                    ns("gbif_date_range"),
+                    "Event Date Range",
+                    start = NULL,
+                    end = NULL,
+                    width = "100%"
+                  )
+                ),
+                checkboxInput(
+                  ns("include_inat"),
+                  "Include iNaturalist records",
+                  value = TRUE
+                ),
+                radioButtons(
+                  inputId = ns("backfill_strategy"),
+                  label = "Wild Record Prioritization",
+                  choices = c(
+                    "Most Recent" = "recent",
+                    "Random Selection" = "random"
+                  ),
+                  selected = "recent",
+                  inline = TRUE
+                ),
+                checkboxInput(
+                  ns("maximize_geo_spread"),
+                  "Optimize geographic spread",
+                  value = FALSE
+                )
               )
             )
           ),
@@ -159,12 +175,51 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     inat_dataset_key <- "50c9509d-22c7-4a22-a47d-8c48425ef4a7"
 
     event_date_range <- reactive({
+      if (!isTRUE(input$apply_date_filter)) {
+        return(NULL)
+      }
       date_range <- input$gbif_date_range
       if (is.null(date_range) || any(is.na(date_range))) {
         return(NULL)
       }
       paste(format(date_range, "%Y-%m-%d"), collapse = ",")
     })
+
+    geo_spread_prioritize <- function(data) {
+      required_cols <- c("countryCode", "stateProvince", "county")
+      missing_cols <- setdiff(required_cols, names(data))
+      if (length(missing_cols) > 0) {
+        return(data)
+      }
+
+      working <- data %>%
+        mutate(
+          countryCode = dplyr::if_else(is.na(countryCode), "", countryCode),
+          stateProvince = dplyr::if_else(
+            is.na(stateProvince),
+            "",
+            stateProvince
+          ),
+          county = dplyr::if_else(is.na(county), "", county)
+        )
+
+      pick_unique <- function(df, group_cols) {
+        df %>%
+          group_by(across(all_of(group_cols))) %>%
+          slice_head(n = 1) %>%
+          ungroup()
+      }
+
+      ordered <- dplyr::bind_rows(
+        pick_unique(working, "countryCode"),
+        pick_unique(working, c("countryCode", "stateProvince")),
+        pick_unique(working, c("countryCode", "stateProvince", "county")),
+        working
+      ) %>%
+        distinct(gbifID, .keep_all = TRUE)
+
+      ordered
+    }
 
     # 2. Populate Genus ----------------------------------------------------------------
     observe({
@@ -374,7 +429,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         class = "text-muted small",
         tags$div(
           paste(
-            "GBIF observations with coordinates:",
+            "Observations with coordinates:",
             format_count(counts$total)
           )
         ),
@@ -450,9 +505,23 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
             if (!is.null(raw_all$data)) {
               other_data <- raw_all$data
 
+              if (
+                !isTRUE(input$include_inat) &&
+                  "datasetKey" %in% names(other_data)
+              ) {
+                other_data <- other_data %>%
+                  dplyr::filter(
+                    is.na(datasetKey) | datasetKey != inat_dataset_key
+                  )
+              }
+
               if (nrow(living_data) > 0) {
                 other_data <- other_data %>%
                   dplyr::filter(!gbifID %in% living_data$gbifID)
+              }
+
+              if (isTRUE(input$maximize_geo_spread)) {
+                other_data <- geo_spread_prioritize(other_data)
               }
 
               if (nrow(other_data) > remaining_limit) {
