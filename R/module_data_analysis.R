@@ -149,15 +149,37 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
 
     # Render row selection counts ------------------------------------------------
     output$row_count_gbif <- renderUI({
-      req(nrow(analysis_data()) > 0)
-      selected <- analysis_data() %>% filter(source == "GBIF", index %in% selected_points()) %>% nrow()
-      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
+      data <- analysis_data()
+      req(nrow(data) > 0)
+      total <- data %>% filter(source == "GBIF") %>% nrow()
+      selected <- data %>% filter(source == "GBIF", index %in% selected_points()) %>% nrow()
+      
+      tagList(
+        span(paste0("(", total, " records)"), style = "font-weight: normal; font-size: 0.85em; margin-left: 10px;"),
+        if (selected > 0) {
+          span(
+            paste0("— ", selected, " row", if (selected != 1) "s", " selected"),
+            style = "font-weight: normal; font-size: 0.85em; margin-left: 5px;"
+          )
+        }
+      )
     })
 
     output$row_count_upload <- renderUI({
-      req(nrow(analysis_data()) > 0)
-      selected <- analysis_data() %>% filter(source == "upload", index %in% selected_points()) %>% nrow()
-      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
+      data <- analysis_data()
+      req(nrow(data) > 0)
+      total <- data %>% filter(source == "upload") %>% nrow()
+      selected <- data %>% filter(source == "upload", index %in% selected_points()) %>% nrow()
+      
+      tagList(
+        span(paste0("(", total, " records)"), style = "font-weight: normal; font-size: 0.85em; margin-left: 10px;"),
+        if (selected > 0) {
+          span(
+            paste0("— ", selected, " row", if (selected != 1) "s", " selected"),
+            style = "font-weight: normal; font-size: 0.85em; margin-left: 5px;"
+          )
+        }
+      )
     })
 
     # Data management observers --------------------------------------------------
