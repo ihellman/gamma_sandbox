@@ -79,13 +79,6 @@ data_eval_base_map <- function() {
     addProviderTiles("OpenStreetMap", group = "OpenStreetMap") |>
     addProviderTiles("Esri.WorldTopoMap", group = "Topography") |>
     addProviderTiles("Esri.WorldImagery", group = "Imagery") |>
-    # Controls
-    addLayersControl(
-      position = "topleft",
-      overlayGroups = c("Upload", "Upload Selection", "GBIF", "GBIF Selection"),
-      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
-      options = layersControlOptions(collapsed = TRUE)
-    ) |>
     # Legends
     addLegend(
       position = "topright",
@@ -100,6 +93,17 @@ data_eval_base_map <- function() {
       labels = c("Upload Reference", "Upload Germplasm"),
       group = "Upload",
       opacity = 1
+    ) |>
+    # Controls
+    addLayersControl(
+      position = "topright",
+      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
+      overlayGroups = c(
+        "Upload", 
+        "Upload Selection", 
+        "GBIF", 
+        "GBIF Selection"),
+      options = layersControlOptions(collapsed = TRUE)
     ) |>
     # Draw Toolbar
     addDrawToolbar(
@@ -304,8 +308,16 @@ gap_base_map <- function() {
     # map pane elements 
     leaflet::addMapPane("buffers", zIndex = 410) %>%
     leaflet::addMapPane("points", zIndex = 420) %>%
-    
+    # Legend
+    addLegend(
+      title = "Species Observations",
+      position = "topright",
+      colors = combinedColor,
+      labels = c("Reference", "Germplasm"),
+      group = "all records"
+    ) %>%
     leaflet::addLayersControl(
+      position = "topright",
       baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
       overlayGroups = c(
         "Reference Records",
@@ -314,15 +326,8 @@ gap_base_map <- function() {
         "GRS Gap",       # <- MUST BE LISTED HERE
         "ERS Regions"    # <- MUST BE LISTED HERE
       ),
-      options = leaflet::layersControlOptions(collapsed = FALSE)
+      options = leaflet::layersControlOptions(collapsed = TRUE)
     ) %>%
     # Optional: Hide them on initial load so the map isn't cluttered
-    leaflet::hideGroup(c("GRS Gap", "ERS Regions", "Buffers"))|> 
-    addLegend(
-      title = "Species Observations",
-      position = "bottomleft",
-      colors = combinedColor,
-      labels = c("Reference", "Germplasm"),
-      group = "all records"
-    )
+    leaflet::hideGroup(c("GRS Gap", "ERS Regions", "Buffers"))
 }
