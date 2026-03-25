@@ -420,7 +420,7 @@ gapAnalysisServer <- function(id, analysis_data) {
             proxy %>%
               leaflet::addLegend(
                 layerId = "gap_legend", 
-                position = "bottomleft",
+                position = "topright",
                 colors = legend_colors,
                 labels = legend_labels,
                 title = "Gap Elements",

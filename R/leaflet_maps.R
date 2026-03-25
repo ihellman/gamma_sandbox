@@ -96,7 +96,7 @@ data_eval_base_map <- function() {
     ) |>
     # Controls
     addLayersControl(
-      position = "topright",
+      position = "topleft",
       baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
       overlayGroups = c(
         "Upload", 
@@ -317,7 +317,7 @@ gap_base_map <- function() {
       group = "all records"
     ) %>%
     leaflet::addLayersControl(
-      position = "topright",
+      position = "topleft",
       baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
       overlayGroups = c(
         "Reference Records",
