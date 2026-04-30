@@ -57,17 +57,23 @@ controlsModuleUI <- function(id) {
           ),
           div(
             class = "gbif-advanced",
-            accordion(
-              multiple = FALSE,
-              open = FALSE,
-              accordion_panel(
-                title = "Advanced options",
-                value = "panel_gbif_advanced",
-                checkboxInput(
-                  ns("apply_date_filter"),
-                  "Apply date filter",
-                  value = FALSE
+            accordion_panel(
+                # Add tooltip and info icon to the accordion header
+                title = bslib::tooltip(
+                  tags$span("Advanced options ", icon("circle-info", class = "ms-1 text-muted", style = "font-size: 0.85em;")),
+                  "You may notice slower download times with these options selected."
                 ),
+                value = "panel_gbif_advanced",
+                
+                bslib::tooltip(
+                  checkboxInput(
+                    ns("apply_date_filter"),
+                    "Apply date filter",
+                    value = FALSE
+                  ),
+                  "Select or enter a specific date range of interest."
+                ),
+                
                 conditionalPanel(
                   condition = sprintf("input['%s']", ns("apply_date_filter")),
                   dateRangeInput(
@@ -78,18 +84,35 @@ controlsModuleUI <- function(id) {
                     width = "100%"
                   )
                 ),
-                checkboxInput(
-                  ns("exclude_inat"),
-                  "Exclude iNaturalist records",
-                  value = FALSE
+                
+                bslib::tooltip(
+                  checkboxInput(
+                    ns("exclude_inat"),
+                    "Exclude iNaturalist records",
+                    value = FALSE
+                  ),
+                  "Removes all records originally collected through iNaturalist."
                 ),
-                checkboxInput(
-                  ns("random_selection"),
-                  "Random selection",
-                  value = FALSE
+                
+                bslib::tooltip(
+                  checkboxInput(
+                    # Changed from exclude_synonyms to include_synonyms
+                    ns("include_synonyms"),
+                    "Include taxonomic synonyms",
+                    value = FALSE # FALSE means synonyms are excluded by default
+                  ),
+                  "Toggle to bring \"accepted synonyms\" back into the pull. When unchecked (default), synonyms are removed and you may need to adjust the download size to get the correct number of features."
+                ),
+                
+                bslib::tooltip(
+                  checkboxInput(
+                    ns("random_selection"),
+                    "Random selection",
+                    value = FALSE
+                  ),
+                  "Selected randomly rather than the default of recent records first."
                 )
               )
-            )
           ),
           uiOutput(
             outputId = ns("taxon_id_display"),
@@ -460,8 +483,10 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         200
       }
 
+      # Notice we now use !isTRUE to trigger the advanced logic when synonyms are excluded
       advanced_selected <- isTRUE(input$apply_date_filter) ||
         isTRUE(input$exclude_inat) ||
+        !isTRUE(input$include_synonyms) || 
         isTRUE(input$random_selection)
 
       shiny::withProgress(
@@ -526,6 +551,17 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
             combined_df <- combined_df %>%
               filter(!is.na(decimalLatitude), !is.na(decimalLongitude))
+
+           # Execute Synonym Exclusion Filter (Defaults to excluding, unless toggle is TRUE)
+            if (!isTRUE(input$include_synonyms) && "taxonomicStatus" %in% names(combined_df)) {
+              combined_df <- combined_df %>% dplyr::filter(taxonomicStatus == "ACCEPTED")
+              
+              if (nrow(combined_df) == 0) {
+                showNotification("All retrieved records were synonyms and filtered out. Try increasing the Max Occurrences.", type = "warning")
+                return()
+              }
+            }
+            
 
             if (
               isTRUE(input$exclude_inat) && "datasetKey" %in% names(combined_df)

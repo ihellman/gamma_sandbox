@@ -1,0 +1,193 @@
+---
+title: "Ex situ Gap Analysis Report"
+output: html_document
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+params:
+  points: NA
+  bufferDist: NA
+  srsMetrics: NA
+  grsMetrics: NA
+  ersMetrics: NA
+  sf_buffers: NA
+  sf_grs_gap: NA
+  sf_ers_regions: NA
+  combinedColor: NA
+  grsexColor: NA
+  ersexColors: NA
+---
+
+```{=html}
+<style>
+  @import url('[https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap)');
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    color: #495057;
+    background-color: #f8f9fa;
+  }
+  
+  h1, h2, h3, h4 {
+    font-family: 'Merriweather', serif;
+    color: #2c3e50;
+  }
+  
+  h1.title {
+    color: #52b788;
+    border-bottom: 2px solid #52b788;
+    padding-bottom: 10px;
+  }
+  
+  .summary-box {
+    background-color: white;
+    border-left: 5px solid #52b788;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border-radius: 4px;
+  }
+  
+  .score-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    color: white;
+  }
+  
+  .data-tables {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+</style>
+```
+
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+pacman::p_load(leaflet, dplyr, ggplot2, DT, sf)
+
+
+# Extract Parameters
+points <- params$points
+col_name <- if ("Current Germplasm Type" %in% names(points)) "Current Germplasm Type" else "type"
+points[[col_name]] <- tidyr::replace_na(points[[col_name]], "H")
+
+species <- if(nrow(points) > 0 && !is.null(points$`Taxon Name`)) points$`Taxon Name`[1] else "Unknown Species"
+totalPoints <- nrow(points)
+g_points <- points %>% filter(.data[[col_name]] == "G")
+h_points <- points %>% filter(.data[[col_name]] == "H")
+
+# Unpack Scores
+srs <- if(!is.null(params$srsMetrics) && "SRS exsitu" %in% names(params$srsMetrics)) params$srsMetrics$`SRS exsitu` else 0
+grs <- if(!is.null(params$grsMetrics) && "GRS exsitu" %in% names(params$grsMetrics)) params$grsMetrics$`GRS exsitu` else 0
+ers <- if(!is.null(params$ersMetrics$summary) && "ERS exsitu" %in% names(params$ersMetrics$summary)) params$ersMetrics$summary$`ERS exsitu` else 0
+fcs <- mean(c(srs, grs, ers), na.rm = TRUE)
+
+# Prioritization Rank
+rank <- case_when(
+  fcs <= 25 ~ "Urgent Priority",
+  fcs > 25 & fcs <= 50 ~ "High Priority",
+  fcs > 50 & fcs <= 75 ~ "Medium Priority",
+  TRUE ~ "Low Priority"
+)
+
+rank_color <- case_when(
+  rank == "Urgent Priority" ~ "#ffb4b3",
+  rank == "High Priority" ~ "#ffd380",
+  rank == "Medium Priority" ~ "#ffff80",
+  TRUE ~ "#a8d2a8"
+)
+```
+
+```{r}
+# Base Map
+m <- leaflet() %>%
+  addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
+  addLayersControl(
+    baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
+    overlayGroups = c("Reference Records", "Germplasm Records", "Buffers", "GRS Gap", "ERS Regions"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addMapPane("ersGap", zIndex = 400) %>%
+  addMapPane("grsGap", zIndex = 405) %>%
+  addMapPane("buffers", zIndex = 410)
+
+# Add pre-calculated sf objects
+if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
+  pal_type <- colorFactor(c("H" = combinedColor[2], "G" = combinedColor[1]), domain = c("H", "G"))
+  m <- m %>% addPolygons(
+    data = params$sf_buffers, group = "Buffers",
+    color = pal_type(params$sf_buffers$processing_type),
+    fillColor = pal_type(params$sf_buffers$processing_type),
+    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "buffers")
+  )
+}
+
+if (!is.null(params$sf_grs_gap)) {
+  m <- m %>% addPolygons(
+    data = params$sf_grs_gap, group = "GRS Gap",
+    color = grsexColor, fillColor = grsexColor,
+    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "grsGap")
+  )
+}
+
+if (!is.null(params$sf_ers_regions)) {
+  pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = params$sf_ers_regions$gap_status)
+  m <- m %>% addPolygons(
+    data = params$sf_ers_regions, group = "ERS Regions",
+    color = "black", fillColor = ~pal_ers(gap_status),
+    fillOpacity = 0.3, weight = 2, options = pathOptions(pane = "ersGap")
+  )
+}
+
+# Add Points
+if (nrow(h_points) > 0) {
+  m <- m %>% addCircleMarkers(
+    data = h_points, lng = ~Longitude, lat = ~Latitude, group = "Reference Records",
+    radius = 4, color = "white", fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1
+  )
+}
+
+if (nrow(g_points) > 0) {
+  m <- m %>% addCircleMarkers(
+    data = g_points, lng = ~Longitude, lat = ~Latitude, group = "Germplasm Records",
+    radius = 4, color = "white", fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1
+  )
+}
+
+m
+```
+
+```{r}
+df_plot <- tibble(
+  Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
+  Score = c(srs, grs, ers, fcs),
+  Type = c("SRS", "GRS", "ERS", "FCS")
+) %>% mutate(Score = round(Score, 1))
+
+df_plot$x_label <- factor(paste0(df_plot$Metric, "\n", df_plot$Score), levels = paste0(df_plot$Metric, "\n", df_plot$Score))
+
+ggplot(df_plot, aes(x = x_label, y = Score, fill = Type)) +
+  geom_col(width = 0.6) +
+  scale_y_continuous(limits = c(0, 100), breaks = c(0, 25, 50, 75, 100), expand = c(0, 0)) +
+  scale_fill_manual(values = c("SRS" = combinedColor[1], "GRS" = grsexColor, "ERS" = ersexColors[2], "FCS" = "#2c3e50")) +
+  theme_minimal(base_size = 14) +
+  labs(y = "Score (0-100)", x = "") +
+  theme(
+    legend.position = "none",
+    panel.grid.major.x = element_blank(),
+    axis.text.x = element_text(size = 12, face = "bold", hjust = 0.5)
+  )
+
+```
+
+```{r}
+colSelect <- points %>%
+  select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date", "source", "Locality", "Collector", "Latitude", "Longitude")))
+
+datatable(colSelect, rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE))
+```
