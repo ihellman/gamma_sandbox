@@ -12,8 +12,8 @@ gapAnalysisUI <- function(id) {
         selectInput(
           inputId = ns("buffer_dist"),
           label = "Buffer Distance (km)",
-          choices = c(5, 10, 25, 50, 100),
-          selected = 10
+          choices = c(1, 5, 10, 25, 50, 100, 175, 250),
+          selected = 50
         ),
         actionButton(
           inputId = ns("generate_buffers"),
@@ -151,9 +151,13 @@ gapAnalysisServer <- function(id, analysis_data) {
       ref_points <- data %>% dplyr::filter(.data[[col_name]] == "H")
       germ_points <- data %>% dplyr::filter(.data[[col_name]] == "G")
 
-      leaflet::leafletProxy("gap_map", session) %>%
+      proxy <- leaflet::leafletProxy("gap_map", session) %>%
         leaflet::clearGroup("Reference Records") %>%
-        leaflet::addCircleMarkers(
+        leaflet::clearGroup("Germplasm Records")
+      
+      # SAFE MAPPING: Only attempt to draw markers if data exists for that group
+      if (nrow(ref_points) > 0) {
+        proxy %>% leaflet::addCircleMarkers(
           data = ref_points,
           lng = ~Longitude,
           lat = ~Latitude,
@@ -166,9 +170,11 @@ gapAnalysisServer <- function(id, analysis_data) {
           stroke = TRUE,
           label = point_labels(ref_points),
           options = leaflet::pathOptions(pane = "points")
-        ) %>%
-        leaflet::clearGroup("Germplasm Records") %>%
-        leaflet::addCircleMarkers(
+        )
+      }
+      
+      if (nrow(germ_points) > 0) {
+        proxy %>% leaflet::addCircleMarkers(
           data = germ_points,
           lng = ~Longitude,
           lat = ~Latitude,
@@ -182,6 +188,7 @@ gapAnalysisServer <- function(id, analysis_data) {
           label = point_labels(germ_points),
           options = leaflet::pathOptions(pane = "points")
         )
+      }
     })
 
     # Reactive Dataframe for Inset Plot
@@ -203,7 +210,6 @@ gapAnalysisServer <- function(id, analysis_data) {
       fcs_val <- mean(c(srs_val, grs_val, ers_val), na.rm = TRUE)
 
       dplyr::tibble(
-        # Convert to factor so ggplot maintains the exact order on the X-axis
         Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
         Score = as.numeric(c(srs_val, grs_val, ers_val, fcs_val)),
         Type = c("SRS", "GRS", "ERS", "FCS")
@@ -211,26 +217,30 @@ gapAnalysisServer <- function(id, analysis_data) {
         dplyr::mutate(Score = round(Score, 1))
     })
 
-    # Render Inset Plot
+# Render Inset Plot (Option 1: Labels on X-Axis)
     output$metrics_plot <- renderPlot({
       req(gap_scores_df())
       df <- gap_scores_df()
-      ggplot2::ggplot(df, ggplot2::aes(x = Metric, y = Score, fill = Type)) +
+      
+      # Combine the Metric name and the Score into a single string
+      df$x_label <- paste0(df$Metric, "\n", df$Score)
+      # Lock the factor levels so they stay in the correct order (SRS, GRS, ERS, FCS)
+      df$x_label <- factor(df$x_label, levels = df$x_label)
+      
+      ggplot2::ggplot(df, ggplot2::aes(x = x_label, y = Score, fill = Type)) +
         ggplot2::geom_col(width = 0.6) +
-        ggplot2::geom_text(
-          ggplot2::aes(label = Score),
-          vjust = -0.5,
-          size = 5,
-          fontface = "bold",
-          color = "#2c3e50"
+        # Strictly limit the y-axis to 100
+        ggplot2::scale_y_continuous(
+          limits = c(0, 100), 
+          breaks = c(0, 25, 50, 75, 100), 
+          expand = c(0, 0)
         ) +
-        ggplot2::scale_y_continuous(limits = c(0, 115), expand = c(0, 0)) +
         ggplot2::scale_fill_manual(
           values = c(
             "SRS" = combinedColor[1],
             "GRS" = grsexColor,
             "ERS" = ersexColors[2],
-            "FCS" = "#2c3e50" # A distinct, bold navy blue for the final score
+            "FCS" = "#2c3e50" 
           )
         ) +
         ggplot2::theme_minimal(base_size = 12) +
@@ -242,10 +252,12 @@ gapAnalysisServer <- function(id, analysis_data) {
         ggplot2::theme(
           legend.position = "none",
           panel.grid.major.x = ggplot2::element_blank(),
-          axis.text.x = ggplot2::element_text(size = 11, face = "bold"),
+          # Center the multi-line text
+          axis.text.x = ggplot2::element_text(size = 12, face = "bold", hjust = 0.5),
           plot.title = ggplot2::element_text(hjust = 0.5, size = 15, face = "bold", color = "#2c3e50")
         )
     })
+  
 
     # 5. Run Gap Analysis
     observeEvent(input$generate_buffers, {
@@ -294,11 +306,18 @@ gapAnalysisServer <- function(id, analysis_data) {
           gBuff <- v_clipped[v_clipped$processing_type == "G", ]
           hBuff <- v_clipped[v_clipped$processing_type == "H", ]
 
-          if (length(gBuff) > 0) {
-            grsMap_element <- terra::erase(x = hBuff, y = gBuff)
-          } else {
+          # SAFE ERASURE: Explicitly handle cases where a specific germplasm type is missing
+          if (length(hBuff) == 0) {
+            # No Reference points exist, so there is technically no geographical gap 
             grsMap_element <- hBuff
+          } else if (length(gBuff) == 0) {
+            # No Germplasm points exist, so the entire H buffer is considered a gap
+            grsMap_element <- hBuff
+          } else {
+            # Both types exist, perform the standard erasure
+            grsMap_element <- terra::erase(x = hBuff, y = gBuff)
           }
+          
           grsMetrics <- GRSex(
             allBuffers = v_clipped,
             outsideGBuffers = grsMap_element
@@ -340,9 +359,10 @@ gapAnalysisServer <- function(id, analysis_data) {
             leaflet::clearGroup("ERS Regions")
 
           if (!is.null(target_col) && nrow(sf_buffers) > 0) {
+            # SAFE PALETTE: Explicitly set the domain so it doesn't break if 'H' or 'G' is missing
             pal_type <- leaflet::colorFactor(
               palette = c("H" = combinedColor[2], "G" = combinedColor[1]),
-              domain = sf_buffers$processing_type
+              domain = c("H", "G") 
             )
             fill_cols <- pal_type(sf_buffers$processing_type)
             proxy %>%
