@@ -87,11 +87,6 @@ controlsModuleUI <- function(id) {
                   ns("random_selection"),
                   "Random selection",
                   value = FALSE
-                ),
-                checkboxInput(
-                  ns("maximize_geo_spread"),
-                  "Optimize geographic spread",
-                  value = FALSE
                 )
               )
             )
@@ -467,8 +462,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
       advanced_selected <- isTRUE(input$apply_date_filter) ||
         isTRUE(input$exclude_inat) ||
-        isTRUE(input$random_selection) ||
-        isTRUE(input$maximize_geo_spread)
+        isTRUE(input$random_selection)
 
       shiny::withProgress(
         message = "GBIF API Search",
@@ -588,25 +582,6 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
                     parsed_date >= start_date,
                     parsed_date <= end_date
                   )
-              }
-            }
-
-            if (isTRUE(input$maximize_geo_spread) && nrow(other_data) > 0) {
-              county_col <- if ("countyCode" %in% names(other_data)) {
-                "countyCode"
-              } else if ("county" %in% names(other_data)) {
-                "county"
-              } else {
-                NULL
-              }
-
-              if (
-                !is.null(county_col) && "stateProvince" %in% names(other_data)
-              ) {
-                other_data <- other_data %>%
-                  group_by(.data$stateProvince, .data[[county_col]]) %>%
-                  slice_head(n = 1) %>%
-                  ungroup()
               }
             }
 
