@@ -12,8 +12,8 @@ gapAnalysisUI <- function(id) {
         selectInput(
           inputId = ns("buffer_dist"),
           label = "Buffer Distance (km)",
-          choices = c(5, 10, 25, 50, 100),
-          selected = 10
+          choices = c(1, 5, 10, 25, 50, 100, 250),
+          selected = 50
         ),
         actionButton(
           inputId = ns("generate_buffers"),

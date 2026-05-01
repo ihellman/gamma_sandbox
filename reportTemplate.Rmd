@@ -68,6 +68,10 @@ params:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 pacman::p_load(leaflet, dplyr, ggplot2, DT, sf)
 
+# Extract Colors from params
+combinedColor <- params$combinedColor
+grsexColor <- params$grsexColor
+ersexColors <- params$ersexColors
 
 # Extract Parameters
 points <- params$points
