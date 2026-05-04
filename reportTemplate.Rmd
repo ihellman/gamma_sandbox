@@ -18,51 +18,74 @@ params:
 
 ```{=html}
 <style>
-  @import url('[https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Nunito+Sans:wght@400;600;700&display=swap)');
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+  div.main-container {
+    max-width: 1600px !important;
+  }
+
+  .footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: red;
+    color: white;
+    text-align: center;
+  }
 
   body {
-    font-family: 'Nunito Sans', sans-serif;
-    color: #495057;
-    background-color: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
+    padding: 0 40px; /* 0 for top and bottom, 40px for left and right */
   }
-  
-  h1, h2, h3, h4 {
-    font-family: 'Merriweather', serif;
-    color: #2c3e50;
+
+  h1 {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    background-color: #f0f0f0;
+    border-radius: 30px;
+    padding: 10px;
+    text-align: center;
   }
-  
-  h1.title {
-    color: #52b788;
-    border-bottom: 2px solid #52b788;
-    padding-bottom: 10px;
-  }
-  
-  .summary-box {
-    background-color: white;
-    border-left: 5px solid #52b788;
-    padding: 20px;
-    margin: 20px 0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    border-radius: 4px;
-  }
-  
-  .score-badge {
-    display: inline-block;
-    padding: 5px 10px;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    background-color:#f0f0f0;
     border-radius: 15px;
-    font-weight: bold;
-    color: white;
+    padding: 8px;
   }
-  
-  .data-tables {
-    background-color: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    background-color: #f0f0f0;
+    padding: 8px;
+  }
+
+  p {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0 auto;
+    width: 90%;
+    margin-bottom: 8px;
+  }
+
+  a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  div.datatables {
+    color: #333;
+    background: #eceae640;
   }
 </style>
 ```
-
 
 ```{r}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -91,23 +114,51 @@ fcs <- mean(c(srs, grs, ers), na.rm = TRUE)
 
 # Prioritization Rank
 rank <- case_when(
-  fcs <= 25 ~ "Urgent Priority",
-  fcs > 25 & fcs <= 50 ~ "High Priority",
-  fcs > 50 & fcs <= 75 ~ "Medium Priority",
-  TRUE ~ "Low Priority"
+  fcs <= 25 ~ "Urgent Priority (UP)",
+  fcs > 25 & fcs <= 50 ~ "High Priority (HP)",
+  fcs > 50 & fcs <= 75 ~ "Medium Priority (MP)",
+  TRUE ~ "Low Priority (LP)"
 )
 
 rank_color <- case_when(
-  rank == "Urgent Priority" ~ "#ffb4b3",
-  rank == "High Priority" ~ "#ffd380",
-  rank == "Medium Priority" ~ "#ffff80",
+  rank == "Urgent Priority (UP)" ~ "#ffb4b3",
+  rank == "High Priority (HP)" ~ "#ffd380",
+  rank == "Medium Priority (MP)" ~ "#ffff80",
   TRUE ~ "#a8d2a8"
 )
 ```
 
+# `r paste0('*', species, '*')`
+
+<br>
+
+## Occurrence records    
+
+The table below shows a summary of the occurrence records for the taxon. In preparation for the conservation gap analyses, we classified each record based on whether it was an existing *ex situ* germplasm sample from a genebank, botanic garden, or other repository (labeled G, as most records were from genebanks), or a reference observation/voucher specimen (labeled H, as most of these records were from herbaria).
+
+<div class="datatables">
+```{r}
+summary_table <- tibble::tibble(
+  Taxon = species,
+  `Total Occurrences` = totalPoints,
+  `Germplasm Records (G)` = nrow(g_points),
+  `Reference Records (H)` = nrow(h_points)
+)
+datatable(summary_table, rownames = FALSE, class = "compact", options = list(dom = 't'))
+```
+</div>
+
+<br>
+
+## Map of *ex situ* conservation gap analysis measures
+
+The GRS *ex situ* map feature shows the potential distribution model, with previous *ex situ* germplasm collection points surrounded by a buffer overlaid. Only germplasm (G) points and reference observations (H) are displayed on the map.
+
+The ERS *ex situ* map feature shows ecoregions within the potential distribution model from which no *ex situ* germplasm collections have been made.
+
 ```{r}
 # Base Map
-m <- leaflet() %>%
+m <- leaflet(width = "100%") %>%
   addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
   addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
@@ -127,7 +178,8 @@ if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
     data = params$sf_buffers, group = "Buffers",
     color = pal_type(params$sf_buffers$processing_type),
     fillColor = pal_type(params$sf_buffers$processing_type),
-    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "buffers")
+    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "buffers"),
+    popup = paste("Buffer:", params$bufferDist, "km")
   )
 }
 
@@ -135,7 +187,8 @@ if (!is.null(params$sf_grs_gap)) {
   m <- m %>% addPolygons(
     data = params$sf_grs_gap, group = "GRS Gap",
     color = grsexColor, fillColor = grsexColor,
-    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "grsGap")
+    fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "grsGap"),
+    popup = "Geographic Gap"
   )
 }
 
@@ -144,7 +197,18 @@ if (!is.null(params$sf_ers_regions)) {
   m <- m %>% addPolygons(
     data = params$sf_ers_regions, group = "ERS Regions",
     color = "black", fillColor = ~pal_ers(gap_status),
-    fillOpacity = 0.3, weight = 2, options = pathOptions(pane = "ersGap")
+    fillOpacity = 0.3, weight = 2, options = pathOptions(pane = "ersGap"),
+    popup = ~paste("<b>Region:</b>", ECO_NAME, "<br><b>Status:</b>", gap_status)
+  )
+}
+
+# Popup Generator
+gen_popup <- function(data) {
+  paste0(
+    "<strong>", as.character(data$`Taxon Name`), "</strong>",
+    "<br/><strong> Type: </strong>", data[[col_name]],
+    "<br/><b>Collector Name:</b> ", data$Collector,
+    "<br/><b>Locality Description:</b> ", data$Locality
   )
 }
 
@@ -152,21 +216,29 @@ if (!is.null(params$sf_ers_regions)) {
 if (nrow(h_points) > 0) {
   m <- m %>% addCircleMarkers(
     data = h_points, lng = ~Longitude, lat = ~Latitude, group = "Reference Records",
-    radius = 4, color = "white", fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1
+    radius = 4, color = "white", fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1,
+    popup = ~gen_popup(h_points)
   )
 }
 
 if (nrow(g_points) > 0) {
   m <- m %>% addCircleMarkers(
     data = g_points, lng = ~Longitude, lat = ~Latitude, group = "Germplasm Records",
-    radius = 4, color = "white", fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1
+    radius = 4, color = "white", fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1,
+    popup = ~gen_popup(g_points)
   )
 }
 
 m
 ```
 
-```{r}
+<br>
+
+## Conservation scores 
+
+The figure below displays all conservation gap analysis scores, providing a summary of the *ex situ* conservation scores. Based on the Final Conservation Score (FCS), the taxon has an assigned priority category of: **`r rank`**.
+
+```{r fig.align='center', out.width="100%"}
 df_plot <- tibble(
   Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
   Score = c(srs, grs, ers, fcs),
@@ -189,9 +261,80 @@ ggplot(df_plot, aes(x = x_label, y = Score, fill = Type)) +
 
 ```
 
+<br>
+
+### *Ex situ* conservation ecoregions table
+
+The table below shows all the ecoregions overlapping with the reference occurrence area of the taxon. The column ERS *ex situ* gap ecoregion denotes (true) if an ecoregion overlaps with the expected area but is farther than the buffer distance from any *ex situ* conservation occurrence, and is thus considered a gap in *ex situ* conservation.
+
+<div class="datatables">
+```{r}
+if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
+  eco_table <- params$sf_ers_regions %>%
+    st_drop_geometry() %>%
+    dplyr::mutate(
+      `ERS ex situ gap ecoregion` = gap_status != "Covered"
+    ) %>%
+    dplyr::select(
+      `ERS ex situ gap ecoregion`,
+      `Ecoregion name` = ECO_NAME
+    ) %>%
+    dplyr::arrange(desc(`ERS ex situ gap ecoregion`))
+  
+  datatable(eco_table, rownames = FALSE, class = "compact", options = list(pageLength = 10))
+} else {
+  cat("No ecoregion data available for this analysis.")
+}
+```
+</div>
+
+<br>
+
+### Detailed occurrence records
+
+The table below lists the details of all the occurrences used in the evaluation. This includes both germplasm accessions (G) and herbarium/reference records (H).
+
+<div class="datatables">
 ```{r}
 colSelect <- points %>%
   select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date", "source", "Locality", "Collector", "Latitude", "Longitude")))
 
-datatable(colSelect, rownames = FALSE, options = list(pageLength = 10, scrollX = TRUE))
+datatable(colSelect, rownames = FALSE, class = "compact", options = list(pageLength = 10, scrollX = TRUE))
 ```
+</div>
+
+<br>
+
+## Definitions of conservation gap analysis scores
+
+### Sampling Representativeness Score (SRS)
+
+***Ex situ***: The Sampling Representativeness Score *ex situ* (SRS ex situ) calculates the ratio of germplasm accessions (G) available in *ex situ* repositories to reference/voucher/herbarium (H) records for each taxon, making use of all compiled records irrespective of whether they include coordinates.
+
+### Geographic Representativeness Score (GRS)
+
+***Ex situ***: The Geographic Representativeness Score *ex situ* (GRS ex situ) uses buffers created around each G collection coordinate point to estimate geographic areas already well collected within the potential distribution models of each taxon and then calculates the proportion of the potential distribution model covered by these buffers.
+
+### Ecological Representativeness Score (ERS)
+
+***Ex situ***: The Ecological Representativeness Score *ex situ* (ERS ex situ) calculates the proportion of terrestrial ecoregions represented within the G buffered areas out of the total number of ecoregions occupied by the potential distribution model.
+
+### Final Conservation Score (FCS)
+
+***Ex situ***: The Final Conservation Score *ex situ* (FCS ex situ) was derived by calculating the average of the three *ex situ* conservation metrics.
+
+Taxa were further categorized with regard to conservation priority, with Urgent Priority (UP) for further conservation action assigned when FCS < 25, High Priority (HP) assigned when 25 ≤ FCS < 50, Medium Priority (MP) when 50 ≤ FCS < 75, and Low Priority (LP) when FCS ≥ 75.
+
+## Definitions of occurrence data categories
+
+**Occurrences**: The total number of observations and *ex situ* collections records for the taxon that were evaluated for use within the study.
+
+**Occurrences with lat/long**: The total number of observations that had a valid latitude and longitude pair and were used for spatial analysis.
+
+**Germplasm Records (G)**: Occurrences in which a living sample (typically a live plant or seed) is present in an *ex situ* conservation system (i.e., botanical garden, seed bank, genebank, etc.).
+
+**Reference/voucher Records (H)**: Occurrences that have a supporting herbarium or other reference record.
+
+---
+
+<p style="font-size: 12px; text-align: center; color: #777;"><strong>Methodology Note:</strong> These metrics are derived from the <a href="https://github.com/CIAT-DAPA/GapAnalysis">GapAnalysis R Package</a> guidelines. This report is intended for conservation planning purposes and should be validated with local experts and field assessments.</p>
