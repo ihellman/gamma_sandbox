@@ -21,16 +21,8 @@ gapAnalysisUI <- function(id) {
           icon = icon("play-circle"),
           class = "btn-primary w-100 mb-3"
         ),
-        # Updated Download Button
-        shinyjs::disabled(
-          downloadButton(
-            outputId = ns("download_report"),
-            label = "Download Report",
-            icon = icon("file-pdf"),
-            class = "btn-outline-primary w-100",
-            style = "font-weight: 500;"
-          )
-        )
+        # Dynamic Download Button
+        uiOutput(ns("download_report_ui"))
       ),
       
       div(
@@ -68,7 +60,6 @@ gapAnalysisServer <- function(id, analysis_data) {
       req(analysis_active()) 
       
       analysis_active(FALSE)
-      shinyjs::disable("download_report")
       
       leaflet::leafletProxy("gap_map", session) %>%
         leaflet::clearGroup("Buffers") %>%
@@ -291,7 +282,6 @@ gapAnalysisServer <- function(id, analysis_data) {
       analysis_active(TRUE)
       shinyjs::removeClass(id = "generate_buffers", class = "btn-warning")
       shinyjs::addClass(id = "generate_buffers", class = "btn-primary")
-      shinyjs::enable("download_report") # Activate report download
       
       showNotification(paste("Gap Analysis Complete"), type = "message")
     })
@@ -299,6 +289,26 @@ gapAnalysisServer <- function(id, analysis_data) {
     # --------------------------------------------------------------------------
     # Report Generation Logic
     # --------------------------------------------------------------------------
+    output$download_report_ui <- renderUI({
+      if (analysis_active()) {
+        downloadButton(
+          outputId = session$ns("download_report"),
+          label = "Download Report",
+          icon = icon("file-pdf"),
+          class = "btn-outline-primary w-100",
+          style = "font-weight: 500;"
+        )
+      } else {
+        # Render a disabled button visually when inactive
+        tags$button(
+          id = session$ns("download_report_disabled"),
+          class = "btn btn-outline-primary w-100 disabled",
+          style = "font-weight: 500;",
+          icon("file-pdf"), " Download Report"
+        )
+      }
+    })
+
     output$download_report <- downloadHandler(
       filename = function() {
         data <- prepLatLon(analysis_data())

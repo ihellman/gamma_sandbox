@@ -87,9 +87,12 @@ params:
 </style>
 ```
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-pacman::p_load(leaflet, dplyr, ggplot2, DT, sf)
+pacman::p_load(leaflet, dplyr, ggplot2, DT, sf, htmltools)
+
+# Force DT dependencies to load
+htmltools::tagList(DT::datatable(cars[1,1,drop=FALSE], width=0, height=0, options=list(dom='t', autoWidth=TRUE)))
 
 # Extract Colors from params
 combinedColor <- params$combinedColor
@@ -137,14 +140,14 @@ rank_color <- case_when(
 The table below shows a summary of the occurrence records for the taxon. In preparation for the conservation gap analyses, we classified each record based on whether it was an existing *ex situ* germplasm sample from a genebank, botanic garden, or other repository (labeled G, as most records were from genebanks), or a reference observation/voucher specimen (labeled H, as most of these records were from herbaria).
 
 <div class="datatables">
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 summary_table <- tibble::tibble(
   Taxon = species,
   `Total Occurrences` = totalPoints,
   `Germplasm Records (G)` = nrow(g_points),
   `Reference Records (H)` = nrow(h_points)
 )
-datatable(summary_table, rownames = FALSE, class = "compact", options = list(dom = 't'))
+DT::datatable(summary_table, rownames = FALSE, class = "compact", options = list(dom = 't'))
 ```
 </div>
 
@@ -156,7 +159,7 @@ The GRS *ex situ* map feature shows the potential distribution model, with previ
 
 The ERS *ex situ* map feature shows ecoregions within the potential distribution model from which no *ex situ* germplasm collections have been made.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Base Map
 m <- leaflet(width = "100%") %>%
   addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
@@ -238,7 +241,7 @@ m
 
 The figure below displays all conservation gap analysis scores, providing a summary of the *ex situ* conservation scores. Based on the Final Conservation Score (FCS), the taxon has an assigned priority category of: **`r rank`**.
 
-```{r fig.align='center', out.width="100%"}
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width="100%"}
 df_plot <- tibble(
   Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
   Score = c(srs, grs, ers, fcs),
@@ -268,7 +271,7 @@ ggplot(df_plot, aes(x = x_label, y = Score, fill = Type)) +
 The table below shows all the ecoregions overlapping with the reference occurrence area of the taxon. The column ERS *ex situ* gap ecoregion denotes (true) if an ecoregion overlaps with the expected area but is farther than the buffer distance from any *ex situ* conservation occurrence, and is thus considered a gap in *ex situ* conservation.
 
 <div class="datatables">
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
   eco_table <- params$sf_ers_regions %>%
     st_drop_geometry() %>%
@@ -281,7 +284,7 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
     ) %>%
     dplyr::arrange(desc(`ERS ex situ gap ecoregion`))
   
-  datatable(eco_table, rownames = FALSE, class = "compact", options = list(pageLength = 10))
+  DT::datatable(eco_table, rownames = FALSE, class = "compact", options = list(pageLength = 10))
 } else {
   cat("No ecoregion data available for this analysis.")
 }
@@ -295,11 +298,11 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
 The table below lists the details of all the occurrences used in the evaluation. This includes both germplasm accessions (G) and herbarium/reference records (H).
 
 <div class="datatables">
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 colSelect <- points %>%
   select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date", "source", "Locality", "Collector", "Latitude", "Longitude")))
 
-datatable(colSelect, rownames = FALSE, class = "compact", options = list(pageLength = 10, scrollX = TRUE))
+DT::datatable(colSelect, rownames = FALSE, class = "compact", options = list(pageLength = 10, scrollX = TRUE))
 ```
 </div>
 
