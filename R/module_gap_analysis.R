@@ -22,7 +22,13 @@ gapAnalysisUI <- function(id) {
           class = "btn-primary w-100 mb-3"
         ),
         # Dynamic Download Button
-        uiOutput(ns("download_report_ui"))
+        shinycssloaders::withSpinner(
+          uiOutput(ns("download_report_ui")),
+          type = 8,
+          color = "#007bff",
+          size = 0.5,
+          proxy.height = "40px"
+        )
       ),
       
       div(

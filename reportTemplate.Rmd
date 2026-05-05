@@ -176,21 +176,24 @@ m <- leaflet(width = "100%") %>%
   addMapPane("grsGap", zIndex = 405) %>%
   addMapPane("buffers", zIndex = 410)
 
-# Add pre-calculated sf objects
+# Add pre-calculated sf objects (simplified for memory reduction)
 if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
+  # Simplify geometries to save memory in the HTML output (tolerance in meters)
+  buffers_simplified <- sf::st_simplify(params$sf_buffers, preserveTopology = TRUE, dTolerance = 1000)
   pal_type <- colorFactor(c("H" = combinedColor[2], "G" = combinedColor[1]), domain = c("H", "G"))
   m <- m %>% addPolygons(
-    data = params$sf_buffers, group = "Buffers",
-    color = pal_type(params$sf_buffers$processing_type),
-    fillColor = pal_type(params$sf_buffers$processing_type),
+    data = buffers_simplified, group = "Buffers",
+    color = pal_type(buffers_simplified$processing_type),
+    fillColor = pal_type(buffers_simplified$processing_type),
     fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "buffers"),
     popup = paste("Buffer:", params$bufferDist, "km")
   )
 }
 
 if (!is.null(params$sf_grs_gap)) {
+  grs_gap_simplified <- sf::st_simplify(params$sf_grs_gap, preserveTopology = TRUE, dTolerance = 1000)
   m <- m %>% addPolygons(
-    data = params$sf_grs_gap, group = "GRS Gap",
+    data = grs_gap_simplified, group = "GRS Gap",
     color = grsexColor, fillColor = grsexColor,
     fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "grsGap"),
     popup = "Geographic Gap"
@@ -198,9 +201,10 @@ if (!is.null(params$sf_grs_gap)) {
 }
 
 if (!is.null(params$sf_ers_regions)) {
-  pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = params$sf_ers_regions$gap_status)
+  ers_regions_simplified <- sf::st_simplify(params$sf_ers_regions, preserveTopology = TRUE, dTolerance = 1000)
+  pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = ers_regions_simplified$gap_status)
   m <- m %>% addPolygons(
-    data = params$sf_ers_regions, group = "ERS Regions",
+    data = ers_regions_simplified, group = "ERS Regions",
     color = "black", fillColor = ~pal_ers(gap_status),
     fillOpacity = 0.3, weight = 2, options = pathOptions(pane = "ersGap"),
     popup = ~paste("<b>Region:</b>", ECO_NAME, "<br><b>Status:</b>", gap_status)
@@ -293,16 +297,7 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
 
 <br>
 
-### Detailed occurrence records
 
-The table below lists the details of all the occurrences used in the evaluation. This includes both germplasm accessions (G) and herbarium/reference records (H).
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-colSelect <- points %>%
-  select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date", "source", "Locality", "Collector", "Latitude", "Longitude")))
-
-DT::datatable(colSelect, rownames = FALSE, class = "compact", options = list(pageLength = 10, scrollX = TRUE))
-```
 
 <br>
 

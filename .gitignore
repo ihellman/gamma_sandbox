@@ -2,3 +2,4 @@
 preprocessing/
 .Rproj.user
 rsconnect/shinyapps.io/atlantabg/GAMMA_dev.dcf
+secrets.yaml
