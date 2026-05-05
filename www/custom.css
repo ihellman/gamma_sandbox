@@ -383,3 +383,21 @@ body.on-home .navbar {
 .footer-modern .mt-4 {
   margin-top: 1rem !important; 
 }
+
+/* GBIF advanced options styling */
+.gbif-advanced .accordion {
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  background: #f8f9fa;
+  padding: 0.25rem;
+}
+
+.gbif-advanced .accordion-button {
+  font-weight: 600;
+}
+
+/* Slightly widen sidebar */
+.bslib-sidebar {
+  width: 340px;
+  min-width: 340px;
+}
