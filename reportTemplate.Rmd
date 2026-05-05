@@ -139,17 +139,19 @@ rank_color <- case_when(
 
 The table below shows a summary of the occurrence records for the taxon. In preparation for the conservation gap analyses, we classified each record based on whether it was an existing *ex situ* germplasm sample from a genebank, botanic garden, or other repository (labeled G, as most records were from genebanks), or a reference observation/voucher specimen (labeled H, as most of these records were from herbaria).
 
-<div class="datatables">
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-summary_table <- tibble::tibble(
+
+summary_table <- data.frame(
   Taxon = species,
   `Total Occurrences` = totalPoints,
   `Germplasm Records (G)` = nrow(g_points),
-  `Reference Records (H)` = nrow(h_points)
+  `Reference Records (H)` = nrow(h_points),
+  check.names = FALSE
 )
+
 DT::datatable(summary_table, rownames = FALSE, class = "compact", options = list(dom = 't'))
+
 ```
-</div>
 
 <br>
 
@@ -270,7 +272,6 @@ ggplot(df_plot, aes(x = x_label, y = Score, fill = Type)) +
 
 The table below shows all the ecoregions overlapping with the reference occurrence area of the taxon. The column ERS *ex situ* gap ecoregion denotes (true) if an ecoregion overlaps with the expected area but is farther than the buffer distance from any *ex situ* conservation occurrence, and is thus considered a gap in *ex situ* conservation.
 
-<div class="datatables">
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
   eco_table <- params$sf_ers_regions %>%
@@ -289,7 +290,6 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
   cat("No ecoregion data available for this analysis.")
 }
 ```
-</div>
 
 <br>
 
@@ -297,14 +297,12 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
 
 The table below lists the details of all the occurrences used in the evaluation. This includes both germplasm accessions (G) and herbarium/reference records (H).
 
-<div class="datatables">
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 colSelect <- points %>%
   select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date", "source", "Locality", "Collector", "Latitude", "Longitude")))
 
 DT::datatable(colSelect, rownames = FALSE, class = "compact", options = list(pageLength = 10, scrollX = TRUE))
 ```
-</div>
 
 <br>
 
