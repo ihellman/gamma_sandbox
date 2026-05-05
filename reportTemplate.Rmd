@@ -89,7 +89,7 @@ params:
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-pacman::p_load(leaflet, dplyr, ggplot2, DT, sf, htmltools)
+pacman::p_load(leaflet, dplyr, ggplot2, DT, sf, htmltools, rmapshaper)
 
 # Force DT dependencies to load
 htmltools::tagList(DT::datatable(cars[1,1,drop=FALSE], width=0, height=0, options=list(dom='t', autoWidth=TRUE)))
@@ -178,8 +178,8 @@ m <- leaflet(width = "100%") %>%
 
 # Add pre-calculated sf objects (simplified for memory reduction)
 if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
-  # Simplify geometries to save memory in the HTML output (tolerance in meters)
-  buffers_simplified <- sf::st_simplify(params$sf_buffers, preserveTopology = TRUE, dTolerance = 1000)
+  # Simplify geometries to save memory in the HTML output using rmapshaper
+  buffers_simplified <- rmapshaper::ms_simplify(params$sf_buffers, keep = 0.05, keep_shapes = TRUE)
   pal_type <- colorFactor(c("H" = combinedColor[2], "G" = combinedColor[1]), domain = c("H", "G"))
   m <- m %>% addPolygons(
     data = buffers_simplified, group = "Buffers",
@@ -191,7 +191,7 @@ if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
 }
 
 if (!is.null(params$sf_grs_gap)) {
-  grs_gap_simplified <- sf::st_simplify(params$sf_grs_gap, preserveTopology = TRUE, dTolerance = 1000)
+  grs_gap_simplified <- rmapshaper::ms_simplify(params$sf_grs_gap, keep = 0.05, keep_shapes = TRUE)
   m <- m %>% addPolygons(
     data = grs_gap_simplified, group = "GRS Gap",
     color = grsexColor, fillColor = grsexColor,
@@ -201,7 +201,7 @@ if (!is.null(params$sf_grs_gap)) {
 }
 
 if (!is.null(params$sf_ers_regions)) {
-  ers_regions_simplified <- sf::st_simplify(params$sf_ers_regions, preserveTopology = TRUE, dTolerance = 1000)
+  ers_regions_simplified <- rmapshaper::ms_simplify(params$sf_ers_regions, keep = 0.05, keep_shapes = TRUE)
   pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = ers_regions_simplified$gap_status)
   m <- m %>% addPolygons(
     data = ers_regions_simplified, group = "ERS Regions",
