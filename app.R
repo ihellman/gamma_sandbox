@@ -11,10 +11,17 @@ library(DT)
 library(yaml)
 library(markdown) # fail on shinyapp.io so adding back 
 library(shinycssloaders)
+library(terra)
+library(ggplot2)
+library(rgbif)
+library(tidyr)
+library(rmarkdown)
+library(htmlwidgets)
+library(rmapshaper)
 sf::sf_use_s2(FALSE)
 
 # Load text from YAML file
-landing_text <- read_yaml("appData/landing_text.yml")
+landing_text <- yaml::read_yaml("appData/landing_text.yml")
 
 # MAIN UI ----------------------------------------------------------------------------------
 ui <- tagList(

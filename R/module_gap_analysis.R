@@ -5,7 +5,7 @@ gapAnalysisUI <- function(id) {
   tagList(
     layout_sidebar(
       fillable = TRUE,
-      class = "p-0", 
+      class = "p-0",
       sidebar = sidebar(
         title = "Controls",
         open = "always",
@@ -30,15 +30,15 @@ gapAnalysisUI <- function(id) {
           proxy.height = "40px"
         )
       ),
-      
+
       div(
         style = "position: relative; width: 100%; height: 100%; min-height: 80vh;",
         leaflet::leafletOutput(ns("gap_map"), width = "100%", height = "100%"),
         shinyjs::hidden(
           div(
             id = ns("plot_inset"),
-            style = "position: absolute; bottom: 30px; right: 60px; z-index: 1000; 
-                     background: white; padding: 15px; border-radius: 8px; 
+            style = "position: absolute; bottom: 30px; right: 60px; z-index: 1000;
+                     background: white; padding: 15px; border-radius: 8px;
                      box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 380px; height: 180px;",
             plotOutput(ns("metrics_plot"), width = "100%", height = "100%")
           )
@@ -54,37 +54,37 @@ gapAnalysisServer <- function(id, analysis_data) {
     srs_ex <- shiny::reactiveVal(NULL)
     grs_ex <- shiny::reactiveVal(NULL)
     ers_ex <- shiny::reactiveVal(NULL)
-    
+
     # NEW: Store the spatial layers for the report to prevent recalculating
     spatial_buffers <- shiny::reactiveVal(NULL)
     spatial_grs_gap <- shiny::reactiveVal(NULL)
     spatial_ers_regions <- shiny::reactiveVal(NULL)
-    
+
     analysis_active <- shiny::reactiveVal(FALSE)
-    
+
     observeEvent(analysis_data(), {
-      req(analysis_active()) 
-      
+      req(analysis_active())
+
       analysis_active(FALSE)
-      
+
       leaflet::leafletProxy("gap_map", session) %>%
         leaflet::clearGroup("Buffers") %>%
         leaflet::clearGroup("GRS Gap") %>%
         leaflet::clearGroup("ERS Regions") %>%
         leaflet::removeControl("gap_legend")
-      
+
       shinyjs::hide("plot_inset")
-      
+
       srs_ex(NULL)
       grs_ex(NULL)
       ers_ex(NULL)
       spatial_buffers(NULL)
       spatial_grs_gap(NULL)
       spatial_ers_regions(NULL)
-      
+
       shinyjs::removeClass(id = "generate_buffers", class = "btn-primary")
       shinyjs::addClass(id = "generate_buffers", class = "btn-warning")
-      
+
       showModal(modalDialog(
         title = "Dataset Modified",
         "The underlying dataset has been changed. Previous gap analysis results have been cleared from the map to prevent inaccuracies.",
@@ -95,7 +95,7 @@ gapAnalysisServer <- function(id, analysis_data) {
         size = "m"
       ))
     }, ignoreInit = TRUE)
-    
+
     buffer_dist_km <- reactive({
       req(input$buffer_dist)
       val <- as.numeric(input$buffer_dist)
@@ -120,19 +120,19 @@ gapAnalysisServer <- function(id, analysis_data) {
     output$gap_map <- leaflet::renderLeaflet({
       gap_base_map()
     })
+    outputOptions(output, "gap_map", suspendWhenHidden = FALSE)
 
     observe({
-      req(analysis_data(), input$gap_map_bounds)
-      data <- prepLatLon(analysis_data())
-      req(nrow(data) > 0)
+      req(analysis_data())
+      # Wait until the map is actually visible and rendered (fixes the hidden tab bug)
+      req(input$gap_map_zoom)
 
-      if (!is.null(data$`Taxon Name`)) {
-        srsMetrics <- SRSex(
-          taxon = data$`Taxon Name`[1],
-          occurrence_Data = data
-        )
-        srs_ex(srsMetrics)
-      }
+      all_data <- analysis_data()
+      req(nrow(all_data) > 0)
+
+      # Skip the taxon filter and map all points
+      data <- prepLatLon(all_data)
+      req(nrow(data) > 0)
 
       col_name <- if ("Current Germplasm Type" %in% names(data)) "Current Germplasm Type" else if ("type" %in% names(data)) "type" else return()
 
@@ -142,20 +142,20 @@ gapAnalysisServer <- function(id, analysis_data) {
       proxy <- leaflet::leafletProxy("gap_map", session) %>%
         leaflet::clearGroup("Reference Records") %>%
         leaflet::clearGroup("Germplasm Records")
-      
+
       if (nrow(ref_points) > 0) {
         proxy %>% leaflet::addCircleMarkers(
           data = ref_points, lng = ~Longitude, lat = ~Latitude,
-          group = "Reference Records", radius = 5, color = "white",
+          group = "Reference Records", radius = 5, color = "#4d4d4d",
           fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1, stroke = TRUE,
           label = point_labels(ref_points), options = leaflet::pathOptions(pane = "points")
         )
       }
-      
+
       if (nrow(germ_points) > 0) {
         proxy %>% leaflet::addCircleMarkers(
           data = germ_points, lng = ~Longitude, lat = ~Latitude,
-          group = "Germplasm Records", radius = 5, color = "white",
+          group = "Germplasm Records", radius = 5, color = "#4d4d4d",
           fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1, stroke = TRUE,
           label = point_labels(germ_points), options = leaflet::pathOptions(pane = "points")
         )
@@ -181,7 +181,7 @@ gapAnalysisServer <- function(id, analysis_data) {
       req(gap_scores_df())
       df <- gap_scores_df()
       df$x_label <- factor(paste0(df$Metric, "\n", df$Score), levels = paste0(df$Metric, "\n", df$Score))
-      
+
       ggplot2::ggplot(df, ggplot2::aes(x = x_label, y = Score, fill = Type)) +
         ggplot2::geom_col(width = 0.6) +
         ggplot2::scale_y_continuous(limits = c(0, 100), breaks = c(0, 25, 50, 75, 100), expand = c(0, 0)) +
@@ -197,20 +197,41 @@ gapAnalysisServer <- function(id, analysis_data) {
     })
 
     observeEvent(input$generate_buffers, {
-      data <- prepLatLon(analysis_data())
+      all_data <- analysis_data()
+      req(nrow(all_data) > 0)
+
+      # 1. Grab the first taxon name to use as a universal label
+      display_taxon <- all_data$`Taxon Name`[1]
+
+      # 2. OVERWRITE the Taxon Name for the entire dataset.
+      # This prevents SRSex() from filtering out the uploaded data.
+      all_data$`Taxon Name` <- display_taxon
+
+      # 3. Prepare coordinates WITHOUT the dplyr::filter
+      data <- prepLatLon(all_data)
       req(nrow(data) > 0)
+
       dist_km <- buffer_dist_km()
 
       target_col <- if ("Current Germplasm Type" %in% names(data)) "Current Germplasm Type" else if ("type" %in% names(data)) "type" else NULL
 
       shiny::withProgress(message = "Running Gap Analysis", value = 0, {
-          incProgress(0.1, detail = "Loading Land Data...")
+          incProgress(0.1, detail = "Calculating SRSex...")
+
+          # 4. Pass the homogenized all_data and display_taxon to SRSex
+          srsMetrics <- SRSex(
+            taxon = display_taxon,
+            occurrence_Data = all_data
+          )
+          srs_ex(srsMetrics)
+
+          incProgress(0.2, detail = "Loading Land Data...")
           land <- terra::vect("appData/land_simple.gpkg")
 
-          incProgress(0.2, detail = "Buffering points...")
+          incProgress(0.3, detail = "Buffering points...")
           df_base <- data
           df_base$processing_type <- if (!is.null(target_col)) df_base[[target_col]] else "All"
-          
+
           v <- terra::vect(df_base, geom = c("Longitude", "Latitude"), crs = "EPSG:4326")
           v_buffer <- terra::buffer(v, width = dist_km * 1000)
 
@@ -229,7 +250,7 @@ gapAnalysisServer <- function(id, analysis_data) {
           } else {
             grsMap_element <- terra::erase(x = hBuff, y = gBuff)
           }
-          
+
           grsMetrics <- GRSex(allBuffers = v_clipped, outsideGBuffers = grsMap_element)
           grs_ex(grsMetrics)
 
@@ -257,11 +278,22 @@ gapAnalysisServer <- function(id, analysis_data) {
             leaflet::clearGroup("Buffers") %>% leaflet::clearGroup("GRS Gap") %>% leaflet::clearGroup("ERS Regions")
 
           if (!is.null(target_col) && nrow(sf_buffers) > 0) {
-            pal_type <- leaflet::colorFactor(c("H" = combinedColor[2], "G" = combinedColor[1]), domain = c("H", "G"))
+            # Fix: Use 'levels' to strictly enforce the color order and prevent alphabetical sorting
+            pal_type <- leaflet::colorFactor(
+              palette = c(combinedColor[1], combinedColor[2]),
+              levels = c("H", "G")
+            )
+
             proxy %>% leaflet::addPolygons(
-                data = sf_buffers, group = "Buffers", color = pal_type(sf_buffers$processing_type),
-                fillColor = pal_type(sf_buffers$processing_type), fillOpacity = 0.4, weight = 1,
-                options = leaflet::pathOptions(pane = "buffers"), popup = paste("Buffer:", dist_km, "km")
+                data = sf_buffers,
+                group = "Buffers",
+                # Fix: Use the tilde (~) formula syntax for robust mapping
+                color = ~pal_type(processing_type),
+                fillColor = ~pal_type(processing_type),
+                fillOpacity = 0.4,
+                weight = 1,
+                options = leaflet::pathOptions(pane = "buffers"),
+                popup = paste("Buffer:", dist_km, "km")
             )
           }
 
@@ -283,15 +315,15 @@ gapAnalysisServer <- function(id, analysis_data) {
 
           proxy %>% leaflet::showGroup(c("Buffers", "GRS Gap", "ERS Regions"))
       })
-      
+
       shinyjs::show("plot_inset")
       analysis_active(TRUE)
       shinyjs::removeClass(id = "generate_buffers", class = "btn-warning")
       shinyjs::addClass(id = "generate_buffers", class = "btn-primary")
-      
+
       showNotification(paste("Gap Analysis Complete"), type = "message")
     })
-    
+
     # --------------------------------------------------------------------------
     # Report Generation Logic
     # --------------------------------------------------------------------------
@@ -325,7 +357,7 @@ gapAnalysisServer <- function(id, analysis_data) {
         # Copy the Rmd file to a temporary directory
         tempReport <- file.path(tempdir(), "reportTemplate.Rmd")
         file.copy("reportTemplate.Rmd", tempReport, overwrite = TRUE)
-        
+
         # Set up parameters to pass to Rmd
         params <- list(
           points = prepLatLon(analysis_data()),
@@ -340,7 +372,7 @@ gapAnalysisServer <- function(id, analysis_data) {
           grsexColor = grsexColor,
           ersexColors = ersexColors
         )
-        
+
         # Render the report
         rmarkdown::render(
           tempReport,
