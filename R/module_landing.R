@@ -1,15 +1,13 @@
 landingUI <- function(id, landing_text) {
   ns <- NS(id)
-
+  
   div(
     class = "landing-page",
     # --- HERO SECTION ---
     div(
       class = "hero-section",
-      tags$img(
-        class = "hero-image",
-        src = "https://plus.unsplash.com/premium_photo-1690031000842-1ac0508f18b7?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
-      ),
+      # UPDATE THIS LINE: Match the exact name and extension of your background image
+      tags$img(class = "hero-image", src = "background_photo.jpg"),
       div(class = "hero-overlay"),
       div(
         class = "hero-content",
@@ -17,7 +15,7 @@ landingUI <- function(id, landing_text) {
         p(landing_text$hero$subtitle, style = "font-size: 1.2rem;")
       )
     ),
-
+    
     # --- ACTION BAR ---
     div(
       class = "action-bar-container",
@@ -38,68 +36,65 @@ landingUI <- function(id, landing_text) {
         )
       )
     ),
-
+    
     # --- MAIN CONTENT SECTION ---
     div(
       class = "container content-section",
-
+      
       div(
         class = "summary-section",
         p(landing_text$summary$text1),
         p(landing_text$summary$text2)
       ),
-
+      
       # --- FEATURES CONTAINER ---
       div(
         class = "features-container",
-
+        
         # BOX 1: Gather
         actionLink(
           ns("show_gather"),
           label = div(
-            id = ns("box_gather"), # Added ID for active state styling
+            id = ns("box_gather"), 
             class = "feature-box",
-            tags$img(
-              src = "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
-            ),
+            # UPDATE THIS LINE: Match the exact name of your people/gather image
+            tags$img(src = "gather_photo.jpg"),
             h4(landing_text$gather$title),
             p(landing_text$gather$text)
           )
         ),
-
+        
         # BOX 2: Find
         actionLink(
           ns("show_find"),
           label = div(
             id = ns("box_find"), 
             class = "feature-box",
-            tags$img(
-              src = "https://images.unsplash.com/photo-1730804518415-75297e8d2a41?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1462"
-            ),
+            # UPDATE THIS LINE: Match the exact name of your cycad image
+            tags$img(src = "cycad.jpg"),
             h4(landing_text$find$title),
             p(landing_text$find$text)
           )
         ),
-
+        
         # BOX 3: Share
         actionLink(
           ns("show_share"),
           label = div(
-            id = ns("box_share"), # Added ID for active state styling
+            id = ns("box_share"), 
             class = "feature-box",
-            tags$img(
-              src = "https://plus.unsplash.com/premium_photo-1726754516964-7ee4209343a6?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            ),
+            # UPDATE THIS LINE: Match the exact name of your seedling image
+            tags$img(src = "seedling.jpg"),
             h4(landing_text$share$title),
             p(landing_text$share$text)
           )
         )
       ),
-
+      
       # --- DETAILS SECTION (Shared by all boxes) ---
       uiOutput(ns("feature_details"))
     ),
-
+    
     # --- FOOTER ---
     footer_ui()
   )
@@ -110,7 +105,6 @@ landingServer <- function(id, landing_text) {
     ns <- session$ns
     
     # Track which sections are currently active as a character vector
-    # Values: character(0) (all closed), or any combination of "gather", "find", "share"
     active_sections <- reactiveVal(character(0))
     
     # --- Toggle Logic Helper ---
@@ -118,10 +112,8 @@ landingServer <- function(id, landing_text) {
       current <- active_sections()
       
       if (section_name %in% current) {
-        # If it's already open, remove it from the list
         active_sections(setdiff(current, section_name))
       } else {
-        # If it's closed, add it to the list
         active_sections(c(current, section_name))
       }
     }
@@ -134,14 +126,11 @@ landingServer <- function(id, landing_text) {
     # --- Render the Expandable Panel ---
     output$feature_details <- renderUI({
       current <- active_sections()
-      req(length(current) > 0) # Only render if at least one section is active
+      req(length(current) > 0)
       
-      # --- THE FIX: Force the display order ---
       master_order <- c("gather", "find", "share")
       ordered_sections <- intersect(master_order, current)
       
-      # Build a list of UI elements for all active sections
-      # Notice we now loop over 'ordered_sections' instead of 'current'
       stacked_content <- lapply(ordered_sections, function(section) {
         content <- switch(section,
                           "gather" = includeMarkdown("appData/gather_modal.md"),
@@ -149,14 +138,12 @@ landingServer <- function(id, landing_text) {
                           "share"  = includeMarkdown("appData/share_results.md")
         )
         
-        # Wrap each section in a div with a bottom border to separate them
         div(class = "mb-4 pb-3 border-bottom", content)
       })
       
       div(
         class = "feature-details-panel slide-down",
         tagList(stacked_content),
-        # Internal Close Button 
         actionButton(
           ns("close_details"),
           "Close All Sections",
@@ -167,7 +154,6 @@ landingServer <- function(id, landing_text) {
     
     # --- Handle Close Button ---
     observeEvent(input$close_details, {
-      # Clear all selections
       active_sections(character(0)) 
     })
     
@@ -175,7 +161,6 @@ landingServer <- function(id, landing_text) {
     observe({
       current <- active_sections()
       
-      # Helper function to toggle classes based on presence in the 'current' vector
       toggle_box_class <- function(box_id, sec_name) {
         if (sec_name %in% current) {
           shinyjs::addClass(id = box_id, class = "active-feature-box")
