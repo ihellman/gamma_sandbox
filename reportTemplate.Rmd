@@ -164,11 +164,11 @@ The ERS *ex situ* map feature shows ecoregions within the potential distribution
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Base Map
 m <- leaflet(width = "100%") %>%
-  addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+  addProviderTiles("CartoDB.Positron", group = "Base Map") %>%
   addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
   addLayersControl(
-    baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
+    baseGroups = c("Base Map", "Topography", "Imagery"),
     overlayGroups = c("Reference Records", "Germplasm Records", "Buffers", "GRS Gap", "ERS Regions"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
@@ -179,7 +179,7 @@ m <- leaflet(width = "100%") %>%
 # Add pre-calculated sf objects (simplified for memory reduction)
 if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
   # Simplify geometries to save memory in the HTML output using rmapshaper
-  buffers_simplified <- rmapshaper::ms_simplify(params$sf_buffers, keep = 0.05, keep_shapes = TRUE)
+  buffers_simplified <- rmapshaper::ms_simplify(params$sf_buffers, keep = 0.3, keep_shapes = TRUE) 
   pal_type <- colorFactor(c("H" = combinedColor[1], "G" = combinedColor[2]), domain = c("H", "G"))
   m <- m %>% addPolygons(
     data = buffers_simplified, group = "Buffers",
@@ -191,7 +191,7 @@ if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
 }
 
 if (!is.null(params$sf_grs_gap)) {
-  grs_gap_simplified <- rmapshaper::ms_simplify(params$sf_grs_gap, keep = 0.05, keep_shapes = TRUE)
+  grs_gap_simplified <- rmapshaper::ms_simplify(params$sf_grs_gap, keep = 0.3, keep_shapes = TRUE)
   m <- m %>% addPolygons(
     data = grs_gap_simplified, group = "GRS Gap",
     color = grsexColor, fillColor = grsexColor,
@@ -201,7 +201,7 @@ if (!is.null(params$sf_grs_gap)) {
 }
 
 if (!is.null(params$sf_ers_regions)) {
-  ers_regions_simplified <- rmapshaper::ms_simplify(params$sf_ers_regions, keep = 0.05, keep_shapes = TRUE)
+  ers_regions_simplified <- rmapshaper::ms_simplify(params$sf_ers_regions, keep = 0.3, keep_shapes = TRUE)
   pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = ers_regions_simplified$gap_status)
   m <- m %>% addPolygons(
     data = ers_regions_simplified, group = "ERS Regions",
