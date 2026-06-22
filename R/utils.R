@@ -32,6 +32,10 @@ merge_and_index <- function(current_data, new_data) {
       Latitude = as.numeric(Latitude),
       Longitude = as.numeric(Longitude)
     ) |>
+    dplyr::mutate(
+      `Current Germplasm Type` = toupper(trimws(`Current Germplasm Type`)),
+      `Taxon Name` = trimws(`Taxon Name`)
+    ) |>
     # Drop any rogue columns uploaded by the user
     dplyr::select(dplyr::all_of(expected_cols)) |>
     dplyr::mutate(index = dplyr::row_number())

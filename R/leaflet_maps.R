@@ -34,20 +34,20 @@ make_shapes <- function(colors, sizes, borders, shapes) {
 gbif_legend_shape <- make_shapes(
   gbifColor,
   sizes = 20,
-  borders = "white",
+  borders = "#4d4d4d",
   shapes = "circle"
 )
 upload_legend_shape <- make_shapes(
   uploadColor,
   sizes = 20,
-  borders = "white",
+  borders = "#4d4d4d",
   shapes = "circle"
 )
 # might need to complicate this a bit for the different shapes
 gap_legend_shape <- make_shapes(
   uploadColor,
   sizes = 20,
-  borders = "white",
+  borders = "#4d4d4d",
   shapes = "circle"
 )
 
@@ -192,7 +192,7 @@ render_base_points <- function(mapID, allPoints) {
       layerId = ~index,
       group = "GBIF", # ASSIGNED TO TOGGLE
       radius = 5,
-      color = "white",
+      color = "#4d4d4d",
       fillColor = ~color,
       stroke = TRUE,
       weight = 1,
@@ -209,7 +209,7 @@ render_base_points <- function(mapID, allPoints) {
       layerId = ~index,
       group = "Upload", # ASSIGNED TO TOGGLE
       radius = 5,
-      color = "white",
+      color = "#4d4d4d",
       fillColor = ~color,
       stroke = TRUE,
       weight = 1,

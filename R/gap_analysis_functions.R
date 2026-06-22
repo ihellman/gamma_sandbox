@@ -97,7 +97,7 @@ SRSex <- function(taxon, occurrence_Data) {
   out_df <- dplyr::tibble(
     Taxon = sp_counts$species,
     "Total records" = sp_counts$totalRecords,
-    "Total with cooordinates" = sp_counts$totalUseful,
+    "Total with coordinates" = sp_counts$totalUseful,
     "Total G records" = sp_counts$totalGRecords,
     "G records with coordinates" = sp_counts$totalGUseful,
     "Total H records" = sp_counts$totalHRecords,
