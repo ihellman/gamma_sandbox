@@ -9,9 +9,10 @@ library(sf)
 library(dplyr)
 library(DT)
 library(yaml)
-library(markdown) # fail on shinyapp.io so adding back 
+library(markdown) # fail on shinyapp.io so adding back
 library(shinycssloaders)
 sf::sf_use_s2(FALSE)
+options(shiny.autoreload = FALSE)
 
 # Load text from YAML file
 landing_text <- read_yaml("appData/landing_text.yml")
@@ -19,7 +20,7 @@ landing_text <- read_yaml("appData/landing_text.yml")
 # MAIN UI ----------------------------------------------------------------------------------
 ui <- tagList(
   page_navbar(
-    title = "GAMMA",
+    title = "GAMMa",
     id = "navbar",
     theme = bs_theme(version = 5),
     # LINKING THE CSS FILE HERE
