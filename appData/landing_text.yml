@@ -1,21 +1,23 @@
 hero:
-  title: "GAMMA"
+  title: "GAMMa"
   subtitle: "Observing the meta collection."
 
 summary: 
-  text1 : "GAMMA evaluates the extent to which a living collection for a taxon is representative of its wild diversity. Living collections managers and curators at botanic gardens and similar organizations can use this app to assess how much wild diversity is or is not represented in a living collection or metacollection for a species. Areas of wild distribution not represented in a living collection, the gaps, can be prioritized for collection to bring more diversity into the collection."
-  text2 : "The app includes taxon-level data currently in the Global Biodiversity Information Facility (GBIF), a publically-accessible database. Accessions data for a living collection is provided by app users for the purpose of a single analysis, and is not stored within the application."
+  text1 : "The Gap Analysis & Metacollection Management (GAMMa) Tool estimates the extent to which an ex situ collection for a taxon is representative of the genetic diversity across its wild or native distribution, using geographic and ecological coverage as proxies for genetic diversity. Curators and collections managers at botanic gardens, genebanks, and other ex situ repositories can use this tool to assess the representativeness of their collections, or of metacollections (i.e. multiple collections across several institutions, in combination). Areas of wild or native distribution not represented in a living collection, i.e. gaps in ex situ collections, can be identified and then prioritized for future collecting to increase  representation in ex situ collections."
+  text2 : "Read an introduction to the tool below, learn more on the About page or Get Started with the tool now."
 
 gather:
   title: "Gather your Data"
   text: "Upload your datasets, compare against public data, and prepare them for analysis."
   modal_title: "Step 1: Gathering Your Data"
-  modal_text: "This is the placeholder text for the 'Gather Data' modal. You can describe what kind of data can be uploaded, what public sources are used (like GBIF), and how the comparison works."
+  modal_text: "Select a publically available wild/native occurrence dataset on GBIF and/or upload your own wild/native occurrence data for a single taxon.
+Upload accession data of that same taxon from your own collection or a metacollection.
+View and clean records within the tool."
 
 find: 
   title: "Find the gaps"
-  text: "Geographic gap analysis to locations to priortize collections."
-  modal_title: "Step 2: Finding the Gaps"
+  text: "Run analysis to identify geographic and ecological gaps in the collection"
+  modal_title: "Step 2. Run a gap analysis to quantify and visualize the overlap between the ex situ accession record locations and the wild/native distribution of the species."
   modal_text: "This is the where we share additional information on the gap analysis page or method"
 
 share:
