@@ -40,6 +40,16 @@ dataAnalysisUI <- function(id) {
       # Tables - right side
       div(
         class = "table-flex-container html-fill-item html-fill-container",
+
+        # Empty-state instructions. Visible on page load; the server observer
+        # below hides it as soon as any data is loaded. Edit the text in
+        # appData/data_analysis_instructions.md — no R changes needed.
+        div(
+          id = ns("instructions_panel"),
+          class = "instructions-panel",
+          includeMarkdown("appData/data_analysis_instructions.md")
+        ),
+
         div(
           id = ns("gbif_card_wrapper"),
           class = "table-card-wrapper",
@@ -109,7 +119,12 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
     #   - (no class):   both cards split 50/50 when each has enough data
     observe({
       data <- analysis_data()
-      
+
+      # Instructions replace the tables whenever the working dataset is empty.
+      # Unlike the cards below, this panel has no DataTable inside it, so a
+      # plain show/hide is safe here — the cards need the class-toggle trick.
+      shinyjs::toggle(id = "instructions_panel", condition = nrow(data) == 0)
+
       gbif_n <- if (nrow(data) > 0 && "source" %in% names(data)) {
         sum(data$source == "GBIF")
       } else {
