@@ -38,32 +38,48 @@ dataAnalysisUI <- function(id) {
       ),
 
       # Tables - right side
-      layout_columns(
-        col_widths = 12,
-        fillable = TRUE,
-        card(
-          full_screen = TRUE,
-          # addding the gbifColor object to avoid hard coding the color
-          card_header(
-            tags$strong("GBIF"),
-            uiOutput(ns("row_count_gbif"), inline = TRUE),
-            style = paste0("background-color: ", gbifColor[1], "; color: #2c3e50;") 
-          ),
-          card_body(
-            padding = 0,
-            DT_tableModuleUI(ns("DT_table_GBIF"))
+      div(
+        class = "table-flex-container html-fill-item html-fill-container",
+
+        # Empty-state instructions. Visible on page load; the server observer
+        # below hides it as soon as any data is loaded. Edit the text in
+        # appData/data_analysis_instructions.md — no R changes needed.
+        div(
+          id = ns("instructions_panel"),
+          class = "instructions-panel",
+          includeMarkdown("appData/data_analysis_instructions.md")
+        ),
+
+        div(
+          id = ns("gbif_card_wrapper"),
+          class = "table-card-wrapper",
+          card(
+            full_screen = TRUE,
+            card_header(
+              tags$strong("GBIF"),
+              uiOutput(ns("row_count_gbif"), inline = TRUE),
+              style = paste0("background-color: ", gbifColor[1], "; color: #2c3e50;") 
+            ),
+            card_body(
+              padding = 0,
+              DT_tableModuleUI(ns("DT_table_GBIF"))
+            )
           )
         ),
-        card(
-          full_screen = TRUE,
-          card_header(
-            tags$strong("Upload"),
-            uiOutput(ns("row_count_upload"), inline = TRUE),
-            style = paste0("background-color: ", uploadColor[1], "; color: #2c3e50;")
-          ),
-          card_body(
-            padding = 0,
-            DT_tableModuleUI(ns("DT_table_upload"))
+        div(
+          id = ns("upload_card_wrapper"),
+          class = "table-card-wrapper",
+          card(
+            full_screen = TRUE,
+            card_header(
+              tags$strong("Upload"),
+              uiOutput(ns("row_count_upload"), inline = TRUE),
+              style = paste0("background-color: ", uploadColor[1], "; color: #2c3e50;")
+            ),
+            card_body(
+              padding = 0,
+              DT_tableModuleUI(ns("DT_table_upload"))
+            )
           )
         )
       )
@@ -94,17 +110,91 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
       selected_points,
       data_source = "upload"    )
 
+    # Dynamic table card sizing ------------------------------------------------
+    # Reactively toggle CSS classes on the GBIF and Upload card wrappers
+    # based on how many rows each source has. This controls the flex layout:
+    #   - "hidden-card": collapses the card to zero height when the source has no data
+    #   - "small-card":  caps the card at a fixed height (~5 rows) when it has
+    #                    very few entries, letting the other card fill remaining space
+    #   - (no class):   both cards split 50/50 when each has enough data
+    observe({
+      data <- analysis_data()
+
+      # Instructions replace the tables whenever the working dataset is empty.
+      # Unlike the cards below, this panel has no DataTable inside it, so a
+      # plain show/hide is safe here — the cards need the class-toggle trick.
+      shinyjs::toggle(id = "instructions_panel", condition = nrow(data) == 0)
+
+      gbif_n <- if (nrow(data) > 0 && "source" %in% names(data)) {
+        sum(data$source == "GBIF")
+      } else {
+        0L
+      }
+      
+      upload_n <- if (nrow(data) > 0 && "source" %in% names(data)) {
+        sum(data$source == "upload")
+      } else {
+        0L
+      }
+      
+      # Hide card entirely when source has 0 rows; show it otherwise
+      shinyjs::toggleClass(
+        id = "gbif_card_wrapper",
+        class = "hidden-card",
+        condition = gbif_n == 0
+      )
+      # Cap card height when source has 1-5 rows
+      shinyjs::toggleClass(
+        id = "gbif_card_wrapper",
+        class = "small-card",
+        condition = gbif_n > 0 && gbif_n <= 5
+      )
+      
+      shinyjs::toggleClass(
+        id = "upload_card_wrapper",
+        class = "hidden-card",
+        condition = upload_n == 0
+      )
+      shinyjs::toggleClass(
+        id = "upload_card_wrapper",
+        class = "small-card",
+        condition = upload_n > 0 && upload_n <= 5
+      )
+    })
+
     # Render row selection counts ------------------------------------------------
     output$row_count_gbif <- renderUI({
-      req(nrow(analysis_data()) > 0)
-      selected <- analysis_data() %>% filter(source == "GBIF", index %in% selected_points()) %>% nrow()
-      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
+      data <- analysis_data()
+      req(nrow(data) > 0)
+      total <- data %>% filter(source == "GBIF") %>% nrow()
+      selected <- data %>% filter(source == "GBIF", index %in% selected_points()) %>% nrow()
+      
+      tagList(
+        span(paste0("(", total, " records)"), style = "font-weight: normal; font-size: 0.85em; margin-left: 10px;"),
+        if (selected > 0) {
+          span(
+            paste0("— ", selected, " row", if (selected != 1) "s", " selected"),
+            style = "font-weight: normal; font-size: 0.85em; margin-left: 5px;"
+          )
+        }
+      )
     })
 
     output$row_count_upload <- renderUI({
-      req(nrow(analysis_data()) > 0)
-      selected <- analysis_data() %>% filter(source == "upload", index %in% selected_points()) %>% nrow()
-      if (selected > 0) HTML(paste0("&nbsp;&nbsp;&nbsp;(", selected, " row", if (selected != 1) "s", " selected)")) else ""
+      data <- analysis_data()
+      req(nrow(data) > 0)
+      total <- data %>% filter(source == "upload") %>% nrow()
+      selected <- data %>% filter(source == "upload", index %in% selected_points()) %>% nrow()
+      
+      tagList(
+        span(paste0("(", total, " records)"), style = "font-weight: normal; font-size: 0.85em; margin-left: 10px;"),
+        if (selected > 0) {
+          span(
+            paste0("— ", selected, " row", if (selected != 1) "s", " selected"),
+            style = "font-weight: normal; font-size: 0.85em; margin-left: 5px;"
+          )
+        }
+      )
     })
 
     # Data management observers --------------------------------------------------
