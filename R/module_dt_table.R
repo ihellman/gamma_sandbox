@@ -6,48 +6,8 @@ DT_tableModuleUI <- function(id) {
     # Force Font Awesome dependency load (Fixes missing icons)
     tags$div(style = "display: none;", icon("search")),
 
-    # Custom CSS for the Link and Hover Effect
-    tags$head(
-      tags$style(HTML(
-        "
-        /* Base Link Style */
-        a.dt-link {
-          color: #333333;       /* Dark Grey Text */
-          text-decoration: none; /* No underline */
-          font-weight: bold;
-          transition: all 0.2s ease-in-out; /* Smooth transition */
-          display: inline-flex;  
-          align-items: center;
-        }
+    # Link/hover styles for the accession links live in www/custom.css (a.dt-link)
 
-        /* Icon Style */
-        a.dt-link i {
-          color: #007bff;       /* Blue Icon */
-          margin-right: 8px;
-          transition: all 0.2s ease-in-out;
-        }
-
-        /* --- HOVER STATES --- */
-        
-        /* When hovering over the link, change text color */
-        a.dt-link:hover {
-          color: #007bff; 
-        }
-
-        /* When hovering over the link, make the icon 'pop' (grow larger) */
-        a.dt-link:hover i {
-          transform: scale(1.3); 
-          color: #0056b3; /* Darker blue */
-        }
-        
-        /* Prevent column header wrapping */
-        table.dataTable thead th {
-          white-space: nowrap !important;
-        }
-      "
-      ))
-    ),
-    
     # fill = TRUE allows the widget to expand to the bslib card size (helps frozen headers)
     DTOutput(outputId = ns("DT_pointsTable"), fill = TRUE)
   )
@@ -57,7 +17,9 @@ DT_tableModuleServer <- function(
   id,
   analysis_data,
   selected_points,
-  data_source = "NULL") {
+  data_source = NULL) {
+  # Each table instance shows the rows of exactly one `source` ("GBIF" / "upload")
+  stopifnot(is.character(data_source), length(data_source) == 1)
   moduleServer(id, function(input, output, session) {
     # 1. Helper Reactive
     table_data <- reactive({
@@ -98,8 +60,10 @@ DT_tableModuleServer <- function(
       initial_rows <- which(data$index %in% current_selection)
 
       col_names <- names(data)
+      # DT column targets are 0-based positions (rownames = FALSE)
       accession_col_index <- which(col_names == "Accession Number") - 1
       source_col_index <- which(col_names == "source") - 1
+      hidden_col_index <- which(col_names %in% c("source", "index", "germplasm_color")) - 1
 
       js_renderer <- JS(
         sprintf(
@@ -134,7 +98,7 @@ DT_tableModuleServer <- function(
           deferRender = TRUE,
           autoWidth = FALSE,
           columnDefs = list(
-            list(targets = c('source', 'index', 'germplasm_color'), visible = FALSE),
+            list(targets = hidden_col_index, visible = FALSE),
             list(targets = '_all', className = 'dt-left', createdCell = JS("function(td, cellData, rowData, row, col) { if(cellData != null) $(td).attr('title', cellData); }")),
             list(targets = accession_col_index, render = js_renderer)
           )

@@ -78,13 +78,20 @@ test_that("uploading a file loads it and a missing-column file loads nothing", {
   testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
     session$setInputs(uploadData = fixture_file("upload_sample_missing_2_cols.csv"))
     expect_equal(nrow(analysis_data()), 0)
+    expect_equal(upload_status()$type, "error")            # #32: the failure is shown
+    expect_match(upload_status()$text, "Missing columns")
     session$setInputs(uploadData = fixture_file("upload_sample_small.csv"))
     expect_equal(nrow(analysis_data()), 5)
     expect_true(all(analysis_data()$source == "upload"))
-    # second upload triggers the overwrite modal; confirming replaces the rows
-    session$setInputs(uploadData = fixture_file("Magnolia_acuminata_data_small.csv"))
-    expect_equal(nrow(analysis_data()), 5)
+    expect_equal(upload_status()$type, "success")
+    session$setInputs(uploadData = fixture_file("upload_sample_manual_15miss_coords.csv"))
     session$setInputs(confirmloadUpload = 1)
+    expect_equal(upload_status()$type, "warning")
+    expect_equal(nrow(analysis_data()), 200)
+    # another upload triggers the overwrite modal; confirming replaces the rows
+    session$setInputs(uploadData = fixture_file("Magnolia_acuminata_data_small.csv"))
+    expect_equal(nrow(analysis_data()), 200)
+    session$setInputs(confirmloadUpload = 2)
     expect_equal(nrow(analysis_data()), 8)
   })
 })

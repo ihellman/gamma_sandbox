@@ -1,3 +1,22 @@
+# Canonical column names the app understands (see merge_and_index() in utils.R).
+UPLOAD_KNOWN_COLS <- c(
+  "Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date",
+  "Latitude", "Longitude", "Locality", "Collector", "issues"
+)
+
+# Trim whitespace from header names and map case-insensitive matches of the
+# known columns onto their canonical spelling. Unknown columns are left as-is
+# (merge_and_index() drops them later).
+normalise_upload_headers <- function(data) {
+  nms <- trimws(names(data))
+  key <- tolower(gsub("\\s+", " ", nms))
+  canon_key <- tolower(UPLOAD_KNOWN_COLS)
+  hit <- match(key, canon_key)
+  nms[!is.na(hit)] <- UPLOAD_KNOWN_COLS[hit[!is.na(hit)]]
+  names(data) <- nms
+  data
+}
+
 read_upload_file <- function(file_info) {
   
   # --- 1. Validation: File Extension ---
@@ -28,17 +47,19 @@ read_upload_file <- function(file_info) {
     }
 
     # B. Validation: Required Columns
-    # Note: Ensure these match your CSV headers exactly (case-sensitive)
+    # Headers are matched ignoring case and surrounding whitespace (a very common
+    # spreadsheet export problem) and renamed to the canonical spelling.
+    data <- normalise_upload_headers(data)
     required_cols <- c(
-      "Accession Number", "Taxon Name", "Current Germplasm Type", 
+      "Accession Number", "Taxon Name", "Current Germplasm Type",
       "Collection Date", "Locality", "Collector"
     )
-    
+
     missing_cols <- setdiff(required_cols, names(data))
-    
+
     if (length(missing_cols) > 0) {
       return(list(
-        status  = "system_error",
+        status  = "validation_error",
         message = paste("Data not loaded.  Missing columns:", paste(missing_cols, collapse = ", "))
       ))
     }

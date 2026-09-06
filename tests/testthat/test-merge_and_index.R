@@ -34,3 +34,15 @@ test_that("merging appends rows and re-indexes from 1..n", {
   expect_equal(sum(out$source == "upload"), nrow(a))
   expect_equal(sum(out$source == "GBIF"), nrow(b))
 })
+
+test_that("rows with a germplasm type other than G/H are kept but counted", {
+  new <- data.frame(
+    `Accession Number` = c("a", "b", "c"), `Taxon Name` = "Q",
+    `Current Germplasm Type` = c("G", "seed", NA), Latitude = 1, Longitude = 1, check.names = FALSE
+  )
+  out <- merge_and_index(data.frame(), new)
+  expect_equal(nrow(out), 3)
+  expect_equal(attr(out, "invalid_germplasm"), 2)
+  clean <- merge_and_index(data.frame(), new[1, ])
+  expect_equal(attr(clean, "invalid_germplasm"), 0)
+})

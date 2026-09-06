@@ -384,16 +384,29 @@ body.on-home .navbar {
   margin-top: 1rem !important; 
 }
 
-/* GBIF advanced options styling */
+/* GBIF advanced options: a nested accordion inside the "GBIF Data" panel */
 .gbif-advanced .accordion {
   border: 1px solid #dee2e6;
   border-radius: 0.5rem;
   background: #f8f9fa;
   padding: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.gbif-advanced .accordion-item {
+  border: none;
+  background: transparent;
 }
 
 .gbif-advanced .accordion-button {
   font-weight: 600;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.5rem 0.75rem;
+}
+
+.gbif-advanced .accordion-body {
+  padding: 0.25rem 0.75rem 0.5rem;
 }
 
 /* Slightly widen sidebar */
@@ -489,4 +502,151 @@ body.on-home .navbar {
 
 .instructions-panel strong {
   color: #2c3e50;
+}
+
+/* =========================================
+   MAP TOOLTIPS / POPUPS (#40)
+   Leaflet tooltips default to white-space: nowrap, so a long locality string
+   produced a box wider than the map. Wrap and cap the width instead.
+   ========================================= */
+.leaflet-tooltip {
+  white-space: normal !important;
+  max-width: 280px;
+  line-height: 1.3;
+}
+
+.leaflet-popup-content {
+  max-width: 280px;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   CARD FULL-SCREEN BUTTON (#29)
+   bslib only reveals the "expand" toggle on hover at low opacity; make it a
+   visible, obviously clickable control on the map and table cards.
+   ========================================= */
+.bslib-full-screen-enter {
+  opacity: 1 !important;
+  background: #2c3e50;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: background 0.15s ease;
+}
+
+.bslib-full-screen-enter:hover {
+  background: #007bff;
+  color: #fff;
+}
+
+/* =========================================
+   MAP ACTION BUTTONS (Data Analysis page)
+   ========================================= */
+.map-action-panel {
+  background: white;
+  padding: 5px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.map-action-panel > div {
+  margin-bottom: 5px;
+}
+
+.map-action-panel > div:last-child {
+  margin-bottom: 0;
+}
+
+.map-action-btn {
+  font-size: 11px;
+  padding: 3px 10px;
+  width: 100%;
+  background-color: white;
+  color: black;
+  border: 1px solid #ddd;
+}
+
+.map-action-btn--danger {
+  background-color: #ba5b5b;
+  color: white;
+  border: none;
+}
+
+.map-action-btn--danger:hover {
+  background-color: #a04a4a;
+  color: white;
+}
+
+/* =========================================
+   DATA TABLES (module_dt_table.R)
+   ========================================= */
+/* GBIF accession numbers rendered as links to gbif.org */
+a.dt-link {
+  color: #333333;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+}
+
+a.dt-link i {
+  color: #007bff;
+  margin-right: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+a.dt-link:hover {
+  color: #007bff;
+}
+
+a.dt-link:hover i {
+  transform: scale(1.3);
+  color: #0056b3;
+}
+
+/* Prevent column header wrapping */
+table.dataTable thead th {
+  white-space: nowrap !important;
+}
+
+/* =========================================
+   FILE UPLOAD STATUS (#32)
+   Shiny's built-in progress bar only reports the browser -> server transfer
+   and therefore says "Upload complete" even when the file was rejected. Hide
+   it and show the result of read_upload_file() instead.
+   ========================================= */
+.shiny-file-input-progress {
+  display: none !important;
+}
+
+.upload-status {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.upload-status--success {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.upload-status--warning {
+  background: #fff8e1;
+  color: #7a4f01;
+}
+
+.upload-status--error {
+  background: #fdecea;
+  color: #8a1c1c;
+}
+
+.upload-status i {
+  margin-right: 0.35rem;
 }

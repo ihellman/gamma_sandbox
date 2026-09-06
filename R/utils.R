@@ -38,14 +38,27 @@ merge_and_index <- function(current_data, new_data) {
     ) |>
     # Drop any rogue columns uploaded by the user
     dplyr::select(dplyr::all_of(expected_cols)) |>
-    dplyr::mutate(index = dplyr::row_number())
+    dplyr::mutate(index = dplyr::row_number()) |>
+    flag_invalid_germplasm()
+}
+
+# Rows whose Current Germplasm Type is not G/H are kept (they still show in the
+# tables, in grey on the map) but every gap-analysis metric ignores them. Record
+# how many there are so the UI can warn the user.
+flag_invalid_germplasm <- function(df) {
+  n <- sum(!df$`Current Germplasm Type` %in% c("G", "H"))
+  attr(df, "invalid_germplasm") <- n
+  df
 }
 
 
 # --- Helper: Modern Footer UI Component ---
-# should be able to call this on all the pages to keep that visual consistency
-# --- Helper: Modern Footer UI Component ---
+# Shared by the landing page and the About page. Links come from REPO_URL in
+# global.R (update that one constant when the repository moves); the version
+# comes from the VERSION file via APP_VERSION.
 footer_ui <- function() {
+  repo_url <- if (exists("REPO_URL")) REPO_URL else "https://github.com/ihellman/gamma_sandbox"
+  version  <- if (exists("APP_VERSION")) APP_VERSION else "dev"
   tags$footer(
     class = "footer-modern",
     div(
@@ -89,7 +102,7 @@ footer_ui <- function() {
           p(
             "This dashboard supports global conservation efforts by providing gap analysis and data exploration tools for prioritized taxa."
           ),
-          p(tags$a(href = "#", "Read Documentation", class = "footer-link"))
+          p(tags$a(href = paste0(repo_url, "#readme"), target = "_blank", "Read Documentation", class = "footer-link"))
         ),
 
         # COLUMN 3: Contact / Links
@@ -98,14 +111,13 @@ footer_ui <- function() {
           h5("Contact"),
           tags$ul(
             class = "list-unstyled",
-            tags$li(tags$i(class = "bi bi-envelope"), " contact@example.org"),
             tags$li(
               tags$i(class = "bi bi-github"),
-              tags$a(href = "#", " View Source Code", class = "footer-link")
+              tags$a(href = repo_url, target = "_blank", " View Source Code", class = "footer-link")
             ),
             tags$li(
               tags$i(class = "bi bi-bug"),
-              tags$a(href = "#", " Report an Issue", class = "footer-link")
+              tags$a(href = paste0(repo_url, "/issues/new"), target = "_blank", " Report an Issue", class = "footer-link")
             )
           )
         )
@@ -124,7 +136,7 @@ footer_ui <- function() {
         ),
         div(
           class = "col-md-6 text-end text-muted small",
-          "Version 1.0.0"
+          paste("Version", version)
         )
       )
     )

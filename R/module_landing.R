@@ -6,7 +6,6 @@ landingUI <- function(id, landing_text) {
     # --- HERO SECTION ---
     div(
       class = "hero-section",
-      # UPDATE THIS LINE: Match the exact name and extension of your background image
       tags$img(class = "hero-image", src = "background_photo.jpg"),
       div(class = "hero-overlay"),
       div(
@@ -57,7 +56,6 @@ landingUI <- function(id, landing_text) {
           label = div(
             id = ns("box_gather"), 
             class = "feature-box",
-            # UPDATE THIS LINE: Match the exact name of your people/gather image
             tags$img(src = "gather_photo.jpg"),
             h4(landing_text$gather$title),
             p(landing_text$gather$text)
@@ -70,7 +68,6 @@ landingUI <- function(id, landing_text) {
           label = div(
             id = ns("box_find"), 
             class = "feature-box",
-            # UPDATE THIS LINE: Match the exact name of your cycad image
             tags$img(src = "cycad.jpg"),
             h4(landing_text$find$title),
             p(landing_text$find$text)
@@ -83,7 +80,6 @@ landingUI <- function(id, landing_text) {
           label = div(
             id = ns("box_share"), 
             class = "feature-box",
-            # UPDATE THIS LINE: Match the exact name of your seedling image
             tags$img(src = "seedling.jpg"),
             h4(landing_text$share$title),
             p(landing_text$share$text)

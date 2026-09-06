@@ -17,20 +17,25 @@ dataAnalysisUI <- function(id) {
           div(
             style = "position: relative; height: 100%;",
             mapModuleUI(ns("map")),
+            # Button styling lives in www/custom.css (.map-action-btn*)
             absolutePanel(
               bottom = 30,
               right = 10,
-              style = "background: white; padding: 5px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 1000;",
+              class = "map-action-panel",
               div(
-                actionButton(ns("deleteSelection"), "Delete Selection", icon = icon("trash-can"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: #ba5b5b; color: white; border: none;"),
-                style = "margin-bottom: 5px;"
+                actionButton(ns("deleteSelection"), "Delete Selection", icon = icon("trash-can"),
+                             class = "map-action-btn map-action-btn--danger")
               ),
               div(
-                actionButton(ns("undoLastDelete"), "Undo Delete", icon = icon("rotate-left"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;"),
-                style = "margin-bottom: 5px;"
+                bslib::tooltip(
+                  actionButton(ns("undoLastDelete"), "Undo Delete", icon = icon("rotate-left"),
+                               class = "map-action-btn"),
+                  "Restores the most recent delete only (one level of undo)."
+                )
               ),
               div(
-                actionButton(ns("clearSelection"), "Clear Selection", icon = icon("square-minus"), style = "font-size: 11px; padding: 3px 10px; width: 100%; background-color: white; color: black; border: 1px solid #ddd;")
+                actionButton(ns("clearSelection"), "Clear Selection", icon = icon("square-minus"),
+                             class = "map-action-btn")
               )
             )
           )
@@ -198,6 +203,9 @@ dataAnalysisServer <- function(id, analysis_data, selected_points) {
     })
 
     # Data management observers --------------------------------------------------
+    # NOTE: any change to analysis_data() (delete / undo / new upload / new GBIF
+    # pull) also clears the gap-analysis results: gapAnalysisServer observes
+    # analysis_data() and resets its map layers, scores and report state.
     observeEvent(input$deleteSelection, {
       req(nrow(analysis_data()) > 0)
       analysis_data_backup(analysis_data())

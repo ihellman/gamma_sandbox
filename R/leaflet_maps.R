@@ -1,4 +1,8 @@
 # Icons, colors, shapes, labels -----------------------------------------------------------
+# NOTE: the palette objects below are APP-WIDE GLOBALS. They are referenced by
+# module_dt_table.R (cell colours via styleEqual), module_data_analysis.R (card
+# headers), module_gap_analysis.R and reportTemplate.Rmd (passed as params).
+# Change a colour here and every consumer follows; never hard-code the hex codes.
 
 # --- Color Palettes ---
 # Data Eval map - Input data
@@ -43,27 +47,28 @@ upload_legend_shape <- make_shapes(
   borders = "#4d4d4d",
   shapes = "circle"
 )
-# might need to complicate this a bit for the different shapes
-gap_legend_shape <- make_shapes(
-  uploadColor,
-  sizes = 20,
-  borders = "#4d4d4d",
-  shapes = "circle"
-)
-
 # --- Label Generator ---
+# Truncate free-text fields so a 300-character locality cannot blow up the
+# hover tooltip (#40); custom.css wraps whatever is left at 280 px.
+truncate_label <- function(x, n = 140) {
+  x <- as.character(x)
+  too_long <- !is.na(x) & nchar(x) > n
+  x[too_long] <- paste0(substr(x[too_long], 1, n - 1), "\u2026")
+  x
+}
+
 # Generates HTML labels on render
 point_labels <- function(data) {
   paste0(
     "<strong>",
-    as.character(data$`Taxon Name`),
+    htmltools::htmlEscape(as.character(data$`Taxon Name`)),
     "</strong>",
     "<br/><strong> Type: </strong>",
     data$`Current Germplasm Type`,
     "<br/><b>Collector Name:</b> ",
-    data$Collector,
+    htmltools::htmlEscape(truncate_label(data$Collector)),
     "<br/><b>Locality Description:</b> ",
-    data$Locality
+    htmltools::htmlEscape(truncate_label(data$Locality))
   ) %>%
     lapply(htmltools::HTML)
 }

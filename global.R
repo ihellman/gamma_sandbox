@@ -32,6 +32,10 @@ library(rmapshaper)
 sf::sf_use_s2(FALSE)
 options(shiny.autoreload = FALSE)
 
+# Source repository: footer links ("View Source Code", "Report an Issue",
+# "Read Documentation") are built from this. Update after the repo migration.
+REPO_URL <- "https://github.com/ihellman/gamma_sandbox"
+
 # App version, shown in the footer. Bump VERSION when releasing.
 APP_VERSION <- if (file.exists("VERSION")) trimws(readLines("VERSION", n = 1, warn = FALSE)) else "dev"
 

@@ -84,6 +84,12 @@ params:
     color: #333;
     background: #eceae640;
   }
+
+  .leaflet-popup-content {
+    max-width: 280px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
 </style>
 ```
 
@@ -226,7 +232,7 @@ if (nrow(h_points) > 0) {
   m <- m %>% addCircleMarkers(
     data = h_points, lng = ~Longitude, lat = ~Latitude, group = "Reference Records",
     radius = 4, color = "#4d4d4d", fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1,
-    popup = ~gen_popup(h_points)
+    popup = ~gen_popup(h_points), popupOptions = popupOptions(maxWidth = 300)
   )
 }
 
@@ -234,7 +240,7 @@ if (nrow(g_points) > 0) {
   m <- m %>% addCircleMarkers(
     data = g_points, lng = ~Longitude, lat = ~Latitude, group = "Germplasm Records",
     radius = 4, color = "#4d4d4d", fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1,
-    popup = ~gen_popup(g_points)
+    popup = ~gen_popup(g_points), popupOptions = popupOptions(maxWidth = 300)
   )
 }
 

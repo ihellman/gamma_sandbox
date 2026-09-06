@@ -53,7 +53,7 @@ test_that("Excel files read the first sheet with all-text coercion", {
 
 test_that("missing required columns are reported by name and nothing is loaded", {
   res <- read_upload_file(fixture_file("upload_sample_missing_2_cols.csv"))
-  expect_true(res$status %in% c("validation_error", "system_error"))
+  expect_equal(res$status, "validation_error")   # a user problem, not a crash
   expect_null(res$data)
   expect_match(res$message, "Missing columns: Locality, Collector")
 })
@@ -64,4 +64,21 @@ test_that("an unreadable file is caught and returned as a system error", {
   res <- read_upload_file(list(name = "bad.xlsx", datapath = bad))
   expect_equal(res$status, "system_error")
   expect_match(res$message, "Critical error reading file")
+})
+
+test_that("headers are matched ignoring case and surrounding whitespace", {
+  tmp <- tempfile(fileext = ".csv")
+  writeLines(c(
+    "accession number, TAXON NAME ,current germplasm type,Collection date,latitude,LONGITUDE,locality,collector,Issues,Extra",
+    "A1,Quercus alba,g,2001-01-01,33.5,-84.2,Somewhere,Someone,,x"
+  ), tmp)
+  res <- read_upload_file(list(name = "odd_headers.csv", datapath = tmp))
+  expect_equal(res$status, "success")
+  expect_true(all(c("Accession Number", "Taxon Name", "Current Germplasm Type", "Collection Date",
+                    "Latitude", "Longitude", "Locality", "Collector", "issues") %in% names(res$data)))
+  expect_equal(res$data$Latitude, 33.5)
+  expect_true("Extra" %in% names(res$data))        # unknown columns pass through untouched
+  merged <- merge_and_index(data.frame(), res$data)
+  expect_false("Extra" %in% names(merged))          # ...and are dropped by the schema gate
+  expect_equal(merged$`Current Germplasm Type`, "G")
 })

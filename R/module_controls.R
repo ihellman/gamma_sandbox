@@ -169,7 +169,10 @@ controlsModuleUI <- function(id) {
             buttonLabel = tagList(icon("folder-open"), "Browse"),
             placeholder = "No file selected",
             width = "100%"
-          )
+          ),
+          # Result of the last upload attempt (#32). Shiny's own progress bar is
+          # hidden in custom.css because it reports the transfer, not the parse.
+          uiOutput(ns("upload_status"))
         )
       )
     )
@@ -508,6 +511,27 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
     # 9. Upload file logic -------------------------------------------------------------
     uploadData_temp <- reactiveVal(NULL)
+    upload_status <- reactiveVal(NULL)   # list(type = success|warning|error, text = ...)
+
+    output$upload_status <- renderUI({
+      st <- upload_status()
+      req(st)
+      icon_name <- switch(st$type, success = "circle-check", warning = "triangle-exclamation", "circle-xmark")
+      div(class = paste0("upload-status upload-status--", st$type), icon(icon_name), st$text)
+    })
+
+    # Notify the user when uploaded rows have a germplasm type other than G/H:
+    # they are kept in the table but excluded from every gap-analysis metric.
+    warn_invalid_germplasm <- function(df) {
+      n <- attr(df, "invalid_germplasm")
+      if (!is.null(n) && n > 0) {
+        showNotification(
+          sprintf("%d record%s have a Current Germplasm Type other than G or H and will be ignored by the gap analysis.",
+                  n, if (n > 1) "s" else ""),
+          type = "warning", duration = 10
+        )
+      }
+    }
 
     observeEvent(input$uploadData, {
       req(input$uploadData)
@@ -517,9 +541,14 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         warning = 10,
         system = NULL
       )
-      res <- read_upload_file(input$uploadData)
+      res <- shiny::withProgress(
+        message = "Reading file...", value = 0.5,
+        read_upload_file(input$uploadData)
+      )
 
       if (res$status == "validation_error") {
+        upload_status(list(type = "error", text = res$message))
+        shinyjs::reset("uploadData")
         showNotification(
           res$message,
           type = "warning",
@@ -528,6 +557,8 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         return()
       }
       if (res$status == "system_error") {
+        upload_status(list(type = "error", text = res$message))
+        shinyjs::reset("uploadData")
         showNotification(
           res$message,
           type = "error",
@@ -535,6 +566,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         )
         return()
       }
+      upload_status(list(type = if (res$message_type == "warning") "warning" else "success", text = res$message))
 
       new_points <- res$data
       current <- analysis_data()
@@ -556,6 +588,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       } else {
         updated_df <- merge_and_index(current, new_points)
         analysis_data(updated_df)
+        warn_invalid_germplasm(updated_df)
         dur <- if (res$message_type == "warning") {
           durations$warning
         } else {
@@ -574,6 +607,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       current_clean <- current %>% filter(source != "upload")
       updated_df <- merge_and_index(current_clean, new_points)
       analysis_data(updated_df)
+      warn_invalid_germplasm(updated_df)
 
       selected_points(numeric(0))
       uploadData_temp(NULL)
@@ -585,6 +619,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
     observeEvent(input$cancelUpload, {
       uploadData_temp(NULL)
+      upload_status(NULL)
       removeModal()
     })
 

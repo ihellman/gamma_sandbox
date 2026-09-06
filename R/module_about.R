@@ -1,12 +1,15 @@
 # ABOUT MODULE ------------------------------------------------------------------------
 aboutUI <- function(id) {
   ns <- NS(id)
-  div(
-    class = "container",
-    style = "max-width: 900px; padding: 40px;",
-    # This line does all the work
-    includeMarkdown("appData/about.md"),
-    # footer_ui()
+  tagList(
+    div(
+      class = "container",
+      style = "max-width: 900px; padding: 40px;",
+      # This line does all the work
+      includeMarkdown("appData/about.md")
+    ),
+    # Shared footer sits below the text column, not inside it
+    footer_ui()
   )
 }
 
