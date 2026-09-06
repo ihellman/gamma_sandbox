@@ -3,12 +3,31 @@ gapAnalysisUI <- function(id) {
   ns <- NS(id)
   
   tagList(
+    # Load the esri-leaflet plugin with the page so it is available before the
+    # gap map renders (see add_protected_land_layers in leaflet_maps.R)
+    esri_leaflet_dependency(),
     layout_sidebar(
       fillable = TRUE,
       class = "p-0",
       sidebar = sidebar(
         title = "Controls",
         open = "always",
+        bslib::tooltip(
+          radioButtons(
+            inputId = ns("model_method"),
+            label = "Wild range estimate",
+            choices = c(
+              "Buffer around records" = "buffer",
+              "Convex hull around records" = "hull"
+            ),
+            selected = "buffer"
+          ),
+          paste(
+            "Buffer: the range is the union of buffers around every record.",
+            "Convex hull: the range is the smallest convex polygon enclosing all records, clipped to land;",
+            "the buffer distance then only applies to the germplasm (G) records."
+          )
+        ),
         selectInput(
           inputId = ns("buffer_dist"),
           label = "Buffer Distance (km)",
@@ -65,6 +84,7 @@ gapAnalysisServer <- function(id, analysis_data) {
       gap_result(NULL)
 
       leaflet::leafletProxy("gap_map", session) %>%
+        leaflet::clearGroup("Range (convex hull)") %>%
         leaflet::clearGroup("Buffers") %>%
         leaflet::clearGroup("GRS Gap") %>%
         leaflet::clearGroup("ERS Regions") %>%
@@ -168,9 +188,10 @@ gapAnalysisServer <- function(id, analysis_data) {
       req(dist_km)
 
       # The whole computation lives in run_gap_analysis() (R/gap_analysis_functions.R)
+      method <- if (is.null(input$model_method)) "buffer" else input$model_method
       res <- shiny::withProgress(message = "Running Gap Analysis", value = 0, {
         tryCatch(
-          run_gap_analysis(all_data, dist_km,
+          run_gap_analysis(all_data, dist_km, method = method,
                            progress = function(value, detail) shiny::setProgress(value, detail = detail)),
           error = function(e) e
         )
@@ -182,7 +203,16 @@ gapAnalysisServer <- function(id, analysis_data) {
       gap_result(res)
 
       proxy <- leaflet::leafletProxy("gap_map", session) %>%
+        leaflet::clearGroup("Range (convex hull)") %>%
         leaflet::clearGroup("Buffers") %>% leaflet::clearGroup("GRS Gap") %>% leaflet::clearGroup("ERS Regions")
+
+      if (!is.null(res$sf_model)) {
+        proxy %>% leaflet::addPolygons(
+          data = res$sf_model, group = "Range (convex hull)",
+          color = combinedColor[1], fillColor = combinedColor[1], fillOpacity = 0.15, weight = 2, dashArray = "6 4",
+          options = leaflet::pathOptions(pane = "buffers"), popup = "Estimated range (convex hull of all records)"
+        )
+      }
 
       if (nrow(res$sf_buffers) > 0) {
         pal_type <- leaflet::colorFactor(
@@ -218,7 +248,7 @@ gapAnalysisServer <- function(id, analysis_data) {
         )
       }
 
-      proxy %>% leaflet::showGroup(c("Buffers", "GRS Gap", "ERS Regions"))
+      proxy %>% leaflet::showGroup(c("Range (convex hull)", "Buffers", "GRS Gap", "ERS Regions"))
 
       shinyjs::show("plot_inset")
       analysis_active(TRUE)
@@ -288,6 +318,8 @@ render_gap_report <- function(res, output_file, template = "reportTemplate.Rmd")
     taxon = res$taxon,
     points = res$points,          # the rows that were analysed
     bufferDist = res$dist_km,
+    method = res$method,
+    sf_model = res$sf_model,
     srsMetrics = res$srs,
     grsMetrics = res$grs,
     ersMetrics = res$ers,

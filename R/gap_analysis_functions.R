@@ -236,7 +236,10 @@ GRSex <- function(allBuffers, outsideGBuffers) {
 
 # `ecoRegions` is the (lake-free) ecoregion SpatVector; defaults to the layer
 # loaded once at start-up rather than re-reading the 9 MB file per call.
-ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions()) {
+# The "universe" of ecoregions is every ecoregion containing a record (buffer
+# method) or, when `model_area` is given, every ecoregion the range polygon
+# overlaps (convex hull method).
+ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions(), model_area = NULL) {
   # CHECK: Handle case with absolutely no points (no H and no G)
   if (is.null(gapPoints) || nrow(gapPoints) == 0) {
     out_df <- dplyr::tibble(
@@ -247,8 +250,12 @@ ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions()) {
     return(list(summary = out_df, spatial = NULL))
   }
 
-  # 1. Define the "Universe" (Ecoregions containing any record)
-  inter_points <- terra::intersect(x = gapPoints, y = ecoRegions)
+  # 1. Define the "Universe"
+  if (!is.null(model_area) && nrow(model_area) > 0) {
+    inter_points <- terra::intersect(x = terra::project(model_area, terra::crs(ecoRegions)), y = ecoRegions)
+  } else {
+    inter_points <- terra::intersect(x = gapPoints, y = ecoRegions)
+  }
 
   # CHECK: Handle case where points exist but fall outside known ecoregions
   if (nrow(inter_points) == 0) {
@@ -305,13 +312,39 @@ ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions()) {
 }
 
 
+# --- Range model: convex hull ----------------------------------------------------
+# Convex hull around every record with coordinates, clipped to land. Needs at
+# least three distinct, non-collinear locations to enclose an area.
+convex_hull_range <- function(v, land_proj) {
+  coords <- unique(terra::crds(v))
+  if (nrow(coords) < 3) {
+    stop("The convex hull method needs at least 3 records at distinct locations; use the buffer method instead.")
+  }
+  hull <- terra::convHull(v)
+  if (terra::geomtype(hull) != "polygons" || terra::expanse(hull, unit = "km") <= 0) {
+    stop("The records are collinear, so a convex hull has no area; use the buffer method instead.")
+  }
+  hull$processing_type <- "range"
+  clipped <- terra::intersect(hull, land_proj)
+  if (length(clipped) == 0) stop("The convex hull does not overlap any land area.")
+  terra::aggregate(clipped)
+}
+
 # --- Whole pipeline ------------------------------------------------------------
 # Everything the "Run Gap Analysis" button does, without Shiny. Returns the three
 # metric tables, the sf layers drawn on the map and passed to the report, the
 # rows that were actually analysed, and the derived FCS / priority.
+#
+# method = "buffer": the range is the union of `dist_km` buffers around every
+#   record (H and G); G buffers are the conserved area (original behaviour).
+# method = "hull":   the range is the convex hull of all records, clipped to
+#   land; G buffers (still `dist_km`) clipped to the hull are the conserved area,
+#   and ERS counts the ecoregions the hull overlaps.
 # `progress(value, detail)` is an optional callback for withProgress.
-run_gap_analysis <- function(all_data, dist_km, land = gap_land(), ecoRegions = gap_ecoregions(),
+run_gap_analysis <- function(all_data, dist_km, method = c("buffer", "hull"),
+                             land = gap_land(), ecoRegions = gap_ecoregions(),
                              progress = NULL) {
+  method <- match.arg(method)
   report <- function(v, d) if (is.function(progress)) progress(v, d)
   stopifnot(is.data.frame(all_data), nrow(all_data) > 0, is.numeric(dist_km), dist_km > 0)
 
@@ -331,21 +364,37 @@ run_gap_analysis <- function(all_data, dist_km, land = gap_land(), ecoRegions = 
   report(0.4, "Clipping to land...")
   land_proj <- terra::project(land, terra::crs(v_buffer))
   v_clipped <- terra::intersect(v_buffer, land_proj)
-
-  report(0.5, "Calculating GRSex...")
   gBuff <- v_clipped[v_clipped$processing_type == "G", ]
   hBuff <- v_clipped[v_clipped$processing_type == "H", ]
-  grsMap_element <- if (length(hBuff) == 0 || length(gBuff) == 0) hBuff else terra::erase(x = hBuff, y = gBuff)
-  grsMetrics <- GRSex(allBuffers = v_clipped, outsideGBuffers = grsMap_element)
+
+  report(0.5, "Calculating GRSex...")
+  sf_model <- NULL
+  if (method == "hull") {
+    model <- convex_hull_range(v, land_proj)
+    if (length(gBuff) > 0) gBuff <- terra::intersect(gBuff, model)     # conserved area within the range
+    grsMap_element <- if (length(gBuff) == 0) model else terra::erase(x = model, y = gBuff)
+    grsMetrics <- GRSex(allBuffers = model, outsideGBuffers = grsMap_element)
+    sf_model <- sf::st_as_sf(model) |> sf::st_make_valid()
+    drawn <- gBuff
+  } else {
+    model <- NULL
+    grsMap_element <- if (length(hBuff) == 0 || length(gBuff) == 0) hBuff else terra::erase(x = hBuff, y = gBuff)
+    grsMetrics <- GRSex(allBuffers = v_clipped, outsideGBuffers = grsMap_element)
+    drawn <- v_clipped
+  }
 
   report(0.6, "Calculating ERSex...")
-  ersMetrics <- ERSex(gapPoints = v, g_buffer = gBuff, ecoRegions = ecoRegions)
+  ersMetrics <- ERSex(gapPoints = v, g_buffer = gBuff, ecoRegions = ecoRegions, model_area = model)
 
   report(0.75, "Preparing visualization...")
-  sf_buffers <- sf::st_as_sf(v_clipped) |>
-    sf::st_make_valid() |>
-    dplyr::group_by(processing_type) |>
-    dplyr::summarize(geometry = sf::st_union(geometry), .groups = "drop")
+  sf_buffers <- if (length(drawn) > 0) {
+    sf::st_as_sf(drawn) |>
+      sf::st_make_valid() |>
+      dplyr::group_by(processing_type) |>
+      dplyr::summarize(geometry = sf::st_union(geometry), .groups = "drop")
+  } else {
+    sf::st_sf(processing_type = character(0), geometry = sf::st_sfc(crs = 4326))
+  }
   sf_grs_gap <- if (length(grsMap_element) > 0) sf::st_as_sf(terra::aggregate(terra::makeValid(grsMap_element))) else NULL
   sf_ers_regions <- if (!is.null(ersMetrics$spatial)) sf::st_as_sf(ersMetrics$spatial) else NULL
 
@@ -357,6 +406,8 @@ run_gap_analysis <- function(all_data, dist_km, land = gap_land(), ecoRegions = 
   list(
     taxon = taxon_label(all_data),
     dist_km = dist_km,
+    method = method,
+    sf_model = sf_model,           # convex hull range (NULL for the buffer method)
     points = data,                 # exactly the rows used for buffering / ERS
     srs = srsMetrics, grs = grsMetrics, ers = ersMetrics,
     fcs = fcs, priority = fcs_priority(fcs),

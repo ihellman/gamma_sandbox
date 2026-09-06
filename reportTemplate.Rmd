@@ -6,6 +6,8 @@ params:
   taxon: "Taxon"
   points: NA
   bufferDist: NA
+  method: "buffer"
+  sf_model: NA
   srsMetrics: NA
   grsMetrics: NA
   ersMetrics: NA
@@ -166,7 +168,9 @@ DT::datatable(summary_table, rownames = FALSE, class = "compact", options = list
 
 ## Map of *ex situ* conservation gap analysis measures
 
-The GRS *ex situ* map feature shows the potential distribution model, with previous *ex situ* germplasm collection points surrounded by a buffer overlaid. Only germplasm (G) points and reference observations (H) are displayed on the map.
+`r if (identical(params$method, "hull")) paste0("The wild range was estimated as the **convex hull** of all records with coordinates, clipped to land. Germplasm (G) records were buffered by ", params$bufferDist, " km within that range to estimate the area already collected.") else paste0("The wild range was estimated with the **buffer method**: a ", params$bufferDist, " km buffer around every record with coordinates, clipped to land. The buffers around germplasm (G) records estimate the area already collected.")`
+
+The GRS *ex situ* map feature shows the estimated range with the germplasm buffers overlaid. Only germplasm (G) points and reference observations (H) are displayed on the map.
 
 The ERS *ex situ* map feature shows ecoregions within the potential distribution model from which no *ex situ* germplasm collections have been made.
 
@@ -176,14 +180,30 @@ m <- leaflet(width = "100%") %>%
   addProviderTiles("CartoDB.Positron", group = "Base Map") %>%
   addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
+  addTiles(
+    urlTemplate = "https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}",
+    group = "Protected areas (WDPA)",
+    attribution = "Protected areas: UNEP-WCMC and IUCN, Protected Planet (WDPA)",
+    options = tileOptions(opacity = 0.6, maxNativeZoom = 15, maxZoom = 19)
+  ) %>%
   addLayersControl(
     baseGroups = c("Base Map", "Topography", "Imagery"),
-    overlayGroups = c("Reference Records", "Germplasm Records", "Buffers", "GRS Gap", "ERS Regions"),
+    overlayGroups = c("Reference Records", "Germplasm Records", "Range (convex hull)", "Buffers", "GRS Gap", "ERS Regions", "Protected areas (WDPA)"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
+  hideGroup("Protected areas (WDPA)") %>%
   addMapPane("ersGap", zIndex = 400) %>%
   addMapPane("grsGap", zIndex = 405) %>%
   addMapPane("buffers", zIndex = 410)
+
+if (!is.null(params$sf_model) && inherits(params$sf_model, "sf") && nrow(params$sf_model) > 0) {
+  model_simplified <- rmapshaper::ms_simplify(params$sf_model, keep = 0.3, keep_shapes = TRUE)
+  m <- m %>% addPolygons(
+    data = model_simplified, group = "Range (convex hull)",
+    color = combinedColor[1], fillColor = combinedColor[1], fillOpacity = 0.15, weight = 2, dashArray = "6 4",
+    options = pathOptions(pane = "buffers"), popup = "Estimated range (convex hull of all records)"
+  )
+}
 
 # Add pre-calculated sf objects (simplified for memory reduction)
 if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
@@ -318,7 +338,7 @@ if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
 
 ### Geographic Representativeness Score (GRS)
 
-***Ex situ***: The Geographic Representativeness Score *ex situ* (GRS ex situ) uses buffers created around each G collection coordinate point to estimate geographic areas already well collected within the potential distribution models of each taxon and then calculates the proportion of the potential distribution model covered by these buffers.
+***Ex situ***: The Geographic Representativeness Score *ex situ* (GRS ex situ) uses buffers created around each G collection coordinate point to estimate geographic areas already well collected within the estimated range of each taxon and then calculates the proportion of the range covered by these buffers. The range is estimated either as the union of buffers around all records (buffer method) or as the convex hull of all records clipped to land (convex hull method).
 
 ### Ecological Representativeness Score (ERS)
 

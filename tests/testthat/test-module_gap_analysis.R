@@ -4,7 +4,7 @@ use_app_root()
 test_that("Run Gap Analysis computes results and a dataset change clears them", {
   analysis_data <- reactiveVal(load_fixture_dataset("Magnolia_acuminata_data_small.csv"))
   testServer(gapAnalysisServer, args = list(analysis_data = analysis_data), {
-    session$setInputs(gap_map_zoom = 4, buffer_dist = "50")
+    session$setInputs(gap_map_zoom = 4, buffer_dist = "50", model_method = "buffer")
     expect_null(gap_result())
     session$setInputs(generate_buffers = 1)
     r <- gap_result()
@@ -21,10 +21,12 @@ test_that("Run Gap Analysis computes results and a dataset change clears them", 
     expect_null(gap_result())
     expect_false(analysis_active())
 
-    # and it can be re-run with a different buffer
-    session$setInputs(buffer_dist = "10")
+    # and it can be re-run with a different buffer / range method
+    session$setInputs(buffer_dist = "10", model_method = "hull")
     session$setInputs(generate_buffers = 2)
     expect_equal(gap_result()$dist_km, 10)
+    expect_equal(gap_result()$method, "hull")
+    expect_s3_class(gap_result()$sf_model, "sf")
   })
 })
 

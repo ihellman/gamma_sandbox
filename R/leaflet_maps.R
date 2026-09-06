@@ -138,7 +138,11 @@ data_eval_base_map <- function() {
     # Remove drawn layer after creation.  Currently, there is not an R-only way to do this.
     htmlwidgets::onRender("
       function(el, x) {
-        var map = this;
+        // In Shiny, onRender hooks do not receive the map as `this`; resolve it
+        // from the widget instance attached to the element.
+        var inst = HTMLWidgets.getInstance(el);
+        var map = (inst && typeof inst.getMap === 'function') ? inst.getMap() : this;
+        if (!map || typeof map.on !== 'function') { return; }
         map.on('draw:created', function(e) {
           var layer = e.layer;
           // Remove the drawn layer immediately after it's created
@@ -303,6 +307,84 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
   }
 }
 
+# --- Protected / public land overlays ---------------------------------------
+# Where seed collecting might be possible. Both are toggleable overlays, hidden
+# by default, streamed from the providers (nothing is shipped with the app).
+#
+# 1. World Database on Protected Areas (UNEP-WCMC / IUCN): global, cached
+#    Web-Mercator tiles - fast at any zoom.
+WDPA_TILE_URL <- "https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}"
+WDPA_ATTRIBUTION <- "Protected areas: UNEP-WCMC and IUCN, <a href='https://www.protectedplanet.net' target='_blank'>Protected Planet (WDPA)</a>"
+# 2. USGS PAD-US "Public Access" (United States only): open / restricted /
+#    closed access polygons from an ArcGIS feature service, drawn client-side
+#    (green / amber / red). Only requested at zoom >= 8 so the whole country
+#    is never downloaded at once.
+PADUS_ACCESS_URL <- "https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/PADUS_Public_Access/FeatureServer/0"
+PADUS_ATTRIBUTION <- "Public access: <a href='https://www.usgs.gov/programs/gap-analysis-project/science/pad-us-data-overview' target='_blank'>USGS PAD-US</a>"
+PROTECTED_LAND_GROUPS <- c("Protected areas (WDPA, global)", "Public access (PAD-US, USA)")
+
+# esri-leaflet (Apache-2.0) is vendored in www/lib/esri-leaflet because the R
+# wrapper package (leaflet.esri) is no longer on CRAN.
+esri_leaflet_dependency <- function() {
+  htmltools::htmlDependency(
+    name = "esri-leaflet", version = "3.0.12",
+    src = c(file = normalizePath("www/lib/esri-leaflet")),
+    script = "esri-leaflet.js"
+  )
+}
+
+add_protected_land_layers <- function(map) {
+  map <- map %>%
+    leaflet::addTiles(
+      urlTemplate = WDPA_TILE_URL, group = PROTECTED_LAND_GROUPS[1],
+      attribution = WDPA_ATTRIBUTION,
+      options = leaflet::tileOptions(opacity = 0.6, maxNativeZoom = 15, maxZoom = 19)
+    )
+  map$dependencies <- c(map$dependencies, list(esri_leaflet_dependency()))
+  # Create the feature layer client-side and hand it to leaflet's layerManager so
+  # the existing layers control (and hideGroup / showGroup) can toggle it.
+  js <- sprintf("
+    function(el, x) {
+      // In Shiny, onRender hooks do not receive the map as `this`, and the
+      // plugin script may still be loading, so resolve both with a short retry.
+      var attempts = 0;
+      var addPadus = function() {
+        var inst = HTMLWidgets.getInstance(el);
+        var map = (inst && typeof inst.getMap === 'function') ? inst.getMap() : null;
+        if (!map || !map.layerManager || !L.esri) {
+          if (attempts++ < 50) { setTimeout(addPadus, 200); }
+          return;
+        }
+      var layer = L.esri.featureLayer({
+        url: %s,
+        minZoom: 8,
+        fields: ['OBJECTID', 'Unit_Nm', 'Pub_Access', 'MngNm_Desc'],
+        style: function(feature) {
+          var c = {OA: '#2e8b57', RA: '#e6a700', XA: '#b22222'}[feature.properties.Pub_Access] || '#777777';
+          return {color: c, weight: 1, fillColor: c, fillOpacity: 0.25};
+        }
+      });
+      layer.bindPopup(function(l) {
+        var p = l.feature.properties;
+        var acc = {OA: 'Open access', RA: 'Restricted access', XA: 'Closed access'}[p.Pub_Access] || p.Pub_Access;
+        return '<b>' + (p.Unit_Nm || '') + '</b><br/>' + acc + '<br/>' + (p.MngNm_Desc || '');
+      });
+      var group = %s;
+      map.layerManager.addLayer(layer, 'shape', 'padus_public_access', group);
+      // start hidden; the layers control toggles the group like any other
+      var container = map.layerManager.getLayerGroup(group);
+      if (container && map.hasLayer(container)) { map.removeLayer(container); }
+      map.attributionControl.addAttribution(%s);
+      };
+      addPadus();
+    }",
+    jsonlite::toJSON(PADUS_ACCESS_URL, auto_unbox = TRUE),
+    jsonlite::toJSON(PROTECTED_LAND_GROUPS[2], auto_unbox = TRUE),
+    jsonlite::toJSON(PADUS_ATTRIBUTION, auto_unbox = TRUE)
+  )
+  htmlwidgets::onRender(map, js)
+}
+
 # Gap Analysis Map Setup
 # Renders the empty basemap with controls and legends
 gap_base_map <- function() {
@@ -310,6 +392,7 @@ gap_base_map <- function() {
     leaflet::addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
     leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
     leaflet::addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
+    add_protected_land_layers() %>%
     # map pane elements 
     leaflet::addMapPane("buffers", zIndex = 410) %>%
     leaflet::addMapPane("points", zIndex = 420) %>%
@@ -327,12 +410,23 @@ gap_base_map <- function() {
       overlayGroups = c(
         "Reference Records",
         "Germplasm Records",
+        "Range (convex hull)",
         "Buffers",
         "GRS Gap",       # <- MUST BE LISTED HERE
-        "ERS Regions"    # <- MUST BE LISTED HERE
+        "ERS Regions",   # <- MUST BE LISTED HERE
+        PROTECTED_LAND_GROUPS
       ),
       options = leaflet::layersControlOptions(collapsed = TRUE)
     ) %>%
+    # Legend for the PAD-US colours; shown/hidden together with that layer
+    addLegend(
+      title = "Public land access (PAD-US)",
+      position = "bottomleft",
+      colors = c("#2e8b57", "#e6a700", "#b22222"),
+      labels = c("Open access", "Restricted access", "Closed access"),
+      opacity = 0.6,
+      group = PROTECTED_LAND_GROUPS[2]
+    ) %>%
     # Optional: Hide them on initial load so the map isn't cluttered
-    leaflet::hideGroup(c("GRS Gap", "ERS Regions", "Buffers"))
+    leaflet::hideGroup(c("Range (convex hull)", "GRS Gap", "ERS Regions", "Buffers", PROTECTED_LAND_GROUPS))
 }

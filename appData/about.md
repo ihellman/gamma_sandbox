@@ -48,8 +48,8 @@ The tool compares *ex situ* accession-level data with wild or native occurrence 
 
 ### Analysis Calculations
 * **Estimating wild or native range.** Two methods can be used:
-  * **Buffer method:** a user-defined buffer is created around each H collection coordinate point to estimate wild or native range
-  * **Convex hull method:** XXXX
+  * **Buffer method (default):** a user-defined buffer is created around each collection coordinate point (H and G) and the union of these buffers, clipped to land, is taken as the wild or native range
+  * **Convex hull method:** the smallest convex polygon enclosing all collection coordinate points (H and G), clipped to land, is taken as the wild or native range. This fills the space between scattered records and needs at least three records at distinct locations. With this method the buffer distance is only applied to G records.
 * **Estimating geographic area represented by an ex situ living collection record:** a user-defined buffer is created around each G collection coordinate point to estimate geographic and ecological areas already collected.
 
 ### Output Calculations

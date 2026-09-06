@@ -110,3 +110,48 @@ test_that("GRSex and ERSex return zero scores for empty inputs", {
   expect_equal(e$summary$`ERS exsitu`, 0)
   expect_null(e$spatial)
 })
+
+test_that("convex hull method estimates the range as a hull and clips G buffers to it", {
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  L <- gap_layers()
+  buf  <- run_gap_analysis(d, 50, method = "buffer", land = L$land, ecoRegions = L$eco)
+  hull <- run_gap_analysis(d, 50, method = "hull",   land = L$land, ecoRegions = L$eco)
+
+  expect_equal(hull$method, "hull"); expect_equal(buf$method, "buffer")
+  expect_null(buf$sf_model)
+  expect_s3_class(hull$sf_model, "sf")
+  hull_area <- as.numeric(sum(sf::st_area(hull$sf_model))) / 1e6
+  expect_gt(hull_area, buf$grs$`Area of model km2`)                 # hull fills the space between records
+  expect_equal(hull$grs$`Area of model km2`, hull_area, tolerance = 1e-3)
+  expect_true(all(hull$sf_buffers$processing_type == "G"))          # only G buffers drawn in hull mode
+  expect_lte(hull$grs$`G buffer areas in model km2`, buf$grs$`G buffer areas in model km2`)  # clipped to the hull
+  expect_true(hull$grs$`GRS exsitu` >= 0 && hull$grs$`GRS exsitu` <= 100)
+  expect_gte(hull$ers$summary$`Ecoregions with records`, buf$ers$summary$`Ecoregions with records`)
+  expect_equal(hull$srs$`SRS exsitu`, buf$srs$`SRS exsitu`)         # SRS does not depend on the range model
+  expect_equal(hull$fcs, compute_fcs(hull$srs$`SRS exsitu`, hull$grs$`GRS exsitu`, hull$ers$summary$`ERS exsitu`))
+
+  # default is the buffer method and golden scores are untouched
+  expect_equal(run_gap_analysis(d, 50, land = L$land, ecoRegions = L$eco)$grs$`GRS exsitu`, 61.924207, tolerance = 1e-6)
+  expect_error(run_gap_analysis(d, 50, method = "circle"))
+})
+
+test_that("convex hull method refuses degenerate inputs with a clear message", {
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  L <- gap_layers()
+  expect_error(run_gap_analysis(d[1:2, ], 50, method = "hull", land = L$land, ecoRegions = L$eco), "at least 3")
+  collinear <- d[1:3, ]; collinear$Longitude <- c(-84, -84, -84); collinear$Latitude <- c(33, 34, 35)
+  expect_error(run_gap_analysis(collinear, 50, method = "hull", land = L$land, ecoRegions = L$eco), "collinear")
+  ocean <- d[1:3, ]; ocean$Longitude <- c(-40, -41, -40); ocean$Latitude <- c(30, 30, 31)
+  expect_error(run_gap_analysis(ocean, 50, method = "hull", land = L$land, ecoRegions = L$eco), "land")
+})
+
+test_that("ERSex counts ecoregions overlapped by a model area when one is given", {
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  L <- gap_layers()
+  v <- terra::vect(prep_lat_lon(d), geom = c("Longitude", "Latitude"), crs = "EPSG:4326")
+  hull <- terra::convHull(v)
+  by_points <- ERSex(v, NULL, ecoRegions = L$eco)
+  by_model  <- ERSex(v, NULL, ecoRegions = L$eco, model_area = hull)
+  expect_gte(by_model$summary$`Ecoregions with records`, by_points$summary$`Ecoregions with records`)
+  expect_equal(by_model$summary$`ERS exsitu`, 0)                    # no G buffer -> nothing conserved
+})

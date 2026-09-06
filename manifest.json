@@ -4397,10 +4397,10 @@
       "checksum": "a24dc0eda03a5baef9cb3e4e10a0af3b"
     },
     "appData/about.md": {
-      "checksum": "aa53bb5c6d8fb3ddd516c40e3b3a6eab"
+      "checksum": "7dce3f7b3aef529be780ac3dfe78e73a"
     },
     "appData/data_analysis_instructions.md": {
-      "checksum": "d5b5f9b5be1f7b5a1761b27a9bb66f0f"
+      "checksum": "994d36881b49f49b2205172411c2bdcd"
     },
     "appData/ecoregionsSimplified.gpkg": {
       "checksum": "97882937e89ecdc0cf5a1eab655bc582"
@@ -4430,19 +4430,19 @@
       "checksum": "3a490b3a37d2a96bd251f28aacf8c458"
     },
     "R/gap_analysis_functions.R": {
-      "checksum": "c1aed143ea2f2f430ee6224b32be2e6f"
+      "checksum": "962c0cd769a04a5c9f50e742c99e13d8"
     },
     "R/gbif_functions.R": {
-      "checksum": "1ad60c7d25ca65ce41c06d50b630ad28"
+      "checksum": "4bcefa9e0f27e0e9199f82d658984ff9"
     },
     "R/leaflet_maps.R": {
-      "checksum": "be078cfbe88dd7b45e3cad85a5dabad1"
+      "checksum": "a417c78198644aed3ff2ed158defcfde"
     },
     "R/module_about.R": {
       "checksum": "73e6c481fb127b649b9817d30ff4c604"
     },
     "R/module_controls.R": {
-      "checksum": "30f814b21bd301bca0de62b201f31d15"
+      "checksum": "8c12ac2dcc2191d849ea89ec0be81f6d"
     },
     "R/module_data_analysis.R": {
       "checksum": "f7dbd884d7e2424ef92bd69c9621bb07"
@@ -4451,7 +4451,7 @@
       "checksum": "435422886109576137ae5b43555c8a73"
     },
     "R/module_gap_analysis.R": {
-      "checksum": "d0c99fee75cf8c6d140d6158a8a07b88"
+      "checksum": "0738bc064f5be0e44237c9f277c8d636"
     },
     "R/module_landing.R": {
       "checksum": "02e3b9aa9b3652dfb155658d0a26cfe4"
@@ -4466,7 +4466,7 @@
       "checksum": "d6c1a9e3d4f057066846f78f79f78073"
     },
     "reportTemplate.Rmd": {
-      "checksum": "865cc8a98d69439a7167414c4c2b7b6b"
+      "checksum": "98335d059dcee6e35414d89b3f93ad47"
     },
     "VERSION": {
       "checksum": "30a04cf33ee91a3ecf4b75c71268f316"
@@ -4491,6 +4491,12 @@
     },
     "www/imls_logo_2c.jpg": {
       "checksum": "74a2801d1427b0b9ca54bad3e32a656e"
+    },
+    "www/lib/esri-leaflet/esri-leaflet.js": {
+      "checksum": "971d88242d60420792ab77ca8c79e8a6"
+    },
+    "www/lib/esri-leaflet/LICENSE": {
+      "checksum": "bc7d62ecc1c6db5b0b2a760c9f1bbc31"
     },
     "www/seedling.jpg": {
       "checksum": "9db0057d8e4a7a6356742ef57820c8ec"
