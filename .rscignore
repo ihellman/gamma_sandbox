@@ -1,12 +1,14 @@
 # Files excluded from the rsconnect / Posit Connect bundle.
-# One pattern per line, relative to the app root.
+# rsconnect reads a .rscignore PER DIRECTORY and matches entries EXACTLY
+# against the names in that directory (no wildcards, no paths). This file
+# covers the app root; appData/.rscignore covers the test fixtures there.
 .Rproj.user
 .Rhistory
 .DS_Store
-*.Rproj
 .git
 .github
 .vscode
+.renvignore
 preprocessing
 dev
 tests
@@ -15,9 +17,8 @@ run.R
 uploadtoshinyio.R
 secrets.yaml
 rsconnect
-renv/library
-appData/upload_sample*
-appData/Magnolia_acuminata_data.csv
-appData/Magnolia_acuminata_data_small.csv
+renv
 README.md
+Dockerfile
+manifest.json
 GAMMa_Repository_Review_and_Work_Plan.md

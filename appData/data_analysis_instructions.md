@@ -9,7 +9,8 @@ Gap Analysis. Load records from either source below — they can be combined.
   epithet, rank and infraspecific epithet, set the maximum number of
   occurrences, then click **Gather GBIF Occurrences**. *Advanced options*
   let you filter by event date, drop iNaturalist records, include taxonomic
-  synonyms, or take a random rather than most-recent sample.
+  synonyms, or choose how reference records are picked (most recent,
+  random, or spatially spread across the range).
 - **Custom Data** — upload your own specimen records as CSV or Excel.
   See **View format requirements** for the expected columns.
 

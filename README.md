@@ -37,6 +37,8 @@ auto-sourced by Shiny.
 | `tests/testthat/` | Unit tests (`Rscript tests/testthat.R`) |
 | `dev/` | Diagnostic scripts, not deployed |
 | `preprocessing/` | One-off scripts that build the static layers, not deployed |
+| `manifest.json`, `Dockerfile` | Posit Connect git-backed deployment manifest; container image recipe |
+| `.github/workflows/tests.yml` | CI: runs the unit tests on push / PR |
 
 ## Static data provenance
 
@@ -62,14 +64,22 @@ Rscript tests/testthat.R
 ```
 
 The suite covers the upload parser, schema enforcement, the GBIF filtering
-pipeline (on a saved fixture, no network) and golden gap-analysis scores on the
-fixture datasets.
+pipeline (on a saved fixture, no network), golden gap-analysis scores on the
+fixture datasets, the Shiny modules via `shiny::testServer`, and report
+rendering. `test-ui_browser.R` drives the app in headless Chromium with
+shinytest2 (skipped on CI and when no browser is installed).
+
+`dev/diagnose_61.R` prints the record counts at every step of a GBIF download
+for one taxon; useful when a user reports unexpected G/H numbers.
 
 ## Deployment
 
 `uploadtoshinyio.R` deploys to shinyapps.io (`atlantabg` account) using
 credentials in a git-ignored `secrets.yaml`. `manifest.json` is generated with
-`rsconnect::writeManifest()` for git-backed Posit Connect deployment.
-`.rscignore` keeps fixtures, tests and preprocessing out of the bundle.
+`rsconnect::writeManifest()` for git-backed Posit Connect deployment
+(regenerate it after changing `renv.lock`). The per-directory `.rscignore`
+files keep fixtures, tests and preprocessing out of the bundle (about 22 MB).
+
+To run in a container: `docker build -t gamma . && docker run --rm -p 3838:3838 gamma`.
 
 Set the version shown in the footer by editing `VERSION`.

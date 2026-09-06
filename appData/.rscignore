@@ -1,0 +1,11 @@
+# Test fixtures: not needed by the deployed app (see tests/testthat)
+upload_sample.csv
+upload_sample_small.csv
+upload_sample_manual_15miss_coords.csv
+upload_sample_manual_no_issues_col.csv
+upload_sample_manual_properly_formatted.csv
+upload_sample_manual_properly_formatted_excel.xlsx
+upload_sample_manual_properly_formatted_excel_missing_lat.xlsx
+upload_sample_missing_2_cols.csv
+Magnolia_acuminata_data.csv
+Magnolia_acuminata_data_small.csv

@@ -36,7 +36,7 @@ test_that("gather loads a G-first dataset into analysis_data and records honest 
     testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
       select_magnolia_fraseri(session)
       session$setInputs(gbif_limit = 150, apply_date_filter = FALSE, exclude_inat = FALSE,
-                        include_synonyms = FALSE, random_selection = FALSE)
+                        include_synonyms = FALSE, reference_selection = "recent")
       session$setInputs(loadGBIF = 1)
       d <- analysis_data()
       expect_equal(nrow(d), 150)
@@ -64,7 +64,7 @@ test_that("gather merges with uploaded data and keeps upload rows on overwrite",
     testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
       select_magnolia_fraseri(session)
       session$setInputs(gbif_limit = 20, apply_date_filter = FALSE, exclude_inat = FALSE,
-                        include_synonyms = FALSE, random_selection = FALSE)
+                        include_synonyms = FALSE, reference_selection = "spatial")
       session$setInputs(loadGBIF = 1)
       d <- analysis_data()
       expect_equal(nrow(d), 25)

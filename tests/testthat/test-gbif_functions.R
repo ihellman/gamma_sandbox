@@ -67,8 +67,9 @@ test_that("selection takes every living specimen first, then most recent referen
 
 test_that("random and yearly-spread selection return the right number of rows", {
   f <- gbif_apply_filters(pool)$data
-  r <- gbif_select_records(f, limit = 40, random = TRUE)
+  r <- gbif_select_records(f, limit = 40, method = "random")
   expect_equal(nrow(r), 40)
+  expect_equal(nrow(gbif_select_records(f, limit = 40, random = TRUE)), 40)   # legacy flag
   y <- gbif_select_records(f, limit = 40, yearly_spread = TRUE)
   expect_equal(nrow(y), 40)
   expect_false("year_val" %in% names(y))
@@ -118,4 +119,58 @@ test_that("gbif_gather fetches when no pool is supplied and passes the pool limi
   empty <- gbif_gather(1, limit = 200, fetch = function(...) data.frame())
   expect_equal(nrow(empty$data), 0)
   expect_equal(empty$steps$raw, 0)
+})
+
+# Synthetic clustered pool for the spatial-spread selection (#58)
+make_clustered_pool <- function(n_clusters = 6, per_cluster = 25, seed = 42) {
+  set.seed(seed)
+  centres <- data.frame(lat = runif(n_clusters, 25, 48), lon = runif(n_clusters, -120, -70))
+  rows <- do.call(rbind, lapply(seq_len(n_clusters), function(i) data.frame(
+    gbifID = paste0(i, "_", seq_len(per_cluster)),
+    decimalLatitude = centres$lat[i] + rnorm(per_cluster, sd = 0.05),
+    decimalLongitude = centres$lon[i] + rnorm(per_cluster, sd = 0.05),
+    eventDate = sprintf("%d-06-01", sample(1990:2024, per_cluster, replace = TRUE)),
+    basisOfRecord = "PRESERVED_SPECIMEN", cluster = i, stringsAsFactors = FALSE
+  )))
+  rows
+}
+mean_nn_distance <- function(df) {
+  m <- as.matrix(dist(cbind(df$decimalLongitude, df$decimalLatitude)))
+  diag(m) <- Inf
+  mean(apply(m, 1, min))
+}
+
+test_that("select_spatially_spread covers every spatial cluster, starting from the newest record (#58)", {
+  p <- make_clustered_pool()
+  s <- select_spatially_spread(p, n = 6)
+  expect_equal(nrow(s), 6)
+  expect_equal(sort(s$cluster), 1:6)                       # every cluster represented once
+  expect_equal(s$eventDate[1], max(p$eventDate))           # seeded with the most recent record
+  expect_identical(select_spatially_spread(p, n = 1000), p)  # nothing to thin
+  expect_equal(nrow(select_spatially_spread(p, n = 40)), 40) # more slots than clusters still fills up
+  expect_false(any(duplicated(select_spatially_spread(p, n = 40)$gbifID)))
+
+  # duplicate locations only fill leftover slots
+  dup <- p[rep(1, 10), ]; dup$gbifID <- paste0("d", 1:10)
+  s2 <- select_spatially_spread(rbind(p, dup), n = 6)
+  expect_equal(sort(s2$cluster), 1:6)
+})
+
+test_that("spatially spread selection is more dispersed than random or most-recent", {
+  p <- make_clustered_pool()
+  spatial <- select_spatially_spread(p, n = 6)
+  recent  <- p |> dplyr::arrange(dplyr::desc(eventDate)) |> dplyr::slice_head(n = 6)
+  set.seed(7); random <- p[sample(nrow(p), 6), ]
+  expect_gt(mean_nn_distance(spatial), mean_nn_distance(random))
+  expect_gte(mean_nn_distance(spatial), mean_nn_distance(recent))
+})
+
+test_that("gbif_select_records(method = 'spatial') keeps G first and honours the limit", {
+  p <- make_clustered_pool()
+  p$basisOfRecord[1:3] <- "LIVING_SPECIMEN"
+  s <- gbif_select_records(p, limit = 9, method = "spatial")
+  expect_equal(nrow(s), 9)
+  expect_equal(sum(s$basisOfRecord == "LIVING_SPECIMEN"), 3)
+  expect_equal(length(unique(s$cluster[s$basisOfRecord != "LIVING_SPECIMEN"])), 6)
+  expect_error(gbif_select_records(p, limit = 5, method = "nope"))
 })

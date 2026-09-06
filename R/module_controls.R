@@ -110,12 +110,17 @@ controlsModuleUI <- function(id) {
                 ),
 
                 bslib::tooltip(
-                  checkboxInput(
-                    ns("random_selection"),
-                    "Random selection",
-                    value = FALSE
+                  radioButtons(
+                    ns("reference_selection"),
+                    "Reference record selection",
+                    choices = c(
+                      "Most recent first" = "recent",
+                      "Random" = "random",
+                      "Spatially spread" = "spatial"
+                    ),
+                    selected = "recent"
                   ),
-                  "Selected randomly rather than the default of recent records first."
+                  "How reference (H) records are chosen when more are available than the Max Occurrences slider allows. Living specimens (G) are always taken first. \"Spatially spread\" picks records spread across the taxon's range instead of the most recent ones."
                 )
               )
             )
@@ -433,7 +438,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
               include_synonyms = isTRUE(input$include_synonyms),
               exclude_inat = isTRUE(input$exclude_inat),
               date_range = date_range,
-              random = isTRUE(input$random_selection),
+              method = if (is.null(input$reference_selection)) "recent" else input$reference_selection,
               pool = pool,
               progress = function(value, detail) shiny::setProgress(value, detail = detail)
             ),

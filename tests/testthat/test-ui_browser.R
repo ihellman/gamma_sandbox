@@ -1,5 +1,6 @@
 # Browser-level checks with shinytest2 (headless Chrome/Chromium). Skipped when
 # shinytest2 or a browser is not available, so the rest of the suite stays fast.
+skip_on_ci()                       # needs a browser; run locally
 skip_if_not_installed("shinytest2")
 skip_if(is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL)), "no Chrome/Chromium found")
 

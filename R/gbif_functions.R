@@ -116,10 +116,46 @@ gbif_apply_filters <- function(df, include_synonyms = FALSE, exclude_inat = FALS
   list(data = df, steps = steps)
 }
 
+# Spatially spread subset (issue #58): deterministic farthest-point sampling.
+# Start from the most recent record, then repeatedly add the record farthest
+# from everything already chosen. Longitude is scaled by cos(latitude) so
+# distances are roughly equal-area at any latitude. Records at locations that
+# are already represented (distance 0) are only used to fill leftover slots, in
+# most-recent order.
+select_spatially_spread <- function(df, n) {
+  if (nrow(df) <= n) return(df)
+  df <- dplyr::arrange(df, dplyr::desc(eventDate))
+  lat <- as.numeric(df$decimalLatitude)
+  lon <- as.numeric(df$decimalLongitude)
+  x <- lon * cos(mean(lat, na.rm = TRUE) * pi / 180)
+  y <- lat
+  ok <- !is.na(x) & !is.na(y)
+
+  chosen <- 1L
+  min_d <- (x - x[1])^2 + (y - y[1])^2
+  min_d[!ok] <- -Inf
+  min_d[1] <- -Inf
+  while (length(chosen) < n) {
+    j <- which.max(min_d)
+    if (!is.finite(min_d[j]) || min_d[j] <= 0) break     # every remaining location is already covered
+    chosen <- c(chosen, j)
+    min_d <- pmin(min_d, (x - x[j])^2 + (y - y[j])^2)
+    min_d[j] <- -Inf
+  }
+  if (length(chosen) < n) {
+    chosen <- c(chosen, setdiff(seq_len(nrow(df)), chosen)[seq_len(n - length(chosen))])
+  }
+  df[chosen, , drop = FALSE]
+}
+
 # Pick at most `limit` records: every living specimen first (G), then reference
-# records (H) ordered most-recent-first, randomly, or - when a date range was
-# applied - one record per year first so the range is spread evenly.
-gbif_select_records <- function(df, limit, random = FALSE, yearly_spread = FALSE) {
+# records (H) chosen by `method` - "recent" (most recent eventDate first),
+# "random", or "spatial" (see select_spatially_spread). When a date range was
+# applied, one record per year is taken first so the range is spread evenly.
+gbif_select_records <- function(df, limit, method = c("recent", "random", "spatial"),
+                                yearly_spread = FALSE, random = NULL) {
+  if (isTRUE(random)) method <- "random"          # backwards compatibility
+  method <- match.arg(method)
   if (nrow(df) == 0 || limit <= 0) return(df[0, , drop = FALSE])
   is_living <- df$basisOfRecord %in% "LIVING_SPECIMEN"
   living <- dplyr::slice_head(df[is_living, , drop = FALSE], n = min(limit, sum(is_living)))
@@ -135,8 +171,10 @@ gbif_select_records <- function(df, limit, random = FALSE, yearly_spread = FALSE
     picked <- dplyr::bind_rows(yearly_unique, remainder) |>
       dplyr::slice_head(n = min(remaining, nrow(other))) |>
       dplyr::select(-year_val)
-  } else if (isTRUE(random)) {
+  } else if (method == "random") {
     picked <- dplyr::slice_sample(other, n = min(remaining, nrow(other)))
+  } else if (method == "spatial") {
+    picked <- select_spatially_spread(other, n = min(remaining, nrow(other)))
   } else {
     picked <- other |> dplyr::arrange(dplyr::desc(eventDate)) |> dplyr::slice_head(n = min(remaining, nrow(other)))
   }
@@ -165,8 +203,9 @@ gbif_to_schema <- function(df) {
 # (the controls module caches it per taxon so re-gathering with different
 # filters or slider values does not hit GBIF again).
 gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat = FALSE,
-                        date_range = NULL, random = FALSE, pool = NULL,
-                        fetch = gbif_fetch, progress = NULL) {
+                        date_range = NULL, method = "recent", pool = NULL,
+                        fetch = gbif_fetch, progress = NULL, random = NULL) {
+  if (isTRUE(random)) method <- "random"          # backwards compatibility
   report <- function(v, d) if (is.function(progress)) progress(v, d)
   limits <- gbif_pool_limits(limit)
   event_date <- if (!is.null(date_range) && !any(is.na(date_range))) {
@@ -181,7 +220,7 @@ gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat
   report(0.6, "Applying filters...")
   filtered <- gbif_apply_filters(pool, include_synonyms = include_synonyms,
                                  exclude_inat = exclude_inat, date_range = date_range)
-  selected <- gbif_select_records(filtered$data, limit = limit, random = random,
+  selected <- gbif_select_records(filtered$data, limit = limit, method = method,
                                   yearly_spread = !is.null(date_range))
   report(0.8, "Formatting downloaded records...")
   data <- gbif_to_schema(selected)
