@@ -9,6 +9,9 @@ for (f in sort(list.files(file.path(app_root, "R"), pattern = "\\.[Rr]$", full.n
 # so call this at the top of any test file that exercises such code.
 use_app_root <- function(env = parent.frame()) withr::local_dir(app_root, .local_envir = env)
 
+# Absolute path to a file in tests/testthat/fixtures (works after use_app_root()).
+fixture_path <- function(name) file.path(app_root, "tests", "testthat", "fixtures", name)
+
 # Build a fileInput-style list for read_upload_file() from a path in appData/
 fixture_file <- function(name) {
   path <- file.path(app_root, "appData", name)

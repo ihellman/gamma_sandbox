@@ -1,9 +1,8 @@
 # CONTROLS UI ----------------------------------------------------------------------
-# CONTROLS UI ----------------------------------------------------------------------
 controlsModuleUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    accordion(
+
+  panels <- accordion(
       multiple = FALSE,
       open = FALSE,
 
@@ -55,16 +54,23 @@ controlsModuleUI <- function(id) {
             step = 50,
             width = "100%"
           ),
+          # Advanced options live in their OWN accordion. A bare accordion_panel()
+          # here would register as a sibling of the "GBIF Data" panel and, with
+          # multiple = FALSE on the parent, collapse it when opened (issue #62).
           div(
             class = "gbif-advanced",
-            accordion_panel(
+            accordion(
+              id = ns("gbif_advanced_acc"),
+              open = FALSE,
+              multiple = TRUE,
+              accordion_panel(
                 # Add tooltip and info icon to the accordion header
                 title = bslib::tooltip(
                   tags$span("Advanced options ", icon("circle-info", class = "ms-1 text-muted", style = "font-size: 0.85em;")),
                   "You may notice slower download times with these options selected."
                 ),
                 value = "panel_gbif_advanced",
-                
+
                 bslib::tooltip(
                   checkboxInput(
                     ns("apply_date_filter"),
@@ -73,7 +79,7 @@ controlsModuleUI <- function(id) {
                   ),
                   "Select or enter a specific date range of interest."
                 ),
-                
+
                 conditionalPanel(
                   condition = sprintf("input['%s']", ns("apply_date_filter")),
                   dateRangeInput(
@@ -84,7 +90,7 @@ controlsModuleUI <- function(id) {
                     width = "100%"
                   )
                 ),
-                
+
                 bslib::tooltip(
                   checkboxInput(
                     ns("exclude_inat"),
@@ -93,17 +99,16 @@ controlsModuleUI <- function(id) {
                   ),
                   "Removes all records originally collected through iNaturalist."
                 ),
-                
+
                 bslib::tooltip(
                   checkboxInput(
-                    # Changed from exclude_synonyms to include_synonyms
                     ns("include_synonyms"),
                     "Include taxonomic synonyms",
                     value = FALSE # FALSE means synonyms are excluded by default
                   ),
                   "Toggle to bring \"accepted synonyms\" back into the pull. When unchecked (default), synonyms are removed and you may need to adjust the download size to get the correct number of features."
                 ),
-                
+
                 bslib::tooltip(
                   checkboxInput(
                     ns("random_selection"),
@@ -113,6 +118,7 @@ controlsModuleUI <- function(id) {
                   "Selected randomly rather than the default of recent records first."
                 )
               )
+            )
           ),
           uiOutput(
             outputId = ns("taxon_id_display"),
@@ -138,7 +144,7 @@ controlsModuleUI <- function(id) {
         tagList(
           p(
             class = "text-muted small mb-2",
-            "Upload your own specimen data in CSV format."
+            "Upload your own specimen data as a CSV or Excel (.xlsx) file."
           ),
           p(
             class = "mb-3",
@@ -166,7 +172,19 @@ controlsModuleUI <- function(id) {
           )
         )
       )
-    ),
+    )
+
+  # bslib::accordion(multiple = FALSE) stamps data-bs-parent="#<outer id>" on EVERY
+  # descendant .accordion-collapse, including the nested Advanced-options panel,
+  # which makes Bootstrap close "GBIF Data" whenever Advanced is opened (#62).
+  # The nested accordion is multiple = TRUE, so it needs no parent at all.
+  panels <- htmltools::tagQuery(panels)$
+    find(".gbif-advanced .accordion-collapse")$
+    removeAttrs("data-bs-parent")$
+    allTags()
+
+  tagList(
+    panels,
 
     # --- EXPORT SECTION (Moved outside accordion) ---
     div(
@@ -185,62 +203,14 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
   moduleServer(id, function(input, output, session) {
     # 1. Initialize Parquet Dataset ----------------------------------------------------
     taxonomy_ds <- arrow::open_dataset("appData/plant_taxonomy_lean.parquet")
-    inat_dataset_key <- "50c9509d-22c7-4a22-a47d-8c48425ef4a7"
 
-    event_date_range <- reactive({
-      if (!isTRUE(input$apply_date_filter)) {
-        return(NULL)
-      }
+    # Date range as c(start, end) Dates, or NULL when the filter is off/incomplete
+    active_date_range <- reactive({
+      if (!isTRUE(input$apply_date_filter)) return(NULL)
       date_range <- input$gbif_date_range
-      if (is.null(date_range) || any(is.na(date_range))) {
-        return(NULL)
-      }
-      paste(format(date_range, "%Y-%m-%d"), collapse = ",")
+      if (is.null(date_range) || length(date_range) != 2 || any(is.na(date_range))) return(NULL)
+      as.Date(date_range)
     })
-
-    geo_spread_prioritize <- function(data) {
-      admin_cols <- c("countryCode", "stateProvince", "county")
-      available <- intersect(admin_cols, names(data))
-      if (!"countryCode" %in% available) {
-        return(data)
-      }
-
-      working <- data %>%
-        mutate(
-          countryCode = dplyr::coalesce(.data$countryCode, ""),
-          stateProvince = if ("stateProvince" %in% names(data)) {
-            dplyr::coalesce(data$stateProvince, "")
-          } else {
-            ""
-          },
-          county = if ("county" %in% names(data)) {
-            dplyr::coalesce(data$county, "")
-          } else {
-            ""
-          }
-        ) %>%
-        mutate(
-          admin1 = stateProvince,
-          admin2 = county
-        )
-
-      pick_unique <- function(df, group_cols) {
-        df %>%
-          group_by(across(all_of(group_cols))) %>%
-          slice_head(n = 1) %>%
-          ungroup()
-      }
-
-      ordered <- dplyr::bind_rows(
-        pick_unique(working, c("countryCode", "admin1", "admin2")),
-        pick_unique(working, c("countryCode", "admin1")),
-        pick_unique(working, "countryCode"),
-        working
-      ) %>%
-        distinct(gbifID, .keep_all = TRUE)
-
-      ordered
-    }
 
     # 2. Populate Genus ----------------------------------------------------------------
     observe({
@@ -387,50 +357,21 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
     })
 
+    # GBIF index counts. Debounced so that clicking through the rank / infra
+    # selectors does not fire three HTTP requests per keystroke.
+    taxon_for_counts <- debounce(selected_taxon_id, 500)
     gbif_observation_counts <- reactive({
-      tid <- selected_taxon_id()
+      tid <- taxon_for_counts()
       req(tid)
-
-      count_total <- tryCatch(
-        {
-          rgbif::occ_search(
-            taxonKey = as.numeric(tid),
-            hasCoordinate = TRUE,
-            eventDate = event_date_range(),
-            limit = 0
-          )$meta$count
-        },
-        error = function(e) NA_integer_
-      )
-
-      count_living <- tryCatch(
-        {
-          rgbif::occ_search(
-            taxonKey = as.numeric(tid),
-            hasCoordinate = TRUE,
-            basisOfRecord = "LIVING_SPECIMEN",
-            eventDate = event_date_range(),
-            limit = 0
-          )$meta$count
-        },
-        error = function(e) NA_integer_
-      )
-
-      count_inat <- tryCatch(
-        {
-          rgbif::occ_search(
-            taxonKey = as.numeric(tid),
-            datasetKey = inat_dataset_key,
-            hasCoordinate = TRUE,
-            eventDate = event_date_range(),
-            limit = 0
-          )$meta$count
-        },
-        error = function(e) NA_integer_
-      )
-
-      list(total = count_total, living = count_living, inat = count_inat)
+      dr <- active_date_range()
+      event_date <- if (!is.null(dr)) paste(format(dr, "%Y-%m-%d"), collapse = ",") else NULL
+      gbif_counts(tid, event_date = event_date)
     })
+
+    # Per-step record counts of the most recent successful gather, so the
+    # sidebar can show what was actually loaded (issue #61).
+    last_gather <- reactiveVal(NULL)
+    observeEvent(selected_taxon_id(), last_gather(NULL), ignoreNULL = FALSE)
 
     output$gbif_summary_display <- renderUI({
       counts <- gbif_observation_counts()
@@ -439,357 +380,110 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
 
       format_count <- function(value) {
-        if (is.na(value)) {
-          "—"
-        } else {
-          formatC(value, big.mark = ",", format = "d")
-        }
+        if (is.na(value)) "\u2014" else formatC(value, big.mark = ",", format = "d")
       }
 
+      loaded <- last_gather()
       tags$div(
         class = "text-muted small",
-        tags$div(
-          paste(
-            "Observations with coordinates:",
-            format_count(counts$total)
+        tags$div(paste("Records with coordinates on GBIF:", format_count(counts$total))),
+        tags$div(paste("Living specimens (G) on GBIF, before filters:", format_count(counts$living))),
+        tags$div(paste("iNaturalist records:", format_count(counts$inat))),
+        if (!is.null(loaded)) {
+          tags$div(
+            class = "text-success mt-1",
+            sprintf("Loaded: %s G / %s H (from %s records after filters)",
+                    format_count(loaded$n_g), format_count(loaded$n_h),
+                    format_count(loaded$steps[[length(loaded$steps) - 1]]))
           )
-        ),
-        tags$div(
-          paste(
-            "Living records (Germplasm):",
-            format_count(counts$living)
-          )
-        ),
-        tags$div(
-          paste(
-            "iNaturalist records:",
-            format_count(counts$inat)
-          )
-        )
+        }
       )
     })
 
     # 7. Gather and Format Live GBIF Data -----------------------------------------------
+    # All download / filter / selection logic lives in R/gbif_functions.R.
     gbifData_temp <- reactiveVal(NULL)
-    gbif_cache <- reactiveVal(NULL)
+    gbif_cache <- reactiveVal(NULL)   # raw pool keyed by taxon + pool size + date range
 
     observeEvent(input$loadGBIF, {
       tid <- selected_taxon_id()
       req(tid)
 
-      selection_limit <- if (is.numeric(input$gbif_limit)) {
-        input$gbif_limit
-      } else {
-        200
-      }
+      selection_limit <- if (is.numeric(input$gbif_limit)) input$gbif_limit else 200
+      date_range <- active_date_range()
+      limits <- gbif_pool_limits(selection_limit)
+      cache_key <- paste(tid, limits$living, limits$other,
+                         paste(format(date_range), collapse = ","), sep = "|")
 
-      # Notice we now use !isTRUE to trigger the advanced logic when synonyms are excluded
-      advanced_selected <- isTRUE(input$apply_date_filter) ||
-        isTRUE(input$exclude_inat) ||
-        !isTRUE(input$include_synonyms) || 
-        isTRUE(input$random_selection)
+      cached <- gbif_cache()
+      pool <- if (!is.null(cached) && identical(cached$key, cache_key)) cached$pool else NULL
 
-      shiny::withProgress(
+      result <- shiny::withProgress(
         message = "GBIF API Search",
         detail = "Initializing...",
         value = 0,
         {
-          if (advanced_selected) {
-            cached <- gbif_cache()
-            if (!is.null(cached) && identical(cached$tid, tid)) {
-              combined_df <- cached$data
-            } else {
-              shiny::incProgress(
-                0.2,
-                detail = "Downloading living specimens..."
-              )
-              raw_living <- rgbif::occ_search(
-                taxonKey = as.numeric(tid),
-                hasCoordinate = TRUE,
-                basisOfRecord = "LIVING_SPECIMEN",
-                eventDate = event_date_range(),
-                limit = 10000
-              )
-
-              living_data <- if (is.null(raw_living$data)) {
-                data.frame()
-              } else {
-                raw_living$data
-              }
-
-              remaining_limit <- max(0, 10000 - nrow(living_data))
-              other_data <- data.frame()
-
-              if (remaining_limit > 0) {
-                shiny::incProgress(
-                  0.3,
-                  detail = "Downloading reference records..."
-                )
-                raw_all <- rgbif::occ_search(
-                  taxonKey = as.numeric(tid),
-                  hasCoordinate = TRUE,
-                  eventDate = event_date_range(),
-                  limit = remaining_limit
-                )
-
-                if (!is.null(raw_all$data)) {
-                  other_data <- raw_all$data
-                }
-              }
-
-              combined_df <- dplyr::bind_rows(living_data, other_data)
-              gbif_cache(list(tid = tid, data = combined_df))
-            }
-
-            if (nrow(combined_df) == 0) {
-              showNotification(
-                "No records with coordinates found on GBIF for this taxon.",
-                type = "warning"
-              )
-              return()
-            }
-
-            combined_df <- combined_df %>%
-              filter(!is.na(decimalLatitude), !is.na(decimalLongitude))
-
-           # Execute Synonym Exclusion Filter (Defaults to excluding, unless toggle is TRUE)
-            if (!isTRUE(input$include_synonyms) && "taxonomicStatus" %in% names(combined_df)) {
-              combined_df <- combined_df %>% dplyr::filter(taxonomicStatus == "ACCEPTED")
-              
-              if (nrow(combined_df) == 0) {
-                showNotification("All retrieved records were synonyms and filtered out. Try increasing the Max Occurrences.", type = "warning")
-                return()
-              }
-            }
-            
-
-            if (
-              isTRUE(input$exclude_inat) && "datasetKey" %in% names(combined_df)
-            ) {
-              combined_df <- combined_df %>%
-                filter(is.na(datasetKey) | datasetKey != inat_dataset_key)
-            }
-
-            if ("basisOfRecord" %in% names(combined_df)) {
-              combined_df <- combined_df %>%
-                filter(!basisOfRecord %in% c("FOSSIL_SPECIMEN"))
-            }
-
-            living_data <- combined_df %>%
-              filter(basisOfRecord == "LIVING_SPECIMEN")
-            other_data <- combined_df %>%
-              filter(basisOfRecord != "LIVING_SPECIMEN")
-
-            if (nrow(living_data) > 0 && nrow(other_data) > 0) {
-              other_data <- other_data %>%
-                dplyr::filter(!gbifID %in% living_data$gbifID)
-            }
-
-            if (isTRUE(input$apply_date_filter)) {
-              start_date <- input$gbif_date_range[1]
-              end_date <- input$gbif_date_range[2]
-              parse_date <- function(x) {
-                suppressWarnings(as.Date(x))
-              }
-
-              if (nrow(living_data) > 0) {
-                living_data <- living_data %>%
-                  mutate(parsed_date = parse_date(eventDate)) %>%
-                  filter(
-                    !is.na(parsed_date),
-                    parsed_date >= start_date,
-                    parsed_date <= end_date
-                  ) %>%
-                  select(-parsed_date)
-              }
-
-              if (nrow(other_data) > 0) {
-                other_data <- other_data %>%
-                  mutate(
-                    parsed_date = parse_date(eventDate),
-                    year_val = suppressWarnings(as.integer(substr(
-                      eventDate,
-                      1,
-                      4
-                    )))
-                  ) %>%
-                  filter(
-                    !is.na(parsed_date),
-                    parsed_date >= start_date,
-                    parsed_date <= end_date
-                  )
-              }
-            }
-
-            remaining_slots <- max(0, selection_limit - nrow(living_data))
-
-            if (isTRUE(input$apply_date_filter) && nrow(other_data) > 0) {
-              yearly_unique <- other_data %>%
-                group_by(year_val) %>%
-                slice_head(n = 1) %>%
-                ungroup()
-
-              remainder <- other_data %>%
-                filter(!gbifID %in% yearly_unique$gbifID)
-
-              other_data <- dplyr::bind_rows(yearly_unique, remainder) %>%
-                slice_head(n = min(remaining_slots, nrow(.))) %>%
-                select(-parsed_date, -year_val)
-            }
-
-            if (isTRUE(input$random_selection)) {
-              if (remaining_slots > 0 && nrow(other_data) > 0) {
-                reference_pick <- other_data %>%
-                  slice_sample(n = min(remaining_slots, nrow(other_data)))
-                combined_df <- dplyr::bind_rows(living_data, reference_pick)
-              } else {
-                combined_df <- living_data %>%
-                  slice_head(n = min(selection_limit, nrow(living_data)))
-              }
-            } else {
-              if (remaining_slots > 0 && nrow(other_data) > 0) {
-                reference_pick <- other_data %>%
-                  dplyr::arrange(desc(eventDate)) %>%
-                  slice_head(n = min(remaining_slots, nrow(other_data)))
-                combined_df <- dplyr::bind_rows(living_data, reference_pick)
-              } else {
-                combined_df <- living_data %>%
-                  slice_head(n = min(selection_limit, nrow(living_data)))
-              }
-            }
-          } else {
-            shiny::incProgress(0.2, detail = "Prioritizing living specimens...")
-            raw_living <- rgbif::occ_search(
-              taxonKey = as.numeric(tid),
-              hasCoordinate = TRUE,
-              basisOfRecord = "LIVING_SPECIMEN",
-              eventDate = event_date_range(),
-              limit = selection_limit
-            )
-
-            living_data <- if (is.null(raw_living$data)) {
-              data.frame()
-            } else {
-              raw_living$data
-            }
-
-            remaining_limit <- selection_limit - nrow(living_data)
-            other_data <- data.frame()
-
-            if (remaining_limit > 0) {
-              pool_size <- min(remaining_limit * 5, 2000)
-
-              shiny::incProgress(
-                0.4,
-                detail = paste(
-                  "Gathering reference records",
-                  remaining_limit,
-                  "remaining..."
-                )
-              )
-              raw_all <- rgbif::occ_search(
-                taxonKey = as.numeric(tid),
-                hasCoordinate = TRUE,
-                eventDate = event_date_range(),
-                limit = pool_size
-              )
-
-              if (!is.null(raw_all$data)) {
-                other_data <- raw_all$data
-
-                if (nrow(living_data) > 0) {
-                  other_data <- other_data %>%
-                    dplyr::filter(!gbifID %in% living_data$gbifID)
-                }
-
-                if ("basisOfRecord" %in% names(other_data)) {
-                  other_data <- other_data %>%
-                    dplyr::filter(
-                      !basisOfRecord %in%
-                        c("LIVING_SPECIMEN", "FOSSIL_SPECIMEN")
-                    )
-                }
-
-                if (nrow(other_data) > remaining_limit) {
-                  if (isTRUE(input$random_selection)) {
-                    other_data <- other_data %>%
-                      dplyr::slice_sample(n = remaining_limit)
-                  } else {
-                    other_data <- other_data %>%
-                      dplyr::arrange(desc(eventDate)) %>%
-                      head(remaining_limit)
-                  }
-                }
-              }
-            }
-
-            shiny::incProgress(0.6, detail = "Formatting downloaded records...")
-            combined_df <- dplyr::bind_rows(living_data, other_data)
-          }
-
-          if (nrow(combined_df) == 0) {
-            showNotification(
-              "No records with coordinates found on GBIF for this taxon.",
-              type = "warning"
-            )
-            return()
-          }
-
-          safe_extract <- function(col_name) {
-            if (col_name %in% names(combined_df)) {
-              combined_df[[col_name]]
-            } else {
-              NA_character_
-            }
-          }
-
-          formatted_gbif <- data.frame(
-            `Accession Number` = as.character(combined_df$gbifID),
-            `Taxon Name` = combined_df$scientificName,
-            `Current Germplasm Type` = ifelse(
-              safe_extract("basisOfRecord") == "LIVING_SPECIMEN",
-              "G",
-              "H"
+          tryCatch(
+            gbif_gather(
+              taxon_key = tid,
+              limit = selection_limit,
+              include_synonyms = isTRUE(input$include_synonyms),
+              exclude_inat = isTRUE(input$exclude_inat),
+              date_range = date_range,
+              random = isTRUE(input$random_selection),
+              pool = pool,
+              progress = function(value, detail) shiny::setProgress(value, detail = detail)
             ),
-            `Collection Date` = as.character(safe_extract("eventDate")),
-            Latitude = as.numeric(combined_df$decimalLatitude),
-            Longitude = as.numeric(combined_df$decimalLongitude),
-            Locality = as.character(safe_extract("stateProvince")),
-            Collector = as.character(safe_extract("recordedBy")),
-            source = "GBIF",
-            check.names = FALSE
-          ) %>%
-            mutate(index = row_number())
-
-          shiny::incProgress(0.9, detail = "Checking current dataset...")
-
-          current <- analysis_data()
-          has_gbif <- nrow(current) > 0 && any(current$source == "GBIF")
-
-          if (has_gbif) {
-            gbifData_temp(formatted_gbif)
-            showModal(modalDialog(
-              title = "Overwrite GBIF Data?",
-              "GBIF data is already loaded. Do you want to overwrite it with this new taxon?",
-              footer = tagList(
-                modalButton("Cancel"),
-                actionButton(
-                  session$ns("confirmLoadGBIF"),
-                  "Overwrite",
-                  class = "btn-primary"
-                )
-              )
-            ))
-          } else {
-            updated_df <- merge_and_index(current, formatted_gbif)
-            analysis_data(updated_df)
-            showNotification(
-              paste("Successfully loaded", nrow(formatted_gbif), "records."),
-              type = "message"
-            )
-          }
+            error = function(e) e
+          )
         }
       )
+
+      if (inherits(result, "error")) {
+        showNotification(paste("GBIF download failed:", conditionMessage(result)), type = "error")
+        return()
+      }
+      gbif_cache(list(key = cache_key, pool = result$pool))
+
+      if (nrow(result$pool) == 0) {
+        showNotification("No records with coordinates found on GBIF for this taxon.", type = "warning")
+        return()
+      }
+      if (nrow(result$data) == 0) {
+        showNotification(
+          "All retrieved records were removed by the current filters (synonyms, iNaturalist, dates). Try relaxing them or increasing Max Occurrences.",
+          type = "warning"
+        )
+        return()
+      }
+      last_gather(result)
+      formatted_gbif <- result$data
+
+      current <- analysis_data()
+      has_gbif <- nrow(current) > 0 && any(current$source == "GBIF")
+
+      if (has_gbif) {
+        gbifData_temp(formatted_gbif)
+        showModal(modalDialog(
+          title = "Overwrite GBIF Data?",
+          "GBIF data is already loaded. Do you want to overwrite it with this new taxon?",
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton(
+              session$ns("confirmLoadGBIF"),
+              "Overwrite",
+              class = "btn-primary"
+            )
+          )
+        ))
+      } else {
+        updated_df <- merge_and_index(current, formatted_gbif)
+        analysis_data(updated_df)
+        showNotification(
+          sprintf("Successfully loaded %d records (%d G, %d H).", nrow(formatted_gbif), result$n_g, result$n_h),
+          type = "message"
+        )
+      }
     })
 
     # 8. Confirm GBIF Overwrite Logic --------------------------------------------------
@@ -936,7 +630,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
       }
     )
 
-    # 11. Data Format Requirements Modal -----------------------------------------------
+    # 12. Data Format Requirements Modal -----------------------------------------------
     observeEvent(input$viewDataFormat, {
       showModal(modalDialog(
         title = "Data Format Requirements",
