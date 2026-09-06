@@ -316,7 +316,9 @@ render_gap_report <- function(res, output_file, template = "reportTemplate.Rmd")
 
   params <- list(
     taxon = res$taxon,
-    points = res$points,          # the rows that were analysed
+    app_version = if (exists("APP_VERSION")) APP_VERSION else "dev",
+    points = res$points,          # the rows that were analysed spatially
+    records = res$records,        # every row of the working dataset
     bufferDist = res$dist_km,
     method = res$method,
     sf_model = res$sf_model,

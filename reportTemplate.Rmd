@@ -1,10 +1,22 @@
 ---
-title: "Ex situ Gap Analysis Report"
-output: html_document
+title: "*Ex situ* conservation gap analysis summary"
+subtitle: "`r params$taxon`"
+author: "Generated with GAMMa (Gap Analysis &amp; Metacollection Management) v`r params$app_version`"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    self_contained: true
 params:
   taxon: "Taxon"
+  app_version: "dev"
   points: NA
+  records: NA
   bufferDist: NA
   method: "buffer"
   sf_model: NA
@@ -24,160 +36,181 @@ params:
 
 ```{=html}
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
-  div.main-container {
-    max-width: 1600px !important;
-  }
-
-  .footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: red;
-    color: white;
-    text-align: center;
-  }
-
-  body {
-    font-family: 'Roboto', sans-serif;
-    padding: 0 40px; /* 0 for top and bottom, 40px for left and right */
-  }
-
-  h1 {
-    font-size: 24px;
-    font-weight: 500;
-    margin-bottom: 16px;
-    background-color: #f0f0f0;
-    border-radius: 30px;
-    padding: 10px;
-    text-align: center;
-  }
-
-  h2 {
-    font-size: 20px;
-    font-weight: 500;
-    margin-bottom: 12px;
-    background-color:#f0f0f0;
-    border-radius: 15px;
-    padding: 8px;
-  }
-
-  h3 {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    background-color: #f0f0f0;
-    padding: 8px;
-  }
-
-  p {
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.5;
-    margin: 0 auto;
-    width: 90%;
-    margin-bottom: 8px;
-  }
-
-  a {
-    color: #007bff;
-    text-decoration: none;
-  }
-
-  div.datatables {
-    color: #333;
-    background: #eceae640;
-  }
-
-  .leaflet-popup-content {
-    max-width: 280px;
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
-  }
+  /* System fonts: the report must read the same offline */
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  div.main-container { max-width: 1400px !important; }
+  h1.title { font-size: 1.9rem; margin-bottom: 0.2rem; }
+  h3.subtitle { font-size: 1.5rem; font-style: italic; color: #2c3e50; margin-top: 0; }
+  h4.author, h4.date { font-size: 0.95rem; font-weight: 400; color: #6c757d; margin: 0.15rem 0; }
+  h1 { font-size: 1.5rem; margin-top: 2.5rem; padding-bottom: 0.4rem; border-bottom: 2px solid #18bc9c; }
+  h2 { font-size: 1.2rem; margin-top: 1.8rem; color: #2c3e50; }
+  h3 { font-size: 1.05rem; margin-top: 1.4rem; }
+  p, li { font-size: 0.95rem; line-height: 1.55; }
+  .score-cards { display: flex; flex-wrap: wrap; gap: 14px; margin: 1rem 0 1.5rem; }
+  .score-card { flex: 1 1 150px; border-radius: 8px; padding: 14px 16px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+  .score-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: .05em; opacity: .9; }
+  .score-card .value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+  .score-card .sub { font-size: 0.8rem; opacity: .9; }
+  .priority-card { color: #2c3e50; border: 2px solid rgba(0,0,0,.08); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 24px; margin: .5rem 0 1rem; font-size: .92rem; }
+  .facts div span { color: #6c757d; display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+  .note { background: #f6f8fa; border-left: 4px solid #18bc9c; padding: .6rem .9rem; margin: .8rem 0; font-size: .9rem; }
+  .leaflet-popup-content { max-width: 280px; word-wrap: break-word; overflow-wrap: anywhere; }
+  table.table { font-size: .9rem; }
+  .footer-note { font-size: .8rem; color: #6c757d; border-top: 1px solid #dee2e6; margin-top: 2.5rem; padding-top: .8rem; }
 </style>
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 # Explicit library() calls so rsconnect / renv detect the dependencies
-# (pacman used to be a hidden server requirement).
 library(leaflet)
 library(dplyr)
 library(tidyr)
-library(ggplot2)
 library(DT)
 library(sf)
 library(htmltools)
 library(rmapshaper)
+library(plotly)
+library(kableExtra)
 
-# Force DT dependencies to load
-htmltools::tagList(DT::datatable(cars[1,1,drop=FALSE], width=0, height=0, options=list(dom='t', autoWidth=TRUE)))
-
-# Extract Colors from params
 combinedColor <- params$combinedColor
-grsexColor <- params$grsexColor
-ersexColors <- params$ersexColors
+grsexColor    <- params$grsexColor
+ersexColors   <- params$ersexColors
 
-# Extract Parameters
-points <- params$points
-col_name <- if ("Current Germplasm Type" %in% names(points)) "Current Germplasm Type" else "type"
+species  <- if (!is.null(params$taxon) && !is.na(params$taxon)) params$taxon else "Unknown taxon"
+method   <- if (identical(params$method, "hull")) "Convex hull" else "Buffer"
+buffer_km <- params$bufferDist
+
+# Rows analysed spatially (have coordinates) and the full working dataset
+points  <- params$points
+col_name <- "Current Germplasm Type"
 points[[col_name]] <- tidyr::replace_na(points[[col_name]], "H")
+records <- if (is.data.frame(params$records) && nrow(params$records) > 0) params$records else points
+if (!"source" %in% names(records)) records$source <- "unknown"
+if (!"source" %in% names(points))  points$source  <- "unknown"
+records[[col_name]] <- tidyr::replace_na(records[[col_name]], "H")
 
-# Taxon label as analysed by the app (all distinct names in the dataset)
-species <- if (!is.null(params$taxon) && !is.na(params$taxon)) params$taxon else "Unknown Species"
-totalPoints <- nrow(points)
 g_points <- points %>% filter(.data[[col_name]] == "G")
 h_points <- points %>% filter(.data[[col_name]] == "H")
 
-# Unpack Scores. FCS and the priority rank are computed ONCE by the app
-# (compute_fcs() / fcs_priority() in R/gap_analysis_functions.R) and passed in,
-# so the report can never disagree with the in-app inset.
-srs <- if(!is.null(params$srsMetrics) && "SRS exsitu" %in% names(params$srsMetrics)) params$srsMetrics$`SRS exsitu` else 0
-grs <- if(!is.null(params$grsMetrics) && "GRS exsitu" %in% names(params$grsMetrics)) params$grsMetrics$`GRS exsitu` else 0
-ers <- if(!is.null(params$ersMetrics$summary) && "ERS exsitu" %in% names(params$ersMetrics$summary)) params$ersMetrics$summary$`ERS exsitu` else 0
+# Scores (FCS and priority were computed once by the app and passed in)
+srs <- if (!is.null(params$srsMetrics) && "SRS exsitu" %in% names(params$srsMetrics)) params$srsMetrics$`SRS exsitu` else 0
+grs <- if (!is.null(params$grsMetrics) && "GRS exsitu" %in% names(params$grsMetrics)) params$grsMetrics$`GRS exsitu` else 0
+ers <- if (!is.null(params$ersMetrics$summary) && "ERS exsitu" %in% names(params$ersMetrics$summary)) params$ersMetrics$summary$`ERS exsitu` else 0
 fcs <- if (!is.null(params$fcs) && !is.na(params$fcs)) params$fcs else mean(c(srs, grs, ers), na.rm = TRUE)
 rank <- params$priority
 rank_color <- params$priorityColor
+
+fmt <- function(x, d = 1) formatC(round(x, d), format = "f", digits = d, big.mark = ",")
+fmt0 <- function(x) formatC(x, format = "d", big.mark = ",")
 ```
 
-# `r paste0('*', species, '*')`
+```{r summary-cards, results='asis'}
+card <- function(label, value, sub, color) {
+  sprintf('<div class="score-card" style="background:%s"><div class="label">%s</div><div class="value">%s</div><div class="sub">%s</div></div>',
+          color, label, value, sub)
+}
+cat('<div class="score-cards">',
+    card("SRS ex situ", fmt(srs), "Sampling representativeness", combinedColor[1]),
+    card("GRS ex situ", fmt(grs), sprintf("Geographic representativeness (%s km buffer)", buffer_km), grsexColor),
+    card("ERS ex situ", fmt(ers), "Ecological representativeness", ersexColors[2]),
+    card("FCS ex situ", fmt(fcs), "Final conservation score", "#2c3e50"),
+    sprintf('<div class="score-card priority-card" style="background:%s"><div class="label">Priority category</div><div class="value" style="font-size:1.35rem">%s</div><div class="sub">based on FCS ex situ</div></div>', rank_color, rank),
+    '</div>', sep = "\n")
 
-<br>
+n_gbif <- sum(records$source == "GBIF"); n_upload <- sum(records$source == "upload")
+cat('<div class="facts">',
+    sprintf('<div><span>Taxon</span><em>%s</em></div>', htmltools::htmlEscape(species)),
+    sprintf('<div><span>Range estimate</span>%s</div>', if (method == "Buffer") sprintf("Buffer method (%s km around every record)", buffer_km) else sprintf("Convex hull of all records; %s km buffer around G records", buffer_km)),
+    sprintf('<div><span>Records analysed</span>%s total, %s with coordinates</div>', fmt0(nrow(records)), fmt0(nrow(points))),
+    sprintf('<div><span>Data sources</span>%s GBIF, %s uploaded</div>', fmt0(n_gbif), fmt0(n_upload)),
+    sprintf('<div><span>Germplasm / reference</span>%s G, %s H</div>', fmt0(sum(records[[col_name]] == "G")), fmt0(sum(records[[col_name]] == "H"))),
+    '</div>', sep = "\n")
+```
 
-## Occurrence records    
+# Occurrence records
 
-The table below shows a summary of the occurrence records for the taxon. In preparation for the conservation gap analyses, we classified each record based on whether it was an existing *ex situ* germplasm sample from a genebank, botanic garden, or other repository (labeled G, as most records were from genebanks), or a reference observation/voucher specimen (labeled H, as most of these records were from herbaria).
+The table below summarises the occurrence records used for the taxon, overall and by data source. A record "with coordinates" has a complete latitude and longitude pair and was used in the spatial analyses (GRS and ERS); the sampling score (SRS) uses every record. Each record was classified as an existing *ex situ* germplasm sample from a genebank, botanic garden, or other repository (**G**), or as a reference observation / voucher specimen (**H**). Records pulled from GBIF are labelled G when their basis of record is *living specimen*; uploaded records use the type supplied in the file.
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-
-summary_table <- data.frame(
-  Taxon = species,
-  `Total Occurrences` = totalPoints,
-  `Germplasm Records (G)` = nrow(g_points),
-  `Reference Records (H)` = nrow(h_points),
-  check.names = FALSE
+```{r occurrence-table}
+has_coords <- !is.na(records$Latitude) & !is.na(records$Longitude)
+summarise_rows <- function(df, hc, label) {
+  tibble(
+    Source = label,
+    `Total records` = nrow(df),
+    `With coordinates` = sum(hc),
+    `G records` = sum(df[[col_name]] == "G"),
+    `G with coordinates` = sum(df[[col_name]] == "G" & hc),
+    `H records` = sum(df[[col_name]] == "H"),
+    `H with coordinates` = sum(df[[col_name]] == "H" & hc)
+  )
+}
+occ <- bind_rows(
+  summarise_rows(records, has_coords, "All records"),
+  if (n_gbif > 0) summarise_rows(records[records$source == "GBIF", ], has_coords[records$source == "GBIF"], "GBIF"),
+  if (n_upload > 0) summarise_rows(records[records$source == "upload", ], has_coords[records$source == "upload"], "Uploaded")
 )
-
-DT::datatable(summary_table, rownames = FALSE, class = "compact", options = list(dom = 't'))
-
+kbl(occ, format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE) %>%
+  row_spec(1, bold = TRUE)
 ```
 
-<br>
+# Conservation scores
 
-## Map of *ex situ* conservation gap analysis measures
+The table and chart show the three *ex situ* conservation gap analysis scores and their average, the Final Conservation Score (FCS *ex situ*). All scores range from 0 (poor state of conservation) to 100 (comprehensive conservation). Based on an FCS *ex situ* of **`r fmt(fcs)`**, the taxon is assigned the priority category **`r rank`**.
 
-`r if (identical(params$method, "hull")) paste0("The wild range was estimated as the **convex hull** of all records with coordinates, clipped to land. Germplasm (G) records were buffered by ", params$bufferDist, " km within that range to estimate the area already collected.") else paste0("The wild range was estimated with the **buffer method**: a ", params$bufferDist, " km buffer around every record with coordinates, clipped to land. The buffers around germplasm (G) records estimate the area already collected.")`
+```{r scores-table}
+scores_tbl <- tibble(
+  Taxon = species,
+  `Total records` = nrow(records),
+  `Records with coordinates` = nrow(points),
+  `SRS ex situ` = round(srs, 1),
+  `GRS ex situ` = round(grs, 1),
+  `ERS ex situ` = round(ers, 1),
+  `FCS ex situ` = round(fcs, 1),
+  `Priority category` = rank
+)
+kbl(scores_tbl, format.args = list(big.mark = ",")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = TRUE) %>%
+  column_spec(8, background = rank_color)
+```
 
-The GRS *ex situ* map feature shows the estimated range with the germplasm buffers overlaid. Only germplasm (G) points and reference observations (H) are displayed on the map.
+```{r scores-plot, fig.align='center', out.width="100%"}
+df_plot <- tibble(
+  Metric = factor(c("SRS ex situ", "GRS ex situ", "ERS ex situ", "FCS ex situ"),
+                  levels = c("SRS ex situ", "GRS ex situ", "ERS ex situ", "FCS ex situ")),
+  Score = round(c(srs, grs, ers, fcs), 1),
+  Color = c(combinedColor[1], grsexColor, ersexColors[2], "#2c3e50")
+)
+plot_ly(df_plot, x = ~Metric, y = ~Score, type = "bar", marker = list(color = ~Color),
+        text = ~Score, textposition = "outside", hovertemplate = "%{x}: %{y}<extra></extra>",
+        height = 380) %>%
+  layout(
+    yaxis = list(title = "Score (0-100)", range = c(0, 108), tickvals = c(0, 25, 50, 75, 100)),
+    xaxis = list(title = ""),
+    shapes = lapply(c(25, 50, 75), function(y) list(type = "line", x0 = -0.5, x1 = 3.5, y0 = y, y1 = y,
+                                                   line = list(color = "#adb5bd", width = 1, dash = "dot"))),
+    annotations = list(
+      list(x = 3.5, y = 12.5, text = "UP", showarrow = FALSE, xanchor = "left", font = list(color = "#6c757d", size = 11)),
+      list(x = 3.5, y = 37.5, text = "HP", showarrow = FALSE, xanchor = "left", font = list(color = "#6c757d", size = 11)),
+      list(x = 3.5, y = 62.5, text = "MP", showarrow = FALSE, xanchor = "left", font = list(color = "#6c757d", size = 11)),
+      list(x = 3.5, y = 87.5, text = "LP", showarrow = FALSE, xanchor = "left", font = list(color = "#6c757d", size = 11))
+    ),
+    margin = list(t = 20, r = 40)
+  ) %>%
+  config(displayModeBar = FALSE)
+```
 
-The ERS *ex situ* map feature shows ecoregions within the potential distribution model from which no *ex situ* germplasm collections have been made.
+# Map of *ex situ* conservation gap analysis measures
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-# Base Map
-m <- leaflet(width = "100%") %>%
-  addProviderTiles("CartoDB.Positron", group = "Base Map") %>%
+`r if (method == "Convex hull") paste0("The wild range was estimated as the **convex hull** of all records with coordinates, clipped to land, and is drawn as a dashed outline. Germplasm (G) records were buffered by ", buffer_km, " km within that range to estimate the area already collected.") else paste0("The wild range was estimated with the **buffer method**: a ", buffer_km, " km buffer around every record with coordinates, clipped to land. The buffers around germplasm (G) records estimate the area already collected.")`
+
+The **GRS gap** layer shows the part of the estimated range that lies farther than `r buffer_km` km from any germplasm record. The **ERS regions** layer shows the ecoregions occupied by the range, coloured by whether they overlap a germplasm buffer (covered) or not (gap). Records can be clicked for their attributes; layers can be toggled with the control in the top right, and the global protected-area layer (World Database on Protected Areas) can be switched on to see where collecting permits may be required.
+
+```{r map}
+m <- leaflet(width = "100%", height = 560) %>%
+  addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
   addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
   addTiles(
@@ -186,15 +219,10 @@ m <- leaflet(width = "100%") %>%
     attribution = "Protected areas: UNEP-WCMC and IUCN, Protected Planet (WDPA)",
     options = tileOptions(opacity = 0.6, maxNativeZoom = 15, maxZoom = 19)
   ) %>%
-  addLayersControl(
-    baseGroups = c("Base Map", "Topography", "Imagery"),
-    overlayGroups = c("Reference Records", "Germplasm Records", "Range (convex hull)", "Buffers", "GRS Gap", "ERS Regions", "Protected areas (WDPA)"),
-    options = layersControlOptions(collapsed = FALSE)
-  ) %>%
-  hideGroup("Protected areas (WDPA)") %>%
   addMapPane("ersGap", zIndex = 400) %>%
   addMapPane("grsGap", zIndex = 405) %>%
-  addMapPane("buffers", zIndex = 410)
+  addMapPane("buffers", zIndex = 410) %>%
+  addMapPane("points", zIndex = 420)
 
 if (!is.null(params$sf_model) && inherits(params$sf_model, "sf") && nrow(params$sf_model) > 0) {
   model_simplified <- rmapshaper::ms_simplify(params$sf_model, keep = 0.3, keep_shapes = TRUE)
@@ -205,161 +233,163 @@ if (!is.null(params$sf_model) && inherits(params$sf_model, "sf") && nrow(params$
   )
 }
 
-# Add pre-calculated sf objects (simplified for memory reduction)
-if (!is.null(params$sf_buffers) && nrow(params$sf_buffers) > 0) {
-  # Simplify geometries to save memory in the HTML output using rmapshaper
-  buffers_simplified <- rmapshaper::ms_simplify(params$sf_buffers, keep = 0.3, keep_shapes = TRUE) 
+if (!is.null(params$sf_buffers) && inherits(params$sf_buffers, "sf") && nrow(params$sf_buffers) > 0) {
+  buffers_simplified <- rmapshaper::ms_simplify(params$sf_buffers, keep = 0.3, keep_shapes = TRUE)
   pal_type <- colorFactor(c("H" = combinedColor[1], "G" = combinedColor[2]), domain = c("H", "G"))
   m <- m %>% addPolygons(
     data = buffers_simplified, group = "Buffers",
     color = pal_type(buffers_simplified$processing_type),
     fillColor = pal_type(buffers_simplified$processing_type),
     fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "buffers"),
-    popup = paste("Buffer:", params$bufferDist, "km")
+    popup = paste0("<b>", ifelse(buffers_simplified$processing_type == "G", "Germplasm", "Reference"), " buffer</b><br/>", buffer_km, " km")
   )
 }
 
-if (!is.null(params$sf_grs_gap)) {
+if (!is.null(params$sf_grs_gap) && inherits(params$sf_grs_gap, "sf")) {
   grs_gap_simplified <- rmapshaper::ms_simplify(params$sf_grs_gap, keep = 0.3, keep_shapes = TRUE)
   m <- m %>% addPolygons(
-    data = grs_gap_simplified, group = "GRS Gap",
+    data = grs_gap_simplified, group = "GRS gap",
     color = grsexColor, fillColor = grsexColor,
     fillOpacity = 0.4, weight = 1, options = pathOptions(pane = "grsGap"),
-    popup = "Geographic Gap"
+    popup = "Geographic gap: range farther than the buffer distance from any germplasm record"
   )
 }
 
-if (!is.null(params$sf_ers_regions)) {
+if (!is.null(params$sf_ers_regions) && inherits(params$sf_ers_regions, "sf")) {
   ers_regions_simplified <- rmapshaper::ms_simplify(params$sf_ers_regions, keep = 0.3, keep_shapes = TRUE)
-  pal_ers <- colorFactor(c(ersexColors[1], ersexColors[2]), domain = ers_regions_simplified$gap_status)
+  pal_ers <- colorFactor(c("Covered" = ersexColors[1], "Gap Ecoregion" = ersexColors[2]), domain = c("Covered", "Gap Ecoregion"))
   m <- m %>% addPolygons(
-    data = ers_regions_simplified, group = "ERS Regions",
+    data = ers_regions_simplified, group = "ERS regions",
     color = "black", fillColor = ~pal_ers(gap_status),
-    fillOpacity = 0.3, weight = 2, options = pathOptions(pane = "ersGap"),
-    popup = ~paste("<b>Region:</b>", ECO_NAME, "<br><b>Status:</b>", gap_status)
+    fillOpacity = 0.3, weight = 1.5, options = pathOptions(pane = "ersGap"),
+    popup = ~paste0("<b>", ECO_NAME, "</b><br/>", ifelse(gap_status == "Covered", "Covered by a germplasm buffer", "Ecological gap"))
   )
 }
 
-# Popup Generator
 gen_popup <- function(data) {
   paste0(
-    "<strong>", as.character(data$`Taxon Name`), "</strong>",
-    "<br/><strong> Type: </strong>", data[[col_name]],
-    "<br/><b>Collector Name:</b> ", data$Collector,
-    "<br/><b>Locality Description:</b> ", data$Locality
+    "<strong>", htmlEscape(as.character(data$`Taxon Name`)), "</strong>",
+    "<br/><b>Type:</b> ", data[[col_name]], " &nbsp; <b>Source:</b> ", data$source,
+    if ("Accession Number" %in% names(data)) paste0("<br/><b>Accession:</b> ", htmlEscape(as.character(data$`Accession Number`))) else "",
+    if ("Collection Date" %in% names(data)) paste0("<br/><b>Date:</b> ", htmlEscape(as.character(data$`Collection Date`))) else "",
+    "<br/><b>Collector:</b> ", htmlEscape(as.character(data$Collector)),
+    "<br/><b>Locality:</b> ", htmlEscape(as.character(data$Locality))
   )
 }
 
-# Add Points
 if (nrow(h_points) > 0) {
   m <- m %>% addCircleMarkers(
-    data = h_points, lng = ~Longitude, lat = ~Latitude, group = "Reference Records",
-    radius = 4, color = "#4d4d4d", fillColor = combinedColor[1], fillOpacity = 0.8, weight = 1,
-    popup = ~gen_popup(h_points), popupOptions = popupOptions(maxWidth = 300)
+    data = h_points, lng = ~Longitude, lat = ~Latitude, group = "Reference records (H)",
+    radius = 4, color = "#4d4d4d", fillColor = combinedColor[1], fillOpacity = 0.85, weight = 1,
+    popup = gen_popup(h_points), popupOptions = popupOptions(maxWidth = 300), options = pathOptions(pane = "points")
   )
 }
-
 if (nrow(g_points) > 0) {
   m <- m %>% addCircleMarkers(
-    data = g_points, lng = ~Longitude, lat = ~Latitude, group = "Germplasm Records",
-    radius = 4, color = "#4d4d4d", fillColor = combinedColor[2], fillOpacity = 0.8, weight = 1,
-    popup = ~gen_popup(g_points), popupOptions = popupOptions(maxWidth = 300)
+    data = g_points, lng = ~Longitude, lat = ~Latitude, group = "Germplasm records (G)",
+    radius = 4, color = "#4d4d4d", fillColor = combinedColor[2], fillOpacity = 0.85, weight = 1,
+    popup = gen_popup(g_points), popupOptions = popupOptions(maxWidth = 300), options = pathOptions(pane = "points")
   )
 }
 
-m
+if (nrow(points) > 0) {
+  m <- m %>% fitBounds(min(points$Longitude), min(points$Latitude), max(points$Longitude), max(points$Latitude))
+}
+
+overlays <- c("Reference records (H)", "Germplasm records (G)",
+              if (method == "Convex hull") "Range (convex hull)", "Buffers", "GRS gap", "ERS regions",
+              "Protected areas (WDPA)")
+m %>%
+  addLayersControl(baseGroups = c("OpenStreetMap", "Topography", "Imagery"), overlayGroups = overlays,
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  hideGroup(c("ERS regions", "Protected areas (WDPA)")) %>%
+  addLegend(position = "bottomleft", colors = c(combinedColor[1], combinedColor[2], grsexColor, ersexColors[1], ersexColors[2]),
+            labels = c("Reference records / buffers (H)", "Germplasm records / buffers (G)", "GRS gap", "ERS: covered ecoregion", "ERS: gap ecoregion"),
+            opacity = 0.8, title = "Legend")
 ```
 
-<br>
+## *Ex situ* conservation ecoregions table
 
-## Conservation scores 
+All terrestrial ecoregions occupied by the estimated range of the taxon. **Gap ecoregion** is *true* when the ecoregion overlaps the range but lies farther than `r buffer_km` km from any germplasm record, i.e. it is not represented in *ex situ* collections. The record counts are the analysed records (with coordinates) falling inside each ecoregion.
 
-The figure below displays all conservation gap analysis scores, providing a summary of the *ex situ* conservation scores. The taxon has a Final Conservation Score (FCS) of **`r sprintf("%.1f", fcs)`** and an assigned priority category of: **`r rank`**.
+```{r ecoregions-table}
+if (!is.null(params$sf_ers_regions) && inherits(params$sf_ers_regions, "sf") && nrow(params$sf_ers_regions) > 0) {
+  eco <- params$sf_ers_regions
+  pts_sf <- sf::st_as_sf(points, coords = c("Longitude", "Latitude"), crs = sf::st_crs(eco), remove = FALSE)
+  pts_sf$.id <- seq_len(nrow(pts_sf))
+  joined <- suppressWarnings(sf::st_join(pts_sf, eco[, "ECO_NAME"], join = sf::st_intersects)) %>%
+    sf::st_drop_geometry() %>%
+    filter(!is.na(ECO_NAME)) %>%
+    distinct(.id, ECO_NAME, .keep_all = TRUE) %>%
+    group_by(ECO_NAME) %>%
+    summarise(`G records` = sum(.data[[col_name]] == "G"), `H records` = sum(.data[[col_name]] == "H"), .groups = "drop")
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width="100%"}
-df_plot <- tibble(
-  Metric = factor(c("SRS", "GRS", "ERS", "FCS"), levels = c("SRS", "GRS", "ERS", "FCS")),
-  Score = c(srs, grs, ers, fcs),
-  Type = c("SRS", "GRS", "ERS", "FCS")
-) %>% mutate(Score = round(Score, 1))
+  eco_table <- eco %>%
+    sf::st_drop_geometry() %>%
+    distinct(ECO_NAME, gap_status) %>%
+    mutate(`Gap ecoregion` = gap_status != "Covered") %>%
+    left_join(joined, by = "ECO_NAME") %>%
+    mutate(across(c(`G records`, `H records`), ~ tidyr::replace_na(.x, 0L))) %>%
+    select(`Gap ecoregion`, `Ecoregion name` = ECO_NAME, `G records`, `H records`) %>%
+    arrange(desc(`Gap ecoregion`), `Ecoregion name`)
 
-df_plot$x_label <- factor(paste0(df_plot$Metric, "\n", df_plot$Score), levels = paste0(df_plot$Metric, "\n", df_plot$Score))
-
-ggplot(df_plot, aes(x = x_label, y = Score, fill = Type)) +
-  geom_col(width = 0.6) +
-  scale_y_continuous(limits = c(0, 100), breaks = c(0, 25, 50, 75, 100), expand = c(0, 0)) +
-  scale_fill_manual(values = c("SRS" = combinedColor[1], "GRS" = grsexColor, "ERS" = ersexColors[2], "FCS" = "#2c3e50")) +
-  theme_minimal(base_size = 14) +
-  labs(y = "Score (0-100)", x = "") +
-  theme(
-    legend.position = "none",
-    panel.grid.major.x = element_blank(),
-    axis.text.x = element_text(size = 12, face = "bold", hjust = 0.5)
-  )
-
-```
-
-<br>
-
-### *Ex situ* conservation ecoregions table
-
-The table below shows all the ecoregions overlapping with the reference occurrence area of the taxon. The column ERS *ex situ* gap ecoregion denotes (true) if an ecoregion overlaps with the expected area but is farther than the buffer distance from any *ex situ* conservation occurrence, and is thus considered a gap in *ex situ* conservation.
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-if (!is.null(params$sf_ers_regions) && nrow(params$sf_ers_regions) > 0) {
-  eco_table <- params$sf_ers_regions %>%
-    st_drop_geometry() %>%
-    dplyr::mutate(
-      `ERS ex situ gap ecoregion` = gap_status != "Covered"
-    ) %>%
-    dplyr::select(
-      `ERS ex situ gap ecoregion`,
-      `Ecoregion name` = ECO_NAME
-    ) %>%
-    dplyr::arrange(desc(`ERS ex situ gap ecoregion`))
-  
-  DT::datatable(eco_table, rownames = FALSE, class = "compact", options = list(pageLength = 10))
+  DT::datatable(eco_table, rownames = FALSE, class = "compact stripe hover",
+                options = list(pageLength = 10, order = list())) %>%
+    DT::formatStyle("Gap ecoregion", backgroundColor = DT::styleEqual(c(TRUE, FALSE), c(paste0(ersexColors[2], "66"), paste0(ersexColors[1], "66"))))
 } else {
   cat("No ecoregion data available for this analysis.")
 }
 ```
 
-<br>
+## Records used in the analysis
 
+Every record with coordinates that entered the spatial analysis. GBIF accession numbers link to the occurrence page on gbif.org.
 
+```{r records-table}
+rec <- points %>%
+  mutate(
+    `Accession Number` = ifelse(source == "GBIF" & !is.na(`Accession Number`),
+      sprintf('<a href="https://www.gbif.org/occurrence/%s" target="_blank">%s</a>', `Accession Number`, `Accession Number`),
+      as.character(`Accession Number`)),
+    Latitude = round(Latitude, 4), Longitude = round(Longitude, 4)
+  ) %>%
+  select(any_of(c("Accession Number", "Taxon Name", "Current Germplasm Type", "source", "Collection Date",
+                  "Latitude", "Longitude", "Locality", "Collector"))) %>%
+  rename(Type = `Current Germplasm Type`, Source = source)
+DT::datatable(rec, rownames = FALSE, escape = FALSE, class = "compact stripe hover",
+              filter = "top", options = list(pageLength = 10, scrollX = TRUE))
+```
 
-<br>
+# Definitions of conservation gap analysis scores
 
-## Definitions of conservation gap analysis scores
+### Sampling Representativeness Score (SRS *ex situ*)
 
-### Sampling Representativeness Score (SRS)
+The ratio of germplasm accessions (G) available in *ex situ* repositories to reference / voucher (H) records for the taxon, using all compiled records regardless of whether they include coordinates. If there are more G than H records the score is capped at 100.
 
-***Ex situ***: The Sampling Representativeness Score *ex situ* (SRS ex situ) calculates the ratio of germplasm accessions (G) available in *ex situ* repositories to reference/voucher/herbarium (H) records for each taxon, making use of all compiled records irrespective of whether they include coordinates.
+### Geographic Representativeness Score (GRS *ex situ*)
 
-### Geographic Representativeness Score (GRS)
+Buffers of `r buffer_km` km are created around each G record to estimate the geographic area already collected within the estimated range of the taxon; the score is the proportion of the range covered by these buffers. The range is estimated either as the union of `r buffer_km` km buffers around all records (buffer method) or as the convex hull of all records clipped to land (convex hull method).
 
-***Ex situ***: The Geographic Representativeness Score *ex situ* (GRS ex situ) uses buffers created around each G collection coordinate point to estimate geographic areas already well collected within the estimated range of each taxon and then calculates the proportion of the range covered by these buffers. The range is estimated either as the union of buffers around all records (buffer method) or as the convex hull of all records clipped to land (convex hull method).
+### Ecological Representativeness Score (ERS *ex situ*)
 
-### Ecological Representativeness Score (ERS)
+The proportion of terrestrial ecoregions represented within the G buffers out of the total number of ecoregions occupied by the estimated range. Ecoregions follow Olson et al. (2001), 814 terrestrial ecoregions worldwide.
 
-***Ex situ***: The Ecological Representativeness Score *ex situ* (ERS ex situ) calculates the proportion of terrestrial ecoregions represented within the G buffered areas out of the total number of ecoregions occupied by the potential distribution model.
+### Final Conservation Score (FCS *ex situ*)
 
-### Final Conservation Score (FCS)
+The average of the three *ex situ* scores. Taxa are categorised as **Urgent Priority (UP)** for further conservation action when FCS < 25, **High Priority (HP)** when 25 ≤ FCS < 50, **Medium Priority (MP)** when 50 ≤ FCS < 75, and **Low Priority (LP)** when FCS ≥ 75.
 
-***Ex situ***: The Final Conservation Score *ex situ* (FCS ex situ) was derived by calculating the average of the three *ex situ* conservation metrics.
+# Definitions of occurrence data categories
 
-Taxa were further categorized with regard to conservation priority, with Urgent Priority (UP) for further conservation action assigned when FCS < 25, High Priority (HP) assigned when 25 ≤ FCS < 50, Medium Priority (MP) when 50 ≤ FCS < 75, and Low Priority (LP) when FCS ≥ 75.
+**Total records**: the number of observations and *ex situ* collection records for the taxon evaluated in this analysis.
 
-## Definitions of occurrence data categories
+**Records with coordinates**: records with a valid latitude and longitude pair, used in the spatial analyses.
 
-**Occurrences**: The total number of observations and *ex situ* collections records for the taxon that were evaluated for use within the study.
+**Germplasm records (G)**: occurrences for which a living sample (typically a plant or seed) is held in an *ex situ* conservation system (botanic garden, seed bank, genebank, etc.).
 
-**Occurrences with lat/long**: The total number of observations that had a valid latitude and longitude pair and were used for spatial analysis.
+**Reference / voucher records (H)**: occurrences supported by an herbarium specimen or other reference record.
 
-**Germplasm Records (G)**: Occurrences in which a living sample (typically a live plant or seed) is present in an *ex situ* conservation system (i.e., botanical garden, seed bank, genebank, etc.).
-
-**Reference/voucher Records (H)**: Occurrences that have a supporting herbarium or other reference record.
-
----
-
-<p style="font-size: 12px; text-align: center; color: #777;"><strong>Methodology Note:</strong> These metrics are derived from the <a href="https://github.com/CIAT-DAPA/GapAnalysis">GapAnalysis R Package</a> guidelines. This report is intended for conservation planning purposes and should be validated with local experts and field assessments.</p>
+```{=html}
+<div class="footer-note">
+<strong>Methodology.</strong> Metrics follow the <a href="https://github.com/CIAT-DAPA/GapAnalysis" target="_blank">GapAnalysis R package</a> (Carver et al. 2021, <em>Ecography</em>) and Khoury et al. (2019, <em>Ecological Indicators</em>). Occurrence data from GBIF are subject to the <a href="https://www.gbif.org/terms" target="_blank">GBIF data user agreement</a>; protected-area tiles from UNEP-WCMC and IUCN, <a href="https://www.protectedplanet.net" target="_blank">Protected Planet</a>. This report is intended for conservation planning and should be validated with local experts and field assessments.
+</div>
+```

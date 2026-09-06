@@ -24,6 +24,7 @@ test_that("taxon selectors resolve the accepted GBIF taxon key", {
   testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
     select_magnolia_fraseri(session)
     expect_equal(selected_taxon_id(), 3153619)
+    expect_equal(selected_taxon()$canonicalName, "Magnolia fraseri")
     session$setInputs(taxon_rank = "variety")
     session$setInputs(taxon_infra = "pyramidata")
     expect_equal(selected_taxon_id(), 8091117)
@@ -36,10 +37,11 @@ test_that("gather loads a G-first dataset into analysis_data and records honest 
     testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
       select_magnolia_fraseri(session)
       session$setInputs(gbif_limit = 150, apply_date_filter = FALSE, exclude_inat = FALSE,
-                        include_synonyms = FALSE, reference_selection = "recent")
+                        include_synonyms = FALSE, reference_selection = "recent", require_name_match = TRUE)
       session$setInputs(loadGBIF = 1)
       d <- analysis_data()
       expect_equal(nrow(d), 150)
+      expect_true(!is.null(last_gather()$steps$scientific_name_matches))
       expect_equal(sum(d$`Current Germplasm Type` == "G"), 9)
       expect_true(all(d$source == "GBIF"))
       expect_equal(d$index, 1:150)

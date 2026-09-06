@@ -70,7 +70,7 @@ Using the input data, the gap analysis tool produces three *ex situ* conservatio
 | 76 - 100 | Low Priority | Species is fairly well-conserved *ex situ*, but a few gaps remain in terms of specific geographic areas or ecoregions. |
 
 ## Taxonomy
-To search and upload reference records from GBIF, the GAMMa tool uses the GBIF Backbone Taxonomy, which is assembled from 105 sources including The World Checklist of Vascular Plants (WCVP) and the International Plant Names Index. Click here to learn more about GBIF Backbone Taxonomy.
+To search and upload reference records from GBIF, the GAMMa tool uses the GBIF Backbone Taxonomy, which is assembled from 105 sources including The World Checklist of Vascular Plants (WCVP) and the International Plant Names Index. Click here to learn more about GBIF Backbone Taxonomy. Records are retrieved by the backbone taxon key and then checked against the scientific name GBIF interpreted for each record: by default only records whose interpreted name is the selected taxon (or, for a species, one of its subspecies or varieties) are kept, so records that GBIF's name matching re-assigned to a different taxon are not counted. This check can be switched off under *Advanced options*.
 
 ## Data Use
 The Gap Analysis tool does not store any user-uploaded data. Analyses are performed in a single session, and will time out after one hour of non use. Sensitive information is therefore not retained—but users must also re-run analyses after the session times out.

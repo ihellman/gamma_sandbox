@@ -102,6 +102,15 @@ controlsModuleUI <- function(id) {
 
                 bslib::tooltip(
                   checkboxInput(
+                    ns("require_name_match"),
+                    "Require scientific name match",
+                    value = TRUE
+                  ),
+                  "Keep only records whose GBIF-interpreted scientific name is the selected taxon (a species selection also accepts its subspecies and varieties). GBIF's backbone matching can assign a record to a different name than the one on the label; this check drops those records instead of counting them."
+                ),
+
+                bslib::tooltip(
+                  checkboxInput(
                     ns("include_synonyms"),
                     "Include taxonomic synonyms",
                     value = FALSE # FALSE means synonyms are excluded by default
@@ -328,7 +337,8 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     })
 
     # 6. Resolve Target Taxon ID -------------------------------------------------------
-    selected_taxon_id <- reactive({
+    # Full backbone row (taxonID, canonicalName, taxonomicStatus) for the selection
+    selected_taxon <- reactive({
       req(input$taxon_genus, input$taxon_species, input$taxon_rank)
       query <- taxonomy_ds %>%
         filter(
@@ -344,16 +354,21 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
           filter(is.na(infraspecificEpithet) | infraspecificEpithet == "")
       }
 
-      res <- query %>% select(taxonID, taxonomicStatus) %>% collect()
+      res <- query %>% select(taxonID, canonicalName, taxonomicStatus) %>% collect()
       if (nrow(res) == 0) {
         return(NULL)
       }
 
       accepted_res <- res %>% filter(toupper(taxonomicStatus) == "ACCEPTED")
       if (nrow(accepted_res) > 0) {
-        return(accepted_res$taxonID[1])
+        return(as.list(accepted_res[1, ]))
       }
-      return(res$taxonID[1])
+      return(as.list(res[1, ]))
+    })
+
+    selected_taxon_id <- reactive({
+      tx <- selected_taxon()
+      if (is.null(tx)) NULL else tx$taxonID
     })
 
     output$taxon_id_display <- renderUI({
@@ -439,6 +454,8 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
               exclude_inat = isTRUE(input$exclude_inat),
               date_range = date_range,
               method = if (is.null(input$reference_selection)) "recent" else input$reference_selection,
+              taxon_name = selected_taxon()$canonicalName,
+              require_name_match = !isFALSE(input$require_name_match),
               pool = pool,
               progress = function(value, detail) shiny::setProgress(value, detail = detail)
             ),

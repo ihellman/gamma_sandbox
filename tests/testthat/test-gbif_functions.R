@@ -2,6 +2,7 @@
 # (tests/testthat/fixtures/gbif_magnolia_fraseri.rds, see make_gbif_fixture.R).
 pool <- readRDS(fixture_path("gbif_magnolia_fraseri.rds"))
 api_counts <- attr(pool, "api_counts")
+TAXON <- attr(pool, "canonical_name")
 
 # A pool with the issue-#61 shape: every living specimen present twice.
 duplicated_pool <- dplyr::bind_rows(pool, pool[pool$basisOfRecord == "LIVING_SPECIMEN", ])
@@ -24,6 +25,35 @@ test_that("filters de-duplicate by gbifID so G is never double counted (#61)", {
   expect_equal(f$steps$deduplicated, nrow(pool))
   expect_false(any(duplicated(f$data$gbifID)))
   expect_lte(sum(f$data$basisOfRecord == "LIVING_SPECIMEN"), api_counts$living)
+})
+
+test_that("record canonical names are built from GBIF's interpreted name fields", {
+  d <- data.frame(genus = c("Magnolia", "Magnolia", NA), specificEpithet = c("fraseri", "fraseri", NA),
+                  infraspecificEpithet = c(NA, "pyramidata", NA))
+  expect_equal(gbif_record_canonical_name(d), c("Magnolia fraseri", "Magnolia fraseri pyramidata", NA))
+  expect_equal(gbif_record_canonical_name(data.frame(genus = "Quercus")), "Quercus")
+})
+
+test_that("scientific-name matching keeps the selected taxon and its infraspecifics only", {
+  canon <- gbif_record_canonical_name(pool)
+  m <- gbif_name_matches(pool, TAXON)
+  expect_true(all(startsWith(canon[m], TAXON)))
+  expect_true(any(canon[m] == "Magnolia fraseri pyramidata"))     # variety of the species is kept
+  expect_false(any(canon[m] == "Magnolia pyramidata"))            # a different (synonym) name is not
+  expect_equal(sum(!m), sum(canon == "Magnolia pyramidata"))
+  v <- gbif_name_matches(pool, "Magnolia fraseri pyramidata")     # infraspecific selection is exact
+  expect_true(all(canon[v] == "Magnolia fraseri pyramidata"))
+  expect_false(any(gbif_name_matches(pool, "Magnolia grandiflora")))
+})
+
+test_that("the name-match filter is on by default and reported as a step", {
+  f <- gbif_apply_filters(pool, taxon_name = TAXON, include_synonyms = TRUE)
+  expect_equal(f$steps$scientific_name_matches, sum(gbif_name_matches(pool, TAXON)))
+  off <- gbif_apply_filters(pool, taxon_name = TAXON, include_synonyms = TRUE, require_name_match = FALSE)
+  expect_null(off$steps$scientific_name_matches)
+  expect_gt(nrow(off$data), nrow(f$data))
+  none <- gbif_apply_filters(pool, taxon_name = NULL)              # no name known -> no filtering
+  expect_null(none$steps$scientific_name_matches)
 })
 
 test_that("synonym toggle changes the record count and default excludes them", {

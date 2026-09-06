@@ -4,7 +4,7 @@
 #
 # Usage (from the app root, needs network):
 #   Rscript dev/diagnose_61.R                # Magnolia fraseri, slider = 200
-#   Rscript dev/diagnose_61.R 3153837 500    # any taxonKey, any slider value
+#   Rscript dev/diagnose_61.R 3153837 500 "Magnolia acuminata"   # any taxonKey, slider, canonical name
 suppressPackageStartupMessages(source("global.R"))
 source("R/gbif_functions.R")
 
@@ -46,8 +46,9 @@ cat(sprintf("  => the old app reported %d G for a taxon whose summary said %s li
 ",
             min(limit, nrow(old_G)), counts$living))
 
+taxon_name <- if (length(args) >= 3) args[3] else "Magnolia fraseri"
 for (syn in c(FALSE, TRUE)) {
-  g <- gbif_gather(taxon_key, limit = limit, include_synonyms = syn, pool = pool)
+  g <- gbif_gather(taxon_key, limit = limit, include_synonyms = syn, pool = pool, taxon_name = taxon_name)
   cat(sprintf("\ninclude_synonyms = %s\n", syn))
   for (nm in names(g$steps)) cat(sprintf("  %-22s %6d\n", nm, g$steps[[nm]]))
   cat(sprintf("  => loaded %d records: %d G, %d H   (index says %s living before filters)\n",

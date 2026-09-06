@@ -409,6 +409,7 @@ run_gap_analysis <- function(all_data, dist_km, method = c("buffer", "hull"),
     method = method,
     sf_model = sf_model,           # convex hull range (NULL for the buffer method)
     points = data,                 # exactly the rows used for buffering / ERS
+    records = all_data,            # every row (SRS uses records without coordinates too)
     srs = srsMetrics, grs = grsMetrics, ers = ersMetrics,
     fcs = fcs, priority = fcs_priority(fcs),
     scores = gap_scores_table(srs, grs, ers),

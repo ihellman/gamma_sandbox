@@ -8,6 +8,7 @@ key <- 3153619
 pool <- gbif_fetch(key, living_limit = 200, other_limit = 1000)
 attr(pool, "taxon_key") <- key
 attr(pool, "api_counts") <- gbif_counts(key)
+attr(pool, "canonical_name") <- "Magnolia fraseri"
 attr(pool, "downloaded") <- Sys.Date()
 saveRDS(pool, "tests/testthat/fixtures/gbif_magnolia_fraseri.rds", compress = "xz")
 cat("rows:", nrow(pool), " living:", sum(pool$basisOfRecord == "LIVING_SPECIMEN"),

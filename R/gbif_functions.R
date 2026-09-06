@@ -13,9 +13,40 @@ GBIF_POOL_CAP    <- 2000   # hard cap on records requested per query (rgbif page
 # Columns of the raw occurrence table the pipeline relies on. Anything else is
 # dropped after download to keep the cached pool small.
 GBIF_RAW_FIELDS <- c(
-  "gbifID", "scientificName", "taxonomicStatus", "basisOfRecord", "datasetKey",
-  "eventDate", "decimalLatitude", "decimalLongitude", "stateProvince", "recordedBy"
+  "gbifID", "scientificName", "acceptedScientificName", "verbatimScientificName",
+  "genus", "specificEpithet", "infraspecificEpithet", "taxonRank", "taxonomicStatus",
+  "basisOfRecord", "datasetKey", "eventDate", "decimalLatitude", "decimalLongitude",
+  "stateProvince", "recordedBy"
 )
+
+# GBIF's interpreted name for each record, as a canonical string
+# ("Genus epithet [infraepithet]", no authorship, no rank marker) built from the
+# interpreted genus / specificEpithet / infraspecificEpithet fields. This is the
+# same form as `canonicalName` in appData/plant_taxonomy_lean.parquet.
+gbif_record_canonical_name <- function(df) {
+  get <- function(col) if (col %in% names(df)) as.character(df[[col]]) else rep(NA_character_, nrow(df))
+  parts <- cbind(get("genus"), get("specificEpithet"), get("infraspecificEpithet"))
+  parts[is.na(parts) | parts == ""] <- NA
+  apply(parts, 1, function(p) {
+    p <- p[!is.na(p)]
+    if (length(p) == 0) NA_character_ else paste(p, collapse = " ")
+  })
+}
+
+# Records that GBIF assigned to the requested taxon. `taxon_name` is the
+# canonical name selected in the sidebar. A species selection accepts its
+# infraspecific taxa (a record of "Magnolia acuminata subcordata" still belongs
+# to Magnolia acuminata); an infraspecific selection requires the full name.
+gbif_name_matches <- function(df, taxon_name) {
+  canon <- gbif_record_canonical_name(df)
+  target <- trimws(taxon_name)
+  n_words <- length(strsplit(target, "\\s+")[[1]])
+  if (n_words <= 2) {
+    !is.na(canon) & (canon == target | startsWith(canon, paste0(target, " ")))
+  } else {
+    !is.na(canon) & canon == target
+  }
+}
 
 # Total / living / iNaturalist record counts with coordinates, as reported by the
 # GBIF index (these are BEFORE any of the app-side filters).
@@ -76,7 +107,8 @@ gbif_fetch <- function(taxon_key, living_limit, other_limit, event_date = NULL, 
 }
 
 # Apply the user's filters and record how many rows survive each step.
-gbif_apply_filters <- function(df, include_synonyms = FALSE, exclude_inat = FALSE, date_range = NULL) {
+gbif_apply_filters <- function(df, include_synonyms = FALSE, exclude_inat = FALSE, date_range = NULL,
+                               taxon_name = NULL, require_name_match = TRUE) {
   steps <- list(raw = nrow(df))
   if (nrow(df) == 0) return(list(data = df, steps = steps))
 
@@ -87,6 +119,15 @@ gbif_apply_filters <- function(df, include_synonyms = FALSE, exclude_inat = FALS
 
   df <- dplyr::filter(df, !is.na(decimalLatitude), !is.na(decimalLongitude))
   steps$with_coordinates <- nrow(df)
+
+  # The taxonKey query returns whatever GBIF's backbone matching assigned to the
+  # key. Check the record's own interpreted scientific name against the name
+  # that was selected, so records GBIF re-assigned (fuzzy or higher-rank matches)
+  # are dropped rather than silently attributed to this taxon.
+  if (isTRUE(require_name_match) && !is.null(taxon_name) && nzchar(taxon_name)) {
+    df <- df[gbif_name_matches(df, taxon_name), , drop = FALSE]
+    steps$scientific_name_matches <- nrow(df)
+  }
 
   # GBIF's taxonomicStatus says how the record's *name* matched the backbone.
   # Keeping only ACCEPTED drops records filed under synonyms (and the rare
@@ -204,6 +245,7 @@ gbif_to_schema <- function(df) {
 # filters or slider values does not hit GBIF again).
 gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat = FALSE,
                         date_range = NULL, method = "recent", pool = NULL,
+                        taxon_name = NULL, require_name_match = TRUE,
                         fetch = gbif_fetch, progress = NULL, random = NULL) {
   if (isTRUE(random)) method <- "random"          # backwards compatibility
   report <- function(v, d) if (is.function(progress)) progress(v, d)
@@ -219,7 +261,8 @@ gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat
 
   report(0.6, "Applying filters...")
   filtered <- gbif_apply_filters(pool, include_synonyms = include_synonyms,
-                                 exclude_inat = exclude_inat, date_range = date_range)
+                                 exclude_inat = exclude_inat, date_range = date_range,
+                                 taxon_name = taxon_name, require_name_match = require_name_match)
   selected <- gbif_select_records(filtered$data, limit = limit, method = method,
                                   yearly_spread = !is.null(date_range))
   report(0.8, "Formatting downloaded records...")
