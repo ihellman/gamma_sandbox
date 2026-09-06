@@ -43,3 +43,28 @@ test_that("opening Advanced options keeps the GBIF Data panel open (#62)", {
   expect_true(is_open(app, UPL_ITEM))
   expect_false(is_open(app, GBIF_ITEM))
 })
+
+test_that("upload -> run gap analysis -> download report works end to end", {
+  app <- start_app("gap_flow")
+  on.exit(app$stop(), add = TRUE)
+
+  click_header(app, UPL_ITEM)
+  app$upload_file(`data_analysis-controls-uploadData` = file.path(app_root, "appData", "Magnolia_acuminata_data_small.csv"))
+  app$wait_for_idle(timeout = 20000)
+  expect_match(app$get_text(".upload-status"), "Successfully loaded 8 records")
+
+  app$run_js("document.querySelector('a.nav-link[data-value=\"gap\"]').click()")
+  app$wait_for_js("document.querySelector('#gap_analysis-gap_map.leaflet-container') !== null", timeout = 20000)
+  app$set_inputs(`gap_analysis-buffer_dist` = "50")
+  app$click("gap_analysis-generate_buffers")
+  app$wait_for_js("getComputedStyle(document.getElementById('gap_analysis-plot_inset')).display !== 'none'", timeout = 60000)
+  # the download button is rendered by renderUI once results exist; wait for
+  # Shiny to populate its href before fetching
+  app$wait_for_js("($('#gap_analysis-download_report').attr('href') || '') !== ''", timeout = 20000)
+
+  report <- app$get_download("gap_analysis-download_report")
+  expect_true(file.exists(report))
+  html <- gsub("\\s+", " ", paste(readLines(report, warn = FALSE), collapse = " "))
+  expect_true(grepl("Magnolia acuminata", html, fixed = TRUE))
+  expect_true(grepl("Medium Priority (MP)", html, fixed = TRUE))
+})

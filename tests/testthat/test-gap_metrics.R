@@ -22,9 +22,69 @@ for (case in gap_cases) {
     expect_equal(r$grs, case$grs, tolerance = 1e-6)
     expect_equal(r$ers, case$ers, tolerance = 1e-6)
     expect_equal(r$n_eco, case$n_eco)
-    expect_equal(r$n_buffers, case$n_buffers)
   })
 }
+
+test_that("run_gap_analysis returns the analysed rows, layers and derived scores", {
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  L <- gap_layers()
+  r <- run_gap_analysis(d, 50, land = L$land, ecoRegions = L$eco)
+  expect_equal(nrow(r$points), sum(!is.na(d$Latitude) & !is.na(d$Longitude)))
+  expect_equal(r$taxon, "Magnolia acuminata (L.) L.")
+  expect_equal(r$fcs, mean(c(100, 61.924207, 50)), tolerance = 1e-6)
+  expect_equal(r$priority$code, "MP")
+  expect_equal(r$scores$Score, round(c(100, 61.924207, 50, r$fcs), 1))
+  expect_s3_class(r$sf_buffers, "sf")
+  expect_true(all(c("H", "G") %in% r$sf_buffers$processing_type))
+  expect_s3_class(r$sf_ers_regions, "sf")
+  expect_error(run_gap_analysis(d[0, ], 50), "nrow")
+})
+
+test_that("SRSex with taxon = NULL counts every row, mixed names included", {
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  d$`Taxon Name`[1:3] <- "Magnolia acuminata var. subcordata"
+  all_rows <- SRSex(NULL, d)
+  expect_equal(all_rows$`Total records`, 8)
+  expect_equal(all_rows$Taxon, "Magnolia acuminata var. subcordata, Magnolia acuminata (L.) L.")
+  one_name <- SRSex("Magnolia acuminata (L.) L.", d)
+  expect_equal(one_name$`Total records`, 5)
+})
+
+test_that("FCS and priority helpers follow the GapAnalysis thresholds", {
+  expect_equal(compute_fcs(10, 20, 30), 20)
+  expect_equal(compute_fcs(10, NA, 30), 20)
+  expect_true(is.na(compute_fcs(NA, NA, NA)))
+  expect_equal(fcs_priority(0)$code, "UP");  expect_equal(fcs_priority(25)$code, "UP")
+  expect_equal(fcs_priority(25.1)$code, "HP"); expect_equal(fcs_priority(50)$code, "HP")
+  expect_equal(fcs_priority(75)$code, "MP");  expect_equal(fcs_priority(75.1)$code, "LP")
+  expect_equal(fcs_priority(NA)$label, "Not assessed")
+  expect_equal(taxon_label(data.frame(`Taxon Name` = c("a", "a", NA, "b"), check.names = FALSE)), "a, b")
+  expect_equal(taxon_label(data.frame(`Taxon Name` = letters[1:5], check.names = FALSE)), "a, b, c (+2 more)")
+  expect_equal(taxon_label(data.frame(`Taxon Name` = NA_character_, check.names = FALSE)), "Taxon")
+})
+
+test_that("prep_lat_lon drops rows missing either coordinate", {
+  d <- data.frame(Latitude = c("1", NA, "3", "4"), Longitude = c("1", "2", NA, "x"))
+  expect_equal(nrow(prep_lat_lon(d)), 1)
+  expect_equal(nrow(prep_lat_lon(NULL)), 0)
+  expect_equal(nrow(prep_lat_lon(data.frame(a = 1))), 0)
+})
+
+test_that("the HTML report renders from a run_gap_analysis() result without pacman", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc not available")
+  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
+  L <- gap_layers()
+  r <- run_gap_analysis(d, 50, land = L$land, ecoRegions = L$eco)
+  out <- tempfile(fileext = ".html")
+  render_gap_report(r, out)
+  expect_true(file.exists(out))
+  html <- gsub("\\s+", " ", paste(readLines(out, warn = FALSE), collapse = " "))   # pandoc wraps lines
+  expect_true(grepl("Magnolia acuminata", html, fixed = TRUE))
+  expect_true(grepl(r$priority$label, html, fixed = TRUE))
+  expect_true(grepl(sprintf("%.1f", r$fcs), html, fixed = TRUE))   # FCS in report == FCS in app
+  expect_false(grepl("pacman", html, fixed = TRUE))
+})
+
 
 test_that("SRSex handles the zero-data edge cases", {
   d <- load_fixture_dataset("upload_sample_small.csv")

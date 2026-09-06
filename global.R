@@ -41,3 +41,11 @@ APP_VERSION <- if (file.exists("VERSION")) trimws(readLines("VERSION", n = 1, wa
 
 # Landing page copy lives in YAML so it can be edited without touching R.
 landing_text <- yaml::read_yaml("appData/landing_text.yml")
+
+# Static spatial layers for the gap analysis, read ONCE per process instead of
+# on every "Run Gap Analysis" click (land 1.2 MB, ecoregions 9 MB). The loader
+# functions live in R/gap_analysis_functions.R, which Shiny auto-sources AFTER
+# global.R, so source that file explicitly here.
+source("R/gap_analysis_functions.R")
+GAP_LAND       <- load_land_layer("appData/land_simple.gpkg")
+GAP_ECOREGIONS <- load_ecoregions_layer("appData/ecoregionsSimplified.gpkg")

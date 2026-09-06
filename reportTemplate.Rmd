@@ -3,11 +3,15 @@ title: "Ex situ Gap Analysis Report"
 output: html_document
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 params:
+  taxon: "Taxon"
   points: NA
   bufferDist: NA
   srsMetrics: NA
   grsMetrics: NA
   ersMetrics: NA
+  fcs: NA
+  priority: "Not assessed"
+  priorityColor: "#dddddd"
   sf_buffers: NA
   sf_grs_gap: NA
   sf_ers_regions: NA
@@ -95,7 +99,16 @@ params:
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-pacman::p_load(leaflet, dplyr, ggplot2, DT, sf, htmltools, rmapshaper)
+# Explicit library() calls so rsconnect / renv detect the dependencies
+# (pacman used to be a hidden server requirement).
+library(leaflet)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(DT)
+library(sf)
+library(htmltools)
+library(rmapshaper)
 
 # Force DT dependencies to load
 htmltools::tagList(DT::datatable(cars[1,1,drop=FALSE], width=0, height=0, options=list(dom='t', autoWidth=TRUE)))
@@ -110,31 +123,21 @@ points <- params$points
 col_name <- if ("Current Germplasm Type" %in% names(points)) "Current Germplasm Type" else "type"
 points[[col_name]] <- tidyr::replace_na(points[[col_name]], "H")
 
-species <- if(nrow(points) > 0 && !is.null(points$`Taxon Name`)) points$`Taxon Name`[1] else "Unknown Species"
+# Taxon label as analysed by the app (all distinct names in the dataset)
+species <- if (!is.null(params$taxon) && !is.na(params$taxon)) params$taxon else "Unknown Species"
 totalPoints <- nrow(points)
 g_points <- points %>% filter(.data[[col_name]] == "G")
 h_points <- points %>% filter(.data[[col_name]] == "H")
 
-# Unpack Scores
+# Unpack Scores. FCS and the priority rank are computed ONCE by the app
+# (compute_fcs() / fcs_priority() in R/gap_analysis_functions.R) and passed in,
+# so the report can never disagree with the in-app inset.
 srs <- if(!is.null(params$srsMetrics) && "SRS exsitu" %in% names(params$srsMetrics)) params$srsMetrics$`SRS exsitu` else 0
 grs <- if(!is.null(params$grsMetrics) && "GRS exsitu" %in% names(params$grsMetrics)) params$grsMetrics$`GRS exsitu` else 0
 ers <- if(!is.null(params$ersMetrics$summary) && "ERS exsitu" %in% names(params$ersMetrics$summary)) params$ersMetrics$summary$`ERS exsitu` else 0
-fcs <- mean(c(srs, grs, ers), na.rm = TRUE)
-
-# Prioritization Rank
-rank <- case_when(
-  fcs <= 25 ~ "Urgent Priority (UP)",
-  fcs > 25 & fcs <= 50 ~ "High Priority (HP)",
-  fcs > 50 & fcs <= 75 ~ "Medium Priority (MP)",
-  TRUE ~ "Low Priority (LP)"
-)
-
-rank_color <- case_when(
-  rank == "Urgent Priority (UP)" ~ "#ffb4b3",
-  rank == "High Priority (HP)" ~ "#ffd380",
-  rank == "Medium Priority (MP)" ~ "#ffff80",
-  TRUE ~ "#a8d2a8"
-)
+fcs <- if (!is.null(params$fcs) && !is.na(params$fcs)) params$fcs else mean(c(srs, grs, ers), na.rm = TRUE)
+rank <- params$priority
+rank_color <- params$priorityColor
 ```
 
 # `r paste0('*', species, '*')`
@@ -251,7 +254,7 @@ m
 
 ## Conservation scores 
 
-The figure below displays all conservation gap analysis scores, providing a summary of the *ex situ* conservation scores. Based on the Final Conservation Score (FCS), the taxon has an assigned priority category of: **`r rank`**.
+The figure below displays all conservation gap analysis scores, providing a summary of the *ex situ* conservation scores. The taxon has a Final Conservation Score (FCS) of **`r sprintf("%.1f", fcs)`** and an assigned priority category of: **`r rank`**.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', out.width="100%"}
 df_plot <- tibble(
