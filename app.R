@@ -1,28 +1,7 @@
-library(shiny)
-library(bslib)
-library(shinyjs)
-library(readr)
-library(readxl)
-library(leaflet)
-library(leaflet.extras)
-library(sf)
-library(dplyr)
-library(DT)
-library(yaml)
-library(markdown) # fail on shinyapp.io so adding back
-library(shinycssloaders)
-library(terra)
-library(ggplot2)
-library(rgbif)
-library(tidyr)
-library(rmarkdown)
-library(htmlwidgets)
-library(rmapshaper)
-sf::sf_use_s2(FALSE)
-options(shiny.autoreload = FALSE)
-
-# Load text from YAML file
-landing_text <- yaml::read_yaml("appData/landing_text.yml")
+# Package attachment, global options and static content live in global.R.
+# Shiny only auto-sources global.R for ui.R/server.R apps, so a single-file
+# app.R must source it explicitly (into the global env, once per process).
+source("global.R")
 
 # MAIN UI ----------------------------------------------------------------------------------
 ui <- tagList(
@@ -81,8 +60,9 @@ server <- function(input, output, session) {
   })
 
   # Initialize other modules
+  # NOTE: the controls module is owned by dataAnalysisServer (it lives in that
+  # page's sidebar); do not instantiate it here as well.
   dataAnalysisServer("data_analysis", analysis_data, selected_points)
-  controlsModuleServer("controls", analysis_data, selected_points)
   gapAnalysisServer("gap_analysis", analysis_data)
   aboutServer("about")
 }

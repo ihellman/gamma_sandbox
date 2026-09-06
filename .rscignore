@@ -1,5 +1,23 @@
-.git
+# Files excluded from the rsconnect / Posit Connect bundle.
+# One pattern per line, relative to the app root.
 .Rproj.user
+.Rhistory
+.DS_Store
+*.Rproj
+.git
+.github
+.vscode
 preprocessing
+dev
+tests
+temp
 run.R
-gap_speed_testing.R
+uploadtoshinyio.R
+secrets.yaml
+rsconnect
+renv/library
+appData/upload_sample*
+appData/Magnolia_acuminata_data.csv
+appData/Magnolia_acuminata_data_small.csv
+README.md
+GAMMa_Repository_Review_and_Work_Plan.md

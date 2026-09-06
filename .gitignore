@@ -1,5 +1,31 @@
-.vscode/extensions.json
-preprocessing/
+# RStudio / R session files
 .Rproj.user
-rsconnect/shinyapps.io/atlantabg/GAMMA_dev.dcf
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj.user
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/extensions.json
+
+# Deployment records & secrets (never commit)
+rsconnect/
 secrets.yaml
+secrets.yaml.git
+
+# Local scratch
+temp/
+dev/loadtest/*.log
+
+# renv project library (renv.lock IS committed)
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/

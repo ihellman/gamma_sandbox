@@ -1,7 +1,7 @@
 # 1. Load Libraries
 pacman::p_load(rnaturalearth, sf, rmapshaper, ggplot2, tmap)
 tmap_mode("view")
-export1 <- "appData/land_detail.gpkg"
+export1 <- "preprocessing/output/land_detail.gpkg" # not used by the app; kept out of the deploy bundle
 export2 <- "appData/land_simple.gpkg"
 # getting errors with the intersection without this setting might need to project the data to get better results
 sf::sf_use_s2(FALSE)

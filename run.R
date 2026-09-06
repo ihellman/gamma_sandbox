@@ -1,1 +1,1 @@
-shiny::runApp("app.R")
+shiny::runApp(".")

@@ -1,0 +1,5 @@
+# renv dependency scanning: skip one-off preprocessing scripts (rnaturalearth/tmap
+# are not app dependencies) and scratch dirs.
+preprocessing/
+dev/
+temp/
