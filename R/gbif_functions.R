@@ -3,12 +3,35 @@
 # The Shiny controls module only wires inputs to these; everything here can be
 # unit-tested on a saved response fixture without a network connection.
 #
-# Pipeline:  gbif_fetch()  ->  gbif_apply_filters()  ->  gbif_select_records()  ->  gbif_to_schema()
+# Two download modes, chosen by gbif_gather():
+#
+#   standard  (no advanced option set)  gbif_fetch_standard()
+#       Ask GBIF for exactly what the slider needs: every living specimen (up to
+#       the slider), then the shortfall in non-living, non-fossil records, in
+#       GBIF's own order. Fossils and living specimens are excluded by the query
+#       itself, so no oversampling and no app-side de-duplication is needed.
+#       Bare minimum of records and requests -> fastest.
+#
+#   advanced  (date filter / iNaturalist exclusion / a reference-selection
+#              method other than GBIF order)  gbif_fetch()
+#       Download an oversampled pool (gbif_pool_limits), filter and sample it on
+#       the app side. Slower, but the app-side filters and selection methods
+#       need candidates to choose from.
+#
+# Either way:  fetch  ->  gbif_apply_filters()  ->  gbif_select_records()  ->  gbif_to_schema()
 # `gbif_gather()` runs the whole chain and reports per-step record counts so the
 # UI can show honest "loaded n G / m H" numbers (issue #61).
 
 INAT_DATASET_KEY <- "50c9509d-22c7-4a22-a47d-8c48425ef4a7"
-GBIF_POOL_CAP    <- 2000   # hard cap on records requested per query (rgbif pages at 300)
+GBIF_POOL_CAP    <- 2000   # hard cap on records requested per advanced-mode query (rgbif pages at 300)
+
+# Every GBIF basisOfRecord value that yields a reference (H) record: everything
+# except LIVING_SPECIMEN (those are G) and FOSSIL_SPECIMEN (never wanted).
+# GBIF accepts several values in one request when they are ";"-separated.
+GBIF_REFERENCE_BASES <- c(
+  "PRESERVED_SPECIMEN", "HUMAN_OBSERVATION", "MATERIAL_SAMPLE", "OCCURRENCE",
+  "MATERIAL_CITATION", "MACHINE_OBSERVATION", "OBSERVATION"
+)
 
 # Columns of the raw occurrence table the pipeline relies on. Anything else is
 # dropped after download to keep the cached pool small.
@@ -77,9 +100,75 @@ gbif_pool_limits <- function(limit) {
   )
 }
 
-# Download the raw pool: living specimens first, then an unfiltered pool.
-# NOTE the unfiltered query also returns living specimens, so the pool contains
-# duplicates by design; gbif_apply_filters() removes them by gbifID.
+# Reduce a raw occ_search() table to GBIF_RAW_FIELDS (adding any that are
+# missing) with a character gbifID.
+gbif_standardise <- function(pool) {
+  if (nrow(pool) == 0) return(pool)
+  missing <- setdiff(GBIF_RAW_FIELDS, names(pool))
+  for (m in missing) pool[[m]] <- NA_character_
+  pool <- pool[, GBIF_RAW_FIELDS]
+  pool$gbifID <- as.character(pool$gbifID)
+  pool
+}
+
+# Is this request one the standard (exact) download can serve? Anything that
+# needs candidates to filter or sample on the app side forces the advanced pool.
+gbif_is_standard_request <- function(exclude_inat = FALSE, date_range = NULL, method = "gbif") {
+  !isTRUE(exclude_inat) && is.null(date_range) && identical(method, "gbif")
+}
+
+# STANDARD download: exactly `limit` records in the fewest requests.
+#   1. living specimens, up to `limit` (the query itself excludes fossils)
+#   2. the shortfall (limit - living) in reference records, requested with
+#      basisOfRecord restricted to GBIF_REFERENCE_BASES so neither living
+#      specimens nor fossils come back
+# `keep(df)` is an optional row predicate (name match / synonym filter). Rows it
+# rejects are replaced by paging further with `start`, at most `max_rounds`
+# requests per query, so the result still hits `limit` when GBIF has enough.
+# `occ` is the rgbif search function (injectable for offline tests).
+gbif_fetch_standard <- function(taxon_key, limit, keep = NULL, occ = rgbif::occ_search,
+                                progress = NULL, max_rounds = 4L) {
+  report <- function(v, d) if (is.function(progress)) progress(v, d)
+  limit <- max(0L, as.integer(limit))
+  requests <- 0L
+
+  pull <- function(target, basis) {
+    got <- data.frame(); start <- 0L; rounds <- 0L
+    while (nrow(got) < target && rounds < max_rounds) {
+      rounds <- rounds + 1L; requests <<- requests + 1L
+      res <- occ(taxonKey = as.numeric(taxon_key), hasCoordinate = TRUE,
+                 basisOfRecord = basis, limit = target - nrow(got), start = start)
+      page <- if (is.null(res$data) || nrow(res$data) == 0) data.frame() else as.data.frame(res$data)
+      if (nrow(page) == 0) break
+      start <- start + nrow(page)
+      page <- gbif_standardise(page)
+      if (is.function(keep)) page <- page[keep(page), , drop = FALSE]
+      got <- dplyr::bind_rows(got, page)
+      total <- res$meta$count
+      if (!is.null(total) && !is.na(total) && start >= total) break   # GBIF has no more
+    }
+    got
+  }
+
+  living <- data.frame(); other <- data.frame()
+  if (limit > 0) {
+    report(0.1, "Downloading living specimens...")
+    living <- pull(limit, "LIVING_SPECIMEN")
+    shortfall <- limit - nrow(living)
+    if (shortfall > 0) {
+      report(0.3, sprintf("Downloading %d reference records...", shortfall))
+      other <- pull(shortfall, paste(GBIF_REFERENCE_BASES, collapse = ";"))
+    }
+  }
+  pool <- dplyr::bind_rows(living, other)
+  attr(pool, "requests") <- requests
+  pool
+}
+
+# ADVANCED download: an oversampled raw pool - living specimens first, then an
+# unfiltered pool. NOTE the unfiltered query also returns living specimens, so
+# the pool contains duplicates by design; gbif_apply_filters() removes them by
+# gbifID.
 gbif_fetch <- function(taxon_key, living_limit, other_limit, event_date = NULL, progress = NULL) {
   report <- function(v, d) if (is.function(progress)) progress(v, d)
   get <- function(limit, ...) {
@@ -97,13 +186,7 @@ gbif_fetch <- function(taxon_key, living_limit, other_limit, event_date = NULL, 
   report(0.3, "Downloading reference records...")
   other <- get(other_limit)
 
-  pool <- dplyr::bind_rows(living, other)
-  if (nrow(pool) == 0) return(pool)
-  missing <- setdiff(GBIF_RAW_FIELDS, names(pool))
-  for (m in missing) pool[[m]] <- NA_character_
-  pool <- pool[, GBIF_RAW_FIELDS]
-  pool$gbifID <- as.character(pool$gbifID)
-  pool
+  gbif_standardise(dplyr::bind_rows(living, other))
 }
 
 # Apply the user's filters and record how many rows survive each step.
@@ -190,10 +273,11 @@ select_spatially_spread <- function(df, n) {
 }
 
 # Pick at most `limit` records: every living specimen first (G), then reference
-# records (H) chosen by `method` - "recent" (most recent eventDate first),
+# records (H) chosen by `method` - "gbif" (the order GBIF returned them, which
+# is what the standard download gives), "recent" (most recent eventDate first),
 # "random", or "spatial" (see select_spatially_spread). When a date range was
 # applied, one record per year is taken first so the range is spread evenly.
-gbif_select_records <- function(df, limit, method = c("recent", "random", "spatial"),
+gbif_select_records <- function(df, limit, method = c("gbif", "recent", "random", "spatial"),
                                 yearly_spread = FALSE, random = NULL) {
   if (isTRUE(random)) method <- "random"          # backwards compatibility
   method <- match.arg(method)
@@ -216,8 +300,10 @@ gbif_select_records <- function(df, limit, method = c("recent", "random", "spati
     picked <- dplyr::slice_sample(other, n = min(remaining, nrow(other)))
   } else if (method == "spatial") {
     picked <- select_spatially_spread(other, n = min(remaining, nrow(other)))
-  } else {
+  } else if (method == "recent") {
     picked <- other |> dplyr::arrange(dplyr::desc(eventDate)) |> dplyr::slice_head(n = min(remaining, nrow(other)))
+  } else {
+    picked <- dplyr::slice_head(other, n = min(remaining, nrow(other)))
   }
   dplyr::bind_rows(living, picked)
 }
@@ -240,29 +326,48 @@ gbif_to_schema <- function(df) {
   ) |> dplyr::mutate(index = dplyr::row_number())
 }
 
-# Whole pipeline. `pool` lets the caller reuse a previously downloaded raw pool
-# (the controls module caches it per taxon so re-gathering with different
-# filters or slider values does not hit GBIF again).
+# Whole pipeline. `mode` "auto" picks the standard (exact) download unless an
+# advanced option forces the oversampled pool (see gbif_is_standard_request).
+# `pool` lets the caller reuse a previously downloaded raw pool (the controls
+# module caches it so re-gathering with the same request does not hit GBIF
+# again).
 gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat = FALSE,
-                        date_range = NULL, method = "recent", pool = NULL,
+                        date_range = NULL, method = "gbif", pool = NULL,
                         taxon_name = NULL, require_name_match = TRUE,
-                        fetch = gbif_fetch, progress = NULL, random = NULL) {
+                        mode = c("auto", "standard", "advanced"),
+                        fetch = gbif_fetch, fetch_standard = gbif_fetch_standard,
+                        progress = NULL, random = NULL) {
   if (isTRUE(random)) method <- "random"          # backwards compatibility
+  mode <- match.arg(mode)
+  if (mode == "auto") {
+    mode <- if (gbif_is_standard_request(exclude_inat, date_range, method)) "standard" else "advanced"
+  }
   report <- function(v, d) if (is.function(progress)) progress(v, d)
-  limits <- gbif_pool_limits(limit)
   event_date <- if (!is.null(date_range) && !any(is.na(date_range))) {
     paste(format(as.Date(date_range), "%Y-%m-%d"), collapse = ",")
   } else NULL
 
+  # The app-side filters that apply in BOTH modes. In standard mode they run on
+  # each downloaded page so rejected rows are replaced before the download ends.
+  filter_pool <- function(df) {
+    gbif_apply_filters(df, include_synonyms = include_synonyms,
+                       exclude_inat = exclude_inat, date_range = date_range,
+                       taxon_name = taxon_name, require_name_match = require_name_match)
+  }
+
   if (is.null(pool)) {
-    pool <- fetch(taxon_key, living_limit = limits$living, other_limit = limits$other,
-                  event_date = event_date, progress = progress)
+    if (mode == "standard") {
+      pool <- fetch_standard(taxon_key, limit = limit, progress = progress,
+                             keep = function(df) df$gbifID %in% filter_pool(df)$data$gbifID)
+    } else {
+      limits <- gbif_pool_limits(limit)
+      pool <- fetch(taxon_key, living_limit = limits$living, other_limit = limits$other,
+                    event_date = event_date, progress = progress)
+    }
   }
 
   report(0.6, "Applying filters...")
-  filtered <- gbif_apply_filters(pool, include_synonyms = include_synonyms,
-                                 exclude_inat = exclude_inat, date_range = date_range,
-                                 taxon_name = taxon_name, require_name_match = require_name_match)
+  filtered <- filter_pool(pool)
   selected <- gbif_select_records(filtered$data, limit = limit, method = method,
                                   yearly_spread = !is.null(date_range))
   report(0.8, "Formatting downloaded records...")
@@ -274,6 +379,7 @@ gbif_gather <- function(taxon_key, limit, include_synonyms = FALSE, exclude_inat
     data  = data,
     pool  = pool,
     steps = steps,
+    mode  = mode,
     n_g   = sum(data$`Current Germplasm Type` == "G"),
     n_h   = sum(data$`Current Germplasm Type` == "H")
   )

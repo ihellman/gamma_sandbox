@@ -67,7 +67,10 @@ controlsModuleUI <- function(id) {
                 # Add tooltip and info icon to the accordion header
                 title = bslib::tooltip(
                   tags$span("Advanced options ", icon("circle-info", class = "ms-1 text-muted", style = "font-size: 0.85em;")),
-                  "You may notice slower download times with these options selected."
+                  paste("With none of these set, the app asks GBIF for exactly the number of records on the slider",
+                        "(all living specimens first, then reference records in GBIF's order) - the fastest download.",
+                        "Setting a date filter, excluding iNaturalist, or choosing another reference selection",
+                        "switches to a larger download pool that is filtered and sampled in the app, which is slower.")
                 ),
                 value = "panel_gbif_advanced",
 
@@ -123,13 +126,14 @@ controlsModuleUI <- function(id) {
                     ns("reference_selection"),
                     "Reference record selection",
                     choices = c(
+                      "GBIF order (fastest)" = "gbif",
                       "Most recent first" = "recent",
                       "Random" = "random",
                       "Spatially spread" = "spatial"
                     ),
-                    selected = "recent"
+                    selected = "gbif"
                   ),
-                  "How reference (H) records are chosen when more are available than the Max Occurrences slider allows. Living specimens (G) are always taken first. \"Spatially spread\" picks records spread across the taxon's range instead of the most recent ones."
+                  "How reference (H) records are chosen. Living specimens (G) are always taken first. \"GBIF order\" requests only the records needed and takes them as GBIF returns them. The other methods download a larger pool first and then pick the most recent records, a random sample, or records spread across the taxon's range."
                 )
               )
             )
@@ -415,9 +419,15 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
         if (!is.null(loaded)) {
           tags$div(
             class = "text-success mt-1",
-            sprintf("Loaded: %s G / %s H (from %s records after filters)",
-                    format_count(loaded$n_g), format_count(loaded$n_h),
-                    format_count(loaded$steps[[length(loaded$steps) - 1]]))
+            if (identical(loaded$mode, "standard")) {
+              sprintf("Loaded: %s G / %s H (standard download, %s records requested)",
+                      format_count(loaded$n_g), format_count(loaded$n_h),
+                      format_count(loaded$steps$raw))
+            } else {
+              sprintf("Loaded: %s G / %s H (advanced download, from %s records after filters)",
+                      format_count(loaded$n_g), format_count(loaded$n_h),
+                      format_count(loaded$steps[[length(loaded$steps) - 1]]))
+            }
           )
         }
       )
@@ -426,7 +436,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
     # 7. Gather and Format Live GBIF Data -----------------------------------------------
     # All download / filter / selection logic lives in R/gbif_functions.R.
     gbifData_temp <- reactiveVal(NULL)
-    gbif_cache <- reactiveVal(NULL)   # raw pool keyed by taxon + pool size + date range
+    gbif_cache <- reactiveVal(NULL)   # raw pool keyed by download mode + taxon + request (see cache_key)
 
     observeEvent(input$loadGBIF, {
       tid <- selected_taxon_id()
@@ -434,9 +444,21 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
 
       selection_limit <- if (is.numeric(input$gbif_limit)) input$gbif_limit else 200
       date_range <- active_date_range()
-      limits <- gbif_pool_limits(selection_limit)
-      cache_key <- paste(tid, limits$living, limits$other,
-                         paste(format(date_range), collapse = ","), sep = "|")
+      method <- if (is.null(input$reference_selection)) "gbif" else input$reference_selection
+      standard <- gbif_is_standard_request(isTRUE(input$exclude_inat), date_range, method)
+
+      # The cached raw pool is only reusable for a request that would download
+      # the same thing: the advanced pool depends on taxon, pool size and date
+      # range; the standard (exact) download also depends on the slider and on
+      # the filters applied while downloading.
+      cache_key <- if (standard) {
+        paste("standard", tid, selection_limit, isTRUE(input$include_synonyms),
+              !isFALSE(input$require_name_match), sep = "|")
+      } else {
+        limits <- gbif_pool_limits(selection_limit)
+        paste("advanced", tid, limits$living, limits$other,
+              paste(format(date_range), collapse = ","), sep = "|")
+      }
 
       cached <- gbif_cache()
       pool <- if (!is.null(cached) && identical(cached$key, cache_key)) cached$pool else NULL
@@ -453,7 +475,7 @@ controlsModuleServer <- function(id, analysis_data, selected_points) {
               include_synonyms = isTRUE(input$include_synonyms),
               exclude_inat = isTRUE(input$exclude_inat),
               date_range = date_range,
-              method = if (is.null(input$reference_selection)) "recent" else input$reference_selection,
+              method = method,
               taxon_name = selected_taxon()$canonicalName,
               require_name_match = !isFALSE(input$require_name_match),
               pool = pool,

@@ -83,15 +83,19 @@ test_that("iNaturalist, fossil and date filters work", {
 
 test_that("selection takes every living specimen first, then most recent references, up to the limit", {
   f <- gbif_apply_filters(pool)$data
-  sel <- gbif_select_records(f, limit = 50)
+  n_liv <- sum(f$basisOfRecord == "LIVING_SPECIMEN")
+  sel <- gbif_select_records(f, limit = 50, method = "recent")
   expect_equal(nrow(sel), 50)
   expect_equal(sum(sel$basisOfRecord == "LIVING_SPECIMEN"), sum(f$basisOfRecord == "LIVING_SPECIMEN"))
   others <- sel[sel$basisOfRecord != "LIVING_SPECIMEN", ]
   expect_equal(others$eventDate, sort(others$eventDate, decreasing = TRUE, na.last = TRUE))
   expect_equal(nrow(gbif_select_records(f, limit = 0)), 0)
   expect_equal(nrow(gbif_select_records(f, limit = 1e6)), nrow(f))
+  # default method keeps the pool's own order (what a standard download returns)
+  g <- gbif_select_records(f, limit = 50)
+  h_ids <- f$gbifID[f$basisOfRecord != "LIVING_SPECIMEN"]
+  expect_equal(g$gbifID[g$basisOfRecord != "LIVING_SPECIMEN"], h_ids[seq_len(50 - n_liv)])
   # a limit smaller than the number of living specimens still returns exactly `limit`
-  n_liv <- sum(f$basisOfRecord == "LIVING_SPECIMEN")
   expect_equal(nrow(gbif_select_records(f, limit = n_liv - 1)), n_liv - 1)
 })
 
@@ -133,7 +137,93 @@ test_that("gbif_gather runs the whole chain from a pool and reports honest count
   expect_identical(g$pool, duplicated_pool)
 })
 
-test_that("gbif_gather fetches when no pool is supplied and passes the pool limits through", {
+# A fake rgbif::occ_search() that serves pages of the fixture pool (plus a few
+# fossils) honouring basisOfRecord (";"-separated), limit and start, and
+# counting requests - so the standard download can be tested offline.
+make_fake_occ <- function(source_pool) {
+  fossils <- source_pool[1:3, ]; fossils$gbifID <- paste0("fossil", 1:3); fossils$basisOfRecord <- "FOSSIL_SPECIMEN"
+  index <- dplyr::bind_rows(fossils, source_pool)
+  calls <- list()
+  occ <- function(taxonKey, hasCoordinate, basisOfRecord, limit, start = 0, ...) {
+    calls[[length(calls) + 1]] <<- list(basisOfRecord = basisOfRecord, limit = limit, start = start)
+    hits <- index[index$basisOfRecord %in% strsplit(basisOfRecord, ";")[[1]], ]
+    page <- hits[seq_len(nrow(hits)) > start & seq_len(nrow(hits)) <= start + limit, ]
+    list(data = page, meta = list(count = nrow(hits)))
+  }
+  list(occ = occ, calls = function() calls, index = index)
+}
+
+test_that("standard download returns exactly the slider count: all living first, then non-living non-fossil", {
+  fake <- make_fake_occ(pool)
+  got <- gbif_fetch_standard(3153619, limit = 100, occ = fake$occ)
+  expect_equal(nrow(got), 100)
+  expect_equal(sum(got$basisOfRecord == "LIVING_SPECIMEN"), api_counts$living)   # every living specimen
+  expect_false(any(got$basisOfRecord == "FOSSIL_SPECIMEN"))                    # excluded by the query
+  expect_false(any(duplicated(got$gbifID)))
+  expect_equal(attr(got, "requests"), 2)                                         # one living + one reference request
+  calls <- fake$calls()
+  expect_equal(calls[[1]]$basisOfRecord, "LIVING_SPECIMEN")
+  expect_equal(calls[[1]]$limit, 100)
+  expect_equal(calls[[2]]$basisOfRecord, paste(GBIF_REFERENCE_BASES, collapse = ";"))
+  expect_equal(calls[[2]]$limit, 100 - api_counts$living)                       # only the shortfall
+  expect_true(all(GBIF_RAW_FIELDS %in% names(got)))
+  # reference records come in GBIF's order
+  ref_ids <- fake$index$gbifID[fake$index$basisOfRecord %in% GBIF_REFERENCE_BASES]
+  expect_equal(got$gbifID[got$basisOfRecord != "LIVING_SPECIMEN"], ref_ids[seq_len(100 - api_counts$living)])
+})
+
+test_that("standard download tops up when a filter rejects rows, and stops when GBIF runs out", {
+  fake <- make_fake_occ(pool)
+  reject_synonyms <- function(df) df$taxonomicStatus == "ACCEPTED"
+  n_syn_first_page <- sum(pool$taxonomicStatus != "ACCEPTED")
+  expect_gt(n_syn_first_page, 0)
+  got <- gbif_fetch_standard(3153619, limit = nrow(pool) - 5, keep = reject_synonyms, occ = fake$occ)
+  expect_equal(nrow(got), nrow(pool) - 5)                    # still exact
+  expect_true(all(got$taxonomicStatus == "ACCEPTED"))
+  expect_gt(attr(got, "requests"), 2)                        # needed a top-up request
+  # more requested than exist: returns everything available, no endless paging
+  fake2 <- make_fake_occ(pool)
+  all_of_it <- gbif_fetch_standard(3153619, limit = 5000, occ = fake2$occ)
+  expect_equal(nrow(all_of_it), nrow(pool))
+  expect_lte(attr(all_of_it, "requests"), 2)
+  expect_equal(nrow(gbif_fetch_standard(3153619, limit = 0, occ = fake2$occ)), 0)
+  # a slider below the living count returns only that many living specimens
+  fake3 <- make_fake_occ(pool)
+  few <- gbif_fetch_standard(3153619, limit = 4, occ = fake3$occ)
+  expect_equal(nrow(few), 4)
+  expect_true(all(few$basisOfRecord == "LIVING_SPECIMEN"))
+  expect_equal(attr(few, "requests"), 1)
+})
+
+test_that("gbif_gather picks the standard download unless an advanced option is set", {
+  expect_true(gbif_is_standard_request())
+  expect_false(gbif_is_standard_request(exclude_inat = TRUE))
+  expect_false(gbif_is_standard_request(date_range = as.Date(c("2000-01-01", "2020-01-01"))))
+  expect_false(gbif_is_standard_request(method = "recent"))
+  expect_false(gbif_is_standard_request(method = "spatial"))
+
+  used <- NULL
+  std <- function(taxon_key, limit, keep = NULL, progress = NULL, ...) { used <<- "standard"; pool[seq_len(limit), ] }
+  adv <- function(...) { used <<- "advanced"; pool }
+  g <- gbif_gather(3153619, limit = 120, include_synonyms = TRUE, taxon_name = NULL,
+                   fetch = adv, fetch_standard = std)
+  expect_equal(used, "standard"); expect_equal(g$mode, "standard"); expect_equal(nrow(g$data), 120)
+  g <- gbif_gather(3153619, limit = 120, exclude_inat = TRUE, fetch = adv, fetch_standard = std)
+  expect_equal(used, "advanced"); expect_equal(g$mode, "advanced")
+  g <- gbif_gather(3153619, limit = 120, method = "random", fetch = adv, fetch_standard = std)
+  expect_equal(used, "advanced")
+  g <- gbif_gather(3153619, limit = 120, mode = "advanced", fetch = adv, fetch_standard = std)
+  expect_equal(used, "advanced")
+  # in standard mode the name-match / synonym filters are applied while downloading
+  seen_keep <- NULL
+  std2 <- function(taxon_key, limit, keep = NULL, progress = NULL, ...) { seen_keep <<- keep; pool[seq_len(limit), ] }
+  gbif_gather(3153619, limit = 50, taxon_name = TAXON, fetch_standard = std2)
+  expect_true(is.function(seen_keep))
+  k <- seen_keep(pool)
+  expect_equal(sum(k), nrow(gbif_apply_filters(pool, taxon_name = TAXON)$data))
+})
+
+test_that("gbif_gather fetches the advanced pool when no pool is supplied and passes the pool limits through", {
   seen <- NULL
   fake_fetch <- function(taxon_key, living_limit, other_limit, event_date = NULL, progress = NULL) {
     seen <<- list(taxon_key = taxon_key, living_limit = living_limit, other_limit = other_limit, event_date = event_date)
@@ -146,7 +236,8 @@ test_that("gbif_gather fetches when no pool is supplied and passes the pool limi
   expect_equal(seen$event_date, "1900-01-01,2030-12-31")
   expect_equal(nrow(g$data), 200)
 
-  empty <- gbif_gather(1, limit = 200, fetch = function(...) data.frame())
+  empty <- gbif_gather(1, limit = 200, fetch = function(...) data.frame(),
+                       fetch_standard = function(...) data.frame())
   expect_equal(nrow(empty$data), 0)
   expect_equal(empty$steps$raw, 0)
 })

@@ -6,8 +6,9 @@ pool <- readRDS(fixture_path("gbif_magnolia_fraseri.rds"))
 # Replace the network layer (sourced into the global env by helper-setup.R)
 # for the duration of the calling test.
 mock_gbif <- function(env = parent.frame()) {
-  originals <- list(gbif_fetch = gbif_fetch, gbif_counts = gbif_counts)
+  originals <- list(gbif_fetch = gbif_fetch, gbif_fetch_standard = gbif_fetch_standard, gbif_counts = gbif_counts)
   assign("gbif_fetch",  function(...) pool, envir = globalenv())
+  assign("gbif_fetch_standard", function(taxon_key, limit, ...) pool[seq_len(min(limit, nrow(pool))), ], envir = globalenv())
   assign("gbif_counts", function(...) list(total = nrow(pool), living = 9, inat = 100), envir = globalenv())
   withr::defer(for (nm in names(originals)) assign(nm, originals[[nm]], envir = globalenv()), envir = env)
 }
@@ -28,6 +29,29 @@ test_that("taxon selectors resolve the accepted GBIF taxon key", {
     session$setInputs(taxon_rank = "variety")
     session$setInputs(taxon_infra = "pyramidata")
     expect_equal(selected_taxon_id(), 8091117)
+  })
+})
+
+test_that("a default request runs the standard (exact) download and reports it", {
+  mock_gbif()
+  analysis_data <- reactiveVal(data.frame()); selected_points <- reactiveVal(numeric(0))
+  testServer(controlsModuleServer, args = list(analysis_data = analysis_data, selected_points = selected_points), {
+    select_magnolia_fraseri(session)
+    session$setInputs(gbif_limit = 100, apply_date_filter = FALSE, exclude_inat = FALSE,
+                      include_synonyms = FALSE, reference_selection = "gbif", require_name_match = TRUE)
+    session$setInputs(loadGBIF = 1)
+    expect_equal(last_gather()$mode, "standard")
+    expect_equal(nrow(gbif_cache()$pool), 100)                    # only what was asked for was fetched
+    expect_true(startsWith(gbif_cache()$key, "standard|"))
+    # the mock cannot top up, so what survives the name-match filter is loaded
+    expect_equal(nrow(analysis_data()), nrow(gbif_apply_filters(pool[1:100, ], taxon_name = "Magnolia fraseri")$data))
+    expect_equal(sum(analysis_data()$`Current Germplasm Type` == "G"), 9)
+    # any advanced option switches to the pool download
+    session$setInputs(reference_selection = "recent")
+    session$setInputs(loadGBIF = 2); session$setInputs(confirmLoadGBIF = 1)
+    expect_equal(last_gather()$mode, "advanced")
+    expect_true(startsWith(gbif_cache()$key, "advanced|"))
+    expect_equal(nrow(gbif_cache()$pool), nrow(pool))
   })
 })
 
