@@ -126,7 +126,7 @@ test_that("convex hull method estimates the range as a hull and clips G buffers 
   expect_true(all(hull$sf_buffers$processing_type == "G"))          # only G buffers drawn in hull mode
   expect_lte(hull$grs$`G buffer areas in model km2`, buf$grs$`G buffer areas in model km2`)  # clipped to the hull
   expect_true(hull$grs$`GRS exsitu` >= 0 && hull$grs$`GRS exsitu` <= 100)
-  expect_gte(hull$ers$summary$`Ecoregions with records`, buf$ers$summary$`Ecoregions with records`)
+  expect_equal(hull$ers$summary, buf$ers$summary)                   # ERS universe = ecoregions with records, both methods
   expect_equal(hull$srs$`SRS exsitu`, buf$srs$`SRS exsitu`)         # SRS does not depend on the range model
   expect_equal(hull$fcs, compute_fcs(hull$srs$`SRS exsitu`, hull$grs$`GRS exsitu`, hull$ers$summary$`ERS exsitu`))
 
@@ -145,13 +145,3 @@ test_that("convex hull method refuses degenerate inputs with a clear message", {
   expect_error(run_gap_analysis(ocean, 50, method = "hull", land = L$land, ecoRegions = L$eco), "land")
 })
 
-test_that("ERSex counts ecoregions overlapped by a model area when one is given", {
-  d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
-  L <- gap_layers()
-  v <- terra::vect(prep_lat_lon(d), geom = c("Longitude", "Latitude"), crs = "EPSG:4326")
-  hull <- terra::convHull(v)
-  by_points <- ERSex(v, NULL, ecoRegions = L$eco)
-  by_model  <- ERSex(v, NULL, ecoRegions = L$eco, model_area = hull)
-  expect_gte(by_model$summary$`Ecoregions with records`, by_points$summary$`Ecoregions with records`)
-  expect_equal(by_model$summary$`ERS exsitu`, 0)                    # no G buffer -> nothing conserved
-})

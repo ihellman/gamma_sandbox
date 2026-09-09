@@ -307,80 +307,77 @@ update_selection_highlights <- function(mapID, allPoints, selected_ids) {
   }
 }
 
-# --- Protected / public land overlays ---------------------------------------
-# Where seed collecting might be possible. Both are toggleable overlays, hidden
-# by default, streamed from the providers (nothing is shipped with the app).
+# --- Protected land overlay ---------------------------------------------------
+# Where seed collecting might be possible. A toggleable overlay, hidden by
+# default, streamed from the provider (nothing is shipped with the app).
 #
-# 1. World Database on Protected Areas (UNEP-WCMC / IUCN): global, cached
-#    Web-Mercator tiles - fast at any zoom.
-WDPA_TILE_URL <- "https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}"
+# World Database on Protected Areas (UNEP-WCMC / IUCN): global, cached
+# Web-Mercator tiles - fast at any zoom. Tiles carry no attributes, so a click
+# on the map while the layer is shown asks the same MapServer's identify
+# endpoint what is at that point and shows the answer in a popup.
+WDPA_SERVICE_URL <- "https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer"
+WDPA_TILE_URL    <- paste0(WDPA_SERVICE_URL, "/tile/{z}/{y}/{x}")
 WDPA_ATTRIBUTION <- "Protected areas: UNEP-WCMC and IUCN, <a href='https://www.protectedplanet.net' target='_blank'>Protected Planet (WDPA)</a>"
-# 2. USGS PAD-US "Public Access" (United States only): open / restricted /
-#    closed access polygons from an ArcGIS feature service, drawn client-side
-#    (green / amber / red). Only requested at zoom >= 8 so the whole country
-#    is never downloaded at once.
-PADUS_ACCESS_URL <- "https://services.arcgis.com/v01gqwM5QqNysAAi/arcgis/rest/services/PADUS_Public_Access/FeatureServer/0"
-PADUS_ATTRIBUTION <- "Public access: <a href='https://www.usgs.gov/programs/gap-analysis-project/science/pad-us-data-overview' target='_blank'>USGS PAD-US</a>"
-PROTECTED_LAND_GROUPS <- c("Protected areas (WDPA, global)", "Public access (PAD-US, USA)")
-
-# esri-leaflet (Apache-2.0) is vendored in www/lib/esri-leaflet because the R
-# wrapper package (leaflet.esri) is no longer on CRAN.
-esri_leaflet_dependency <- function() {
-  htmltools::htmlDependency(
-    name = "esri-leaflet", version = "3.0.12",
-    src = c(file = normalizePath("www/lib/esri-leaflet")),
-    script = "esri-leaflet.js"
-  )
-}
+PROTECTED_LAND_GROUP <- "Protected areas (WDPA)"
 
 add_protected_land_layers <- function(map) {
   map <- map %>%
     leaflet::addTiles(
-      urlTemplate = WDPA_TILE_URL, group = PROTECTED_LAND_GROUPS[1],
+      urlTemplate = WDPA_TILE_URL, group = PROTECTED_LAND_GROUP,
       attribution = WDPA_ATTRIBUTION,
       options = leaflet::tileOptions(opacity = 0.6, maxNativeZoom = 15, maxZoom = 19)
     )
-  map$dependencies <- c(map$dependencies, list(esri_leaflet_dependency()))
-  # Create the feature layer client-side and hand it to leaflet's layerManager so
-  # the existing layers control (and hideGroup / showGroup) can toggle it.
+  # Click-to-identify popup. Only runs while the WDPA group is switched on, and
+  # ignores clicks that landed on a marker / polygon (those have their own
+  # popups and their click bubbles up to the map).
   js <- sprintf("
     function(el, x) {
-      // In Shiny, onRender hooks do not receive the map as `this`, and the
-      // plugin script may still be loading, so resolve both with a short retry.
-      var attempts = 0;
-      var addPadus = function() {
-        var inst = HTMLWidgets.getInstance(el);
-        var map = (inst && typeof inst.getMap === 'function') ? inst.getMap() : null;
-        if (!map || !map.layerManager || !L.esri) {
-          if (attempts++ < 50) { setTimeout(addPadus, 200); }
-          return;
-        }
-      var layer = L.esri.featureLayer({
-        url: %s,
-        minZoom: 8,
-        fields: ['OBJECTID', 'Unit_Nm', 'Pub_Access', 'MngNm_Desc'],
-        style: function(feature) {
-          var c = {OA: '#2e8b57', RA: '#e6a700', XA: '#b22222'}[feature.properties.Pub_Access] || '#777777';
-          return {color: c, weight: 1, fillColor: c, fillOpacity: 0.25};
-        }
-      });
-      layer.bindPopup(function(l) {
-        var p = l.feature.properties;
-        var acc = {OA: 'Open access', RA: 'Restricted access', XA: 'Closed access'}[p.Pub_Access] || p.Pub_Access;
-        return '<b>' + (p.Unit_Nm || '') + '</b><br/>' + acc + '<br/>' + (p.MngNm_Desc || '');
-      });
-      var group = %s;
-      map.layerManager.addLayer(layer, 'shape', 'padus_public_access', group);
-      // start hidden; the layers control toggles the group like any other
-      var container = map.layerManager.getLayerGroup(group);
-      if (container && map.hasLayer(container)) { map.removeLayer(container); }
-      map.attributionControl.addAttribution(%s);
+      // In Shiny, onRender hooks do not receive the map as `this`; resolve it.
+      var inst = HTMLWidgets.getInstance(el);
+      var map = (inst && typeof inst.getMap === 'function') ? inst.getMap() : null;
+      if (!map) { return; }
+      var group = %s, service = %s;
+      var esc = function(v) {
+        return String(v == null ? '' : v).replace(/[&<>]/g, function(c) {
+          return {'&': '&amp;', '<': '&lt;', '>': '&gt;'}[c];
+        });
       };
-      addPadus();
+      map.on('click', function(e) {
+        var lg = map.layerManager && map.layerManager.getLayerGroup(group);
+        if (!lg || !map.hasLayer(lg)) { return; }
+        var t = e.originalEvent && e.originalEvent.target;
+        if (t && (t.tagName === 'path' || (t.classList && t.classList.contains('leaflet-marker-icon')))) { return; }
+        var b = map.getBounds(), size = map.getSize();
+        var url = service + '/identify?f=json&geometryType=esriGeometryPoint&sr=4326&layers=all' +
+          '&tolerance=3&returnGeometry=false' +
+          '&geometry=' + e.latlng.lng + ',' + e.latlng.lat +
+          '&mapExtent=' + [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].join(',') +
+          '&imageDisplay=' + size.x + ',' + size.y + ',96';
+        var popup = L.popup({maxWidth: 320}).setLatLng(e.latlng)
+          .setContent('<span class=\"text-muted\">Looking up protected areas…</span>').openOn(map);
+        fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+          var seen = {}, items = [];
+          (d.results || []).forEach(function(r) {
+            var a = r.attributes || {}, key = a.WDPA_PID || a.WDPAID || a.NAME;
+            if (!key || seen[key]) { return; }
+            seen[key] = true;
+            var rows = [];
+            if (a.DESIG_ENG) { rows.push(esc(a.DESIG_ENG) + (a.DESIG_TYPE ? ' (' + esc(a.DESIG_TYPE) + ')' : '')); }
+            if (a.IUCN_CAT) { rows.push('IUCN category: ' + esc(a.IUCN_CAT)); }
+            if (a.STATUS) { rows.push(esc(a.STATUS) + (a.STATUS_YR && a.STATUS_YR !== '0' ? ' ' + esc(a.STATUS_YR) : '')); }
+            if (a.MANG_AUTH && a.MANG_AUTH !== 'Not Reported') { rows.push('Managed by: ' + esc(a.MANG_AUTH)); }
+            if (a.REP_AREA && Number(a.REP_AREA) > 0) { rows.push('Reported area: ' + Number(a.REP_AREA).toLocaleString(undefined, {maximumFractionDigits: 0}) + ' km²'); }
+            var link = a.WDPAID ? ' <a href=\"https://www.protectedplanet.net/' + encodeURIComponent(a.WDPAID) + '\" target=\"_blank\">Protected Planet</a>' : '';
+            items.push('<div style=\"margin-bottom:6px\"><b>' + esc(a.NAME || 'Unnamed protected area') + '</b>' + link + '<br/>' + rows.join('<br/>') + '</div>');
+          });
+          popup.setContent(items.length ? items.join('') : 'No WDPA protected area recorded at this point.');
+        }).catch(function() {
+          popup.setContent('Protected-area lookup failed (WDPA service unavailable).');
+        });
+      });
     }",
-    jsonlite::toJSON(PADUS_ACCESS_URL, auto_unbox = TRUE),
-    jsonlite::toJSON(PROTECTED_LAND_GROUPS[2], auto_unbox = TRUE),
-    jsonlite::toJSON(PADUS_ATTRIBUTION, auto_unbox = TRUE)
+    jsonlite::toJSON(PROTECTED_LAND_GROUP, auto_unbox = TRUE),
+    jsonlite::toJSON(WDPA_SERVICE_URL, auto_unbox = TRUE)
   )
   htmlwidgets::onRender(map, js)
 }
@@ -414,19 +411,10 @@ gap_base_map <- function() {
         "Buffers",
         "GRS Gap",       # <- MUST BE LISTED HERE
         "ERS Regions",   # <- MUST BE LISTED HERE
-        PROTECTED_LAND_GROUPS
+        PROTECTED_LAND_GROUP
       ),
       options = leaflet::layersControlOptions(collapsed = TRUE)
     ) %>%
-    # Legend for the PAD-US colours; shown/hidden together with that layer
-    addLegend(
-      title = "Public land access (PAD-US)",
-      position = "bottomleft",
-      colors = c("#2e8b57", "#e6a700", "#b22222"),
-      labels = c("Open access", "Restricted access", "Closed access"),
-      opacity = 0.6,
-      group = PROTECTED_LAND_GROUPS[2]
-    ) %>%
     # Optional: Hide them on initial load so the map isn't cluttered
-    leaflet::hideGroup(c("Range (convex hull)", "GRS Gap", "ERS Regions", "Buffers", PROTECTED_LAND_GROUPS))
+    leaflet::hideGroup(c("Range (convex hull)", "GRS Gap", "ERS Regions", "Buffers", PROTECTED_LAND_GROUP))
 }

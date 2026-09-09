@@ -3,9 +3,6 @@ gapAnalysisUI <- function(id) {
   ns <- NS(id)
   
   tagList(
-    # Load the esri-leaflet plugin with the page so it is available before the
-    # gap map renders (see add_protected_land_layers in leaflet_maps.R)
-    esri_leaflet_dependency(),
     layout_sidebar(
       fillable = TRUE,
       class = "p-0",

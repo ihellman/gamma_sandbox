@@ -236,10 +236,10 @@ GRSex <- function(allBuffers, outsideGBuffers) {
 
 # `ecoRegions` is the (lake-free) ecoregion SpatVector; defaults to the layer
 # loaded once at start-up rather than re-reading the 9 MB file per call.
-# The "universe" of ecoregions is every ecoregion containing a record (buffer
-# method) or, when `model_area` is given, every ecoregion the range polygon
-# overlaps (convex hull method).
-ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions(), model_area = NULL) {
+# The "universe" of ecoregions is every ecoregion containing a record, under
+# BOTH range methods: the convex hull only changes the GRS range polygon, not
+# which ecoregions count as part of the taxon's range.
+ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions()) {
   # CHECK: Handle case with absolutely no points (no H and no G)
   if (is.null(gapPoints) || nrow(gapPoints) == 0) {
     out_df <- dplyr::tibble(
@@ -250,12 +250,8 @@ ERSex <- function(gapPoints, g_buffer, ecoRegions = gap_ecoregions(), model_area
     return(list(summary = out_df, spatial = NULL))
   }
 
-  # 1. Define the "Universe"
-  if (!is.null(model_area) && nrow(model_area) > 0) {
-    inter_points <- terra::intersect(x = terra::project(model_area, terra::crs(ecoRegions)), y = ecoRegions)
-  } else {
-    inter_points <- terra::intersect(x = gapPoints, y = ecoRegions)
-  }
+  # 1. Define the "Universe" (ecoregions containing any record)
+  inter_points <- terra::intersect(x = gapPoints, y = ecoRegions)
 
   # CHECK: Handle case where points exist but fall outside known ecoregions
   if (nrow(inter_points) == 0) {
@@ -338,8 +334,8 @@ convex_hull_range <- function(v, land_proj) {
 # method = "buffer": the range is the union of `dist_km` buffers around every
 #   record (H and G); G buffers are the conserved area (original behaviour).
 # method = "hull":   the range is the convex hull of all records, clipped to
-#   land; G buffers (still `dist_km`) clipped to the hull are the conserved area,
-#   and ERS counts the ecoregions the hull overlaps.
+#   land; G buffers (still `dist_km`) clipped to the hull are the conserved area.
+#   ERS is unchanged: it counts the ecoregions containing records either way.
 # `progress(value, detail)` is an optional callback for withProgress.
 run_gap_analysis <- function(all_data, dist_km, method = c("buffer", "hull"),
                              land = gap_land(), ecoRegions = gap_ecoregions(),
@@ -384,7 +380,7 @@ run_gap_analysis <- function(all_data, dist_km, method = c("buffer", "hull"),
   }
 
   report(0.6, "Calculating ERSex...")
-  ersMetrics <- ERSex(gapPoints = v, g_buffer = gBuff, ecoRegions = ecoRegions, model_area = model)
+  ersMetrics <- ERSex(gapPoints = v, g_buffer = gBuff, ecoRegions = ecoRegions)
 
   report(0.75, "Preparing visualization...")
   sf_buffers <- if (length(drawn) > 0) {
