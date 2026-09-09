@@ -81,7 +81,7 @@ data_eval_base_map <- function() {
   leaflet::leaflet(options = leafletOptions(minZoom = 3, maxZoom = 16)) |>
     setView(lng = "-97.511993", lat = "40.023401", zoom = 4) |>
     # Base Layers
-    addProviderTiles("OpenStreetMap", group = "OpenStreetMap") |>
+    addProviderTiles("Esri.WorldGrayCanvas", group = "Light Gray") |>
     addProviderTiles("Esri.WorldTopoMap", group = "Topography") |>
     addProviderTiles("Esri.WorldImagery", group = "Imagery") |>
     # Legends
@@ -102,7 +102,7 @@ data_eval_base_map <- function() {
     # Controls
     addLayersControl(
       position = "topleft",
-      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
+      baseGroups = c("Light Gray", "Topography", "Imagery"),
       overlayGroups = c(
         "Upload", 
         "Upload Selection", 
@@ -386,7 +386,7 @@ add_protected_land_layers <- function(map) {
 # Renders the empty basemap with controls and legends
 gap_base_map <- function() {
   leaflet::leaflet() %>%
-    leaflet::addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+    leaflet::addProviderTiles("Esri.WorldGrayCanvas", group = "Light Gray") %>%
     leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
     leaflet::addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
     add_protected_land_layers() %>%
@@ -403,7 +403,7 @@ gap_base_map <- function() {
     ) %>%
     leaflet::addLayersControl(
       position = "topleft",
-      baseGroups = c("OpenStreetMap", "Topography", "Imagery"),
+      baseGroups = c("Light Gray", "Topography", "Imagery"),
       overlayGroups = c(
         "Reference Records",
         "Germplasm Records",
