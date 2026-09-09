@@ -210,7 +210,9 @@ The **GRS gap** layer shows the part of the estimated range that lies farther th
 
 ```{r map}
 m <- leaflet(width = "100%", height = 560) %>%
-  addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+  # Esri tiles only: OpenStreetMap's tile servers refuse requests from a saved
+  # HTML file opened locally (HTTP 403), which is how this report is used.
+  addProviderTiles("Esri.WorldStreetMap", group = "Simple") %>%
   addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
   addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%
   addTiles(
@@ -300,7 +302,7 @@ overlays <- c("Reference records (H)", "Germplasm records (G)",
               if (method == "Convex hull") "Range (convex hull)", "Buffers", "GRS gap", "ERS regions",
               "Protected areas (WDPA)")
 m %>%
-  addLayersControl(baseGroups = c("OpenStreetMap", "Topography", "Imagery"), overlayGroups = overlays,
+  addLayersControl(baseGroups = c("Simple", "Topography", "Imagery"), overlayGroups = overlays,
                    options = layersControlOptions(collapsed = FALSE)) %>%
   hideGroup(c("ERS regions", "Protected areas (WDPA)")) %>%
   addLegend(position = "bottomleft", colors = c(combinedColor[1], combinedColor[2], grsexColor, ersexColors[1], ersexColors[2]),
