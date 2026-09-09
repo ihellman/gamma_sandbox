@@ -508,10 +508,14 @@ body.on-home .navbar {
    MAP TOOLTIPS / POPUPS (#40)
    Leaflet tooltips default to white-space: nowrap, so a long locality string
    produced a box wider than the map. Wrap and cap the width instead.
+   Tooltips live in a zero-width map pane, so with wrapping allowed the box
+   shrinks to its longest word unless it is told to size to its content:
+   width: max-content makes it as wide as the text, max-width caps that.
    ========================================= */
 .leaflet-tooltip {
   white-space: normal !important;
-  max-width: 280px;
+  width: max-content;
+  max-width: 260px;   /* ~50 characters per line at the tooltip font size */
   line-height: 1.3;
 }
 
