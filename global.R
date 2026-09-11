@@ -25,7 +25,6 @@ library(sf)
 library(terra)
 library(ggplot2)
 library(rgbif)
-library(rmarkdown)
 library(htmlwidgets)
 library(rmapshaper)
 

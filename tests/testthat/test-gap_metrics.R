@@ -71,18 +71,25 @@ test_that("prep_lat_lon drops rows missing either coordinate", {
 })
 
 test_that("the HTML report renders from a run_gap_analysis() result without pacman", {
-  skip_if_not(rmarkdown::pandoc_available(), "pandoc not available")
   d <- load_fixture_dataset("Magnolia_acuminata_data_small.csv")
   L <- gap_layers()
   r <- run_gap_analysis(d, 50, land = L$land, ecoRegions = L$eco)
   out <- tempfile(fileext = ".html")
   render_gap_report(r, out)
   expect_true(file.exists(out))
-  html <- gsub("\\s+", " ", paste(readLines(out, warn = FALSE), collapse = " "))   # pandoc wraps lines
+  lines <- readLines(out, warn = FALSE)
+  html <- gsub("\\s+", " ", paste(lines, collapse = " "))
   expect_true(grepl("Magnolia acuminata", html, fixed = TRUE))
   expect_true(grepl(r$priority$label, html, fixed = TRUE))
   expect_true(grepl(sprintf("%.1f", r$fcs), html, fixed = TRUE))   # FCS in report == FCS in app
-  expect_false(grepl("pacman", html, fixed = TRUE))
+  # self-contained, pandoc-free: widgets and their libraries are inlined
+  expect_true(grepl('class="leaflet html-widget', html, fixed = TRUE))
+  expect_true(grepl('class="datatables html-widget', html, fixed = TRUE))
+  expect_true(grepl("HTMLWidgets.staticRender", html, fixed = TRUE))
+  expect_true(grepl("data:image/png;base64", html, fixed = TRUE))                 # the scores chart
+  expect_equal(length(grep('(src|href)="(https?:)?//[^"]+\\.(js|css)"', lines)), 0)  # no CDN / local file references
+  expect_equal(length(grep('src="[^"]*_files/', lines)), 0)
+  expect_false(grepl("pandoc", html, fixed = TRUE))
 })
 
 
