@@ -73,13 +73,28 @@ point_labels <- function(data) {
     lapply(htmltools::HTML)
 }
 
+# Fit a map (by output id) to the extent of the rows that have coordinates,
+# with a little padding. No-op when nothing has coordinates.
+fit_map_to_points <- function(map_id, data, session = shiny::getDefaultReactiveDomain()) {
+  lat <- suppressWarnings(as.numeric(data$Latitude))
+  lon <- suppressWarnings(as.numeric(data$Longitude))
+  ok <- !is.na(lat) & !is.na(lon)
+  if (!any(ok)) return(invisible(NULL))
+  leaflet::leafletProxy(map_id, session) |>
+    leaflet::fitBounds(lng1 = min(lon[ok]), lat1 = min(lat[ok]), lng2 = max(lon[ok]), lat2 = max(lat[ok]),
+                       options = list(padding = c(30, 30), maxZoom = 10))
+  invisible(NULL)
+}
+
 # Maps ---------------------------------------------------------------------------
 
 # 1. Initial Map Setup
 # Renders the empty basemap with controls and legends
 data_eval_base_map <- function() {
-  leaflet::leaflet(options = leafletOptions(minZoom = 3, maxZoom = 16)) |>
-    setView(lng = "-97.511993", lat = "40.023401", zoom = 4) |>
+  leaflet::leaflet(options = leafletOptions(minZoom = 2, maxZoom = 16)) |>
+    # Open on a global view (whole world at the most zoomed-out level) rather
+    # than a US-centred one; the map zooms to the records once data is loaded.
+    setView(lng = 0, lat = 0, zoom = 2) |>
     # Base Layers
     addProviderTiles("Esri.WorldGrayCanvas", group = "Light Gray") |>
     addProviderTiles("Esri.WorldTopoMap", group = "Topography") |>
@@ -385,7 +400,8 @@ add_protected_land_layers <- function(map) {
 # Gap Analysis Map Setup
 # Renders the empty basemap with controls and legends
 gap_base_map <- function() {
-  leaflet::leaflet() %>%
+  leaflet::leaflet(options = leaflet::leafletOptions(minZoom = 2)) %>%
+    leaflet::setView(lng = 0, lat = 0, zoom = 2) %>%   # global view until results are drawn
     leaflet::addProviderTiles("Esri.WorldGrayCanvas", group = "Light Gray") %>%
     leaflet::addProviderTiles("Esri.WorldTopoMap", group = "Topography") %>%
     leaflet::addProviderTiles("Esri.WorldImagery", group = "Imagery") %>%

@@ -42,11 +42,22 @@ mapModuleServer <- function(id, analysis_data, selected_points) {
     })
 
     # Handle data handling of GBIF/uploaded data
+    # Zoom to the records when new data arrives (row count grew: a GBIF gather
+    # or an upload). Deletions keep the current view so the user's place on
+    # the map is not lost while cleaning.
+    previous_n <- reactiveVal(0L)
+
     observeEvent(analysis_data(), {
       req(analysis_data())
 
       # Redraw the base points if data is updated
       render_base_points("dataEvalMap", analysis_data())
+
+      n_now <- nrow(analysis_data())
+      if (n_now > previous_n()) {
+        fit_map_to_points("dataEvalMap", analysis_data())
+      }
+      previous_n(n_now)
 
       count_html <- map_count_control(analysis_data())
       if (!is.null(count_html)) {

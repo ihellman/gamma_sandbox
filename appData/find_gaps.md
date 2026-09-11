@@ -1,26 +1,31 @@
-### Step 2: Find the gaps
-We a conservation gap analysis framework to inform collection actions and the state of the metacollection for a specific species. This process evaluates the extent to which *ex situ* (genebank/living collection), are present across the estimated distribution of the species.
+## Step 2: Find the gaps
 
-#### Key Metrics
-We calculate three primary scores to evaluate conservation status:
-* **Sampling Representativeness Score (SRS):** Compares the total number of reference(H) occurrences to the number of *ex situ* accessions (G).
-* **Geographic Representativeness Score (GRS):** Measures how well the physical area of the species' range represented by buffered around all observations is covered by *ex situ* accessions (G).
-* **Ecological Representativeness Score (ERS):** Determines if the collections *ex situ* accessions (G) cover the full range of ecoregions that species is expected to occupy.
+The **Gap Analysis** page estimates how well the germplasm (**G**) records represent the taxon's wild or native distribution, following the *ex situ* conservation gap analysis framework of the [GapAnalysis R package](https://github.com/CIAT-DAPA/GapAnalysis). Geographic and ecological coverage are used as proxies for the genetic diversity captured in collections.
 
----
+#### Estimating the range
 
-#### How to Interpret Results
-The results are aggregated into a **Final Conservation Score (FCS)** ranging from 0 to 100.
+Two methods are offered for estimating the wild range from the records with coordinates:
 
-| Score Range | Priority Level | Description |
+* **Buffer around records (default):** a circular buffer of the chosen distance is drawn around every record, and the union of those buffers, clipped to land, is taken as the range.
+* **Convex hull around records:** the smallest convex polygon enclosing all records, clipped to land, is taken as the range. This fills the space between scattered records and needs at least three records at distinct locations. With this method the buffer distance is applied to the germplasm records only.
+
+#### Three scores
+
+* **Sampling Representativeness Score (SRS):** the ratio of germplasm accessions to reference records, using all records whether or not they have coordinates. Are there enough accessions relative to what is known of the taxon?
+* **Geographic Representativeness Score (GRS):** the share of the estimated range that lies within the buffer distance of a germplasm record. Which parts of the range have never been collected from?
+* **Ecological Representativeness Score (ERS):** the share of the ecoregions containing records that also contain a germplasm record. Which environments are missing from collections?
+
+Each score runs from 0 (nothing represented) to 100 (fully represented). Their average is the **Final Conservation Score (FCS)**, which places the taxon in a priority category:
+
+| FCS | Priority category | Meaning |
 | :--- | :--- | :--- |
-| **0 - 25** | **High Priority** | Species is critically under-represented in collections. Urgent action required. |
-| **26 - 50** | **Medium Priority** | Some representation exists, but significant gaps remain in specific regions or ecotypes. |
-| **51 - 75** |**Low Priority** | Species is adequately represented, though targeted collecting may still be beneficial. |
-| **76 - 100** |**Sufficient** | Species is well-conserved *ex situ*. |
+| **0 – 25** | **Urgent Priority (UP)** | Little or none of the range or its ecoregions is represented in collections. |
+| **25 – 50** | **High Priority (HP)** | Some representation, but large geographic or ecological gaps remain. |
+| **50 – 75** | **Medium Priority (MP)** | Reasonably represented; targeted collecting can still close specific gaps. |
+| **75 – 100** | **Low Priority (LP)** | Well represented *ex situ*. |
 
-> **Note:** These metrics are derived from the [GapAnalysis R Package](https://github.com/CIAT-DAPA/GapAnalysis) guidelines.
+#### Reading the map
 
-#### Next Steps
-1.  Navigate to the **GAP Analysis** tab using the navigation bar above.
-2. fill this out later
+The map shows the estimated range, the buffers around germplasm records, the **GRS gap** (the part of the range farther than the buffer distance from any germplasm record) and the **ERS regions** (ecoregions coloured by whether a germplasm buffer reaches them). Global protected-area boundaries can be switched on to see where collecting may need permits. Together these layers point to the places and environments where new collecting would add the most to the metacollection.
+
+> Any change to the working dataset on the Data Analysis page clears the current results; re-run the analysis after cleaning.

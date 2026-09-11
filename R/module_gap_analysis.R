@@ -135,6 +135,10 @@ gapAnalysisServer <- function(id, analysis_data) {
         leaflet::clearGroup("Reference Records") %>%
         leaflet::clearGroup("Germplasm Records")
 
+      # The map opens on a global view; bring the records into view whenever
+      # the working dataset changes.
+      fit_map_to_points("gap_map", data, session)
+
       if (nrow(ref_points) > 0) {
         proxy %>% leaflet::addCircleMarkers(
           data = ref_points, lng = ~Longitude, lat = ~Latitude,
