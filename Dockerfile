@@ -15,7 +15,7 @@ COPY renv.lock .renvignore ./
 RUN R -e "install.packages('renv', repos = 'https://cloud.r-project.org')" \
  && R -e "renv::restore(lockfile = 'renv.lock', library = .libPaths()[1], prompt = FALSE)"
 
-COPY app.R global.R VERSION reportTemplate.Rmd ./
+COPY app.R global.R VERSION reportTemplate.Rmd reportTemplate.css ./
 COPY R ./R
 COPY appData ./appData
 COPY www ./www
