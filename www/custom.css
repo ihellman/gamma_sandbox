@@ -235,7 +235,26 @@ body.on-home .navbar {
    MARKDOWN STYLING FOR "FIND GAPS" PANEL
    ========================================= */
 
-/* Scoped specifically to the expandable panel */
+/* Scoped specifically to the expandable panel. The landing page centres its
+   text; the step write-ups are prose with bullet lists and tables, so they
+   read left-aligned (a centred bullet leaves a gap after its marker). Only
+   the step heading stays centred. */
+.feature-details-panel {
+  text-align: left;
+}
+.feature-details-panel h2 {
+  text-align: center;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+.feature-details-panel ul,
+.feature-details-panel ol {
+  padding-left: 1.5rem;
+}
+.feature-details-panel li {
+  margin-bottom: 0.35rem;
+}
+
 .feature-details-panel h3 {
   color: #2c3e50;
   border-bottom: 2px solid #e9ecef;

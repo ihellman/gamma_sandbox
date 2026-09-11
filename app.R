@@ -63,7 +63,8 @@ server <- function(input, output, session) {
   # NOTE: the controls module is owned by dataAnalysisServer (it lives in that
   # page's sidebar); do not instantiate it here as well.
   dataAnalysisServer("data_analysis", analysis_data, selected_points)
-  gapAnalysisServer("gap_analysis", analysis_data)
+  gapAnalysisServer("gap_analysis", analysis_data,
+                    active = reactive(identical(input$navbar, "gap")))
   aboutServer("about")
 }
 

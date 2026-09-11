@@ -65,12 +65,28 @@ gapAnalysisUI <- function(id) {
 }
 
 # --- Module Server ---
-gapAnalysisServer <- function(id, analysis_data) {
+# `active` is a reactive saying whether the Gap Analysis page is the one on
+# screen (app.R passes the navbar state). The map lives in a hidden tab until
+# then, and Leaflet cannot fit bounds in a container it cannot measure, so the
+# zoom-to-records is deferred until the page is showing.
+gapAnalysisServer <- function(id, analysis_data, active = shiny::reactive(TRUE)) {
   moduleServer(id, function(input, output, session) {
     # Result of the last run of run_gap_analysis() (NULL until run / after the
     # dataset changes). Holds metrics, sf layers, the analysed points and FCS.
     gap_result <- shiny::reactiveVal(NULL)
     analysis_active <- shiny::reactiveVal(FALSE)
+    fit_pending <- shiny::reactiveVal(FALSE)   # records changed since the map was last fitted
+
+    # Zoom to the records once the page is visible and the map has rendered.
+    # The short delay lets Leaflet re-measure the container after the tab
+    # transition (it invalidates its size on the "shown" event).
+    observe({
+      req(fit_pending(), isTRUE(active()), input$gap_map_zoom)
+      d <- analysis_data()
+      req(nrow(d) > 0)
+      fit_pending(FALSE)
+      shinyjs::delay(250, fit_map_to_points("gap_map", d, session))
+    })
 
     # Any change to the working dataset invalidates the results (this observer is
     # what the delete / undo / upload / GBIF flows rely on).
@@ -135,9 +151,9 @@ gapAnalysisServer <- function(id, analysis_data) {
         leaflet::clearGroup("Reference Records") %>%
         leaflet::clearGroup("Germplasm Records")
 
-      # The map opens on a global view; bring the records into view whenever
-      # the working dataset changes.
-      fit_map_to_points("gap_map", data, session)
+      # The map opens on a global view; bring the records into view once the
+      # page is showing (see the fit_pending observer above).
+      fit_pending(TRUE)
 
       if (nrow(ref_points) > 0) {
         proxy %>% leaflet::addCircleMarkers(
