@@ -77,11 +77,22 @@ gapAnalysisServer <- function(id, analysis_data, active = shiny::reactive(TRUE))
     analysis_active <- shiny::reactiveVal(FALSE)
     fit_pending <- shiny::reactiveVal(FALSE)   # records changed since the map was last fitted
 
+    # One-shot "the map has rendered on the client" signal. We only need to
+    # know this happened once; depending on input$gap_map_zoom directly (as
+    # an ordinary reactive input) would re-fire this on every zoom/pan the
+    # user performs, which previously caused a fitBounds() feedback loop.
+    map_ready <- shiny::reactiveVal(FALSE)
+    ready_obs <- observe({
+      req(input$gap_map_zoom)
+      map_ready(TRUE)
+      ready_obs$destroy()
+    })
+
     # Zoom to the records once the page is visible and the map has rendered.
     # The short delay lets Leaflet re-measure the container after the tab
     # transition (it invalidates its size on the "shown" event).
     observe({
-      req(fit_pending(), isTRUE(active()), input$gap_map_zoom)
+      req(fit_pending(), isTRUE(active()), map_ready())
       d <- analysis_data()
       req(nrow(d) > 0)
       fit_pending(FALSE)
@@ -131,11 +142,7 @@ gapAnalysisServer <- function(id, analysis_data, active = shiny::reactive(TRUE))
     })
     outputOptions(output, "gap_map", suspendWhenHidden = FALSE)
 
-    observe({
-      req(analysis_data())
-      # Wait until the map is actually visible and rendered (fixes the hidden tab bug)
-      req(input$gap_map_zoom)
-
+    observeEvent(analysis_data(), {
       all_data <- analysis_data()
       req(nrow(all_data) > 0)
 
