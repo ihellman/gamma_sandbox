@@ -11,7 +11,8 @@ ui <- tagList(
     theme = bs_theme(version = 5),
     # LINKING THE CSS FILE HERE
     header = tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+      tags$link(rel = "stylesheet", type = "text/css",
+                href = paste0("custom.css?v=", as.integer(file.mtime("www/custom.css")))),
     ),
     nav_spacer(),
     # Navigation pages
