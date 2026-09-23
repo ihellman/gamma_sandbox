@@ -5,7 +5,7 @@
 FROM rocker/shiny-verse:4.6.1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      libgdal-dev libgeos-dev libproj-dev libudunits2-dev pandoc \
+      libgdal-dev libgeos-dev libproj-dev libudunits2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/shiny-server/gamma

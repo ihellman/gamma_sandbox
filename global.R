@@ -3,9 +3,10 @@
 # shared by every user session on that process: package attachment, global
 # options, static content and (later) static spatial layers.
 #
-# Shiny sources this file automatically when the app is launched from the app
-# directory (runApp(), rsconnect/Connect, shinyapps.io). The R/ directory is
-# auto-sourced by Shiny as well (option shiny.autoload.r, default TRUE).
+# Load order for a single-file app.R app: Shiny first auto-sources every file
+# in R/ into a shared environment (option shiny.autoload.r, default TRUE), then
+# evaluates app.R. It does NOT source global.R for app.R apps, which is why
+# app.R calls source("global.R") explicitly.
 
 library(shiny)
 library(bslib)
@@ -13,7 +14,7 @@ library(shinyjs)
 library(shinycssloaders)
 library(readr)
 library(readxl)
-library(arrow)      # taxonomy parquet (previously only called via arrow::)
+library(arrow)      # taxonomy parquet (arrow::open_dataset in module_controls.R)
 library(dplyr)
 library(tidyr)
 library(yaml)
@@ -43,8 +44,8 @@ landing_text <- yaml::read_yaml("appData/landing_text.yml")
 
 # Static spatial layers for the gap analysis, read ONCE per process instead of
 # on every "Run Gap Analysis" click (land 1.2 MB, ecoregions 9 MB). The loader
-# functions live in R/gap_analysis_functions.R, which Shiny auto-sources AFTER
-# global.R, so source that file explicitly here.
+# functions live in R/gap_analysis_functions.R. Shiny auto-sources R/ into a
+# separate environment that this file cannot see, so source it explicitly here.
 source("R/gap_analysis_functions.R")
 GAP_LAND       <- load_land_layer("appData/land_simple.gpkg")
 GAP_ECOREGIONS <- load_ecoregions_layer("appData/ecoregionsSimplified.gpkg")

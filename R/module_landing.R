@@ -96,7 +96,7 @@ landingUI <- function(id, landing_text) {
   )
 }
 
-landingServer <- function(id, landing_text) {
+landingServer <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -151,23 +151,6 @@ landingServer <- function(id, landing_text) {
     # --- Handle Close Button ---
     observeEvent(input$close_details, {
       active_sections(character(0)) 
-    })
-    
-    # --- Visual "Active" State Management ---
-    observe({
-      current <- active_sections()
-      
-      toggle_box_class <- function(box_id, sec_name) {
-        if (sec_name %in% current) {
-          shinyjs::addClass(id = box_id, class = "active-feature-box")
-        } else {
-          shinyjs::removeClass(id = box_id, class = "active-feature-box")
-        }
-      }
-      
-      toggle_box_class("box_gather", "gather")
-      toggle_box_class("box_find", "find")
-      toggle_box_class("box_share", "share")
     })
     
     return(list(

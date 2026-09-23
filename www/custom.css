@@ -135,28 +135,6 @@ body.on-home .navbar {
   padding-bottom: 12px;
 }
 
-.nav-buttons {
-  margin-top: 30px;
-}
-
-.nav-buttons .btn {
-  margin: 0 10px;
-}
-
-.footer-banner {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-top: 1px solid #dee2e6;
-  text-align: center;
-  margin-top: auto;
-}
-
-.footer-banner img {
-  height: 50px;
-  margin: 0 20px;
-  vertical-align: middle;
-}
-
 /* Custom navbar styling */
 .navbar {
   background-color: #f8f9fa !important;
@@ -225,15 +203,6 @@ body.on-home .navbar {
 .features-container > a {
   text-decoration: none !important;
   color: inherit !important;
-}
-
-.modal-body img {
-  max-width: 80%;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  padding: 10px 0;
-  box-sizing: border-box;
 }
 
 /* =========================================
@@ -328,7 +297,6 @@ body.on-home .navbar {
 .feature-details-panel a:hover {
   color: #146c43;
 }
-
 
 /* =========================================
    MODERN FOOTER STYLES (COMPACT VERSION)

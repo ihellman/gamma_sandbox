@@ -1,0 +1,8 @@
+# Keep test fixtures and local cruft out of the image. The Dockerfile copies
+# whole directories (appData/, www/), so exclusions have to happen here.
+.git
+.Rproj.user
+.Rhistory
+rsconnect
+appData/upload_sample*
+appData/Magnolia_*

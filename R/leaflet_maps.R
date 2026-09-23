@@ -11,7 +11,6 @@ gbifColor <- c("#92c5de", "#0571b0")
 # GAP Map
 combinedColor <- c("#f1a340", "#542788")
 grsexColor <- c("#ef8a62")
-ersexColor <- c("#d1e5f0")
 # Ers gaps
 ersexColors <- c("#8ae6c7", "#728587")
 

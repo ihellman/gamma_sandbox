@@ -9,18 +9,12 @@ summary:
 gather:
   title: "Gather your Data"
   text: "Download GBIF reference records, upload your own accession data, and clean the combined dataset on a map."
-  modal_title: "Step 1: Gathering Your Data"
-  modal_text: "Select a publicly available wild/native occurrence dataset on GBIF and/or upload your own accession data for a single taxon, then view and clean the records within the tool."
 
 find: 
   title: "Find the gaps"
   text: "Estimate the wild range and score how well your germplasm covers it geographically and ecologically."
-  modal_title: "Step 2. Run a gap analysis to quantify and visualize the overlap between the ex situ accession record locations and the wild/native distribution of the species."
-  modal_text: "Run a gap analysis to quantify and map the overlap between germplasm record locations and the estimated wild/native distribution of the taxon."
 
 share:
   title: "Share the results"
   text: "Download a self-contained HTML report of the scores, maps and records to share with partners."
-  modal_title: "Step 3: Sharing Your Results"
-  modal_text: "Export a self-contained HTML report and the cleaned dataset so results can be shared, stored and compared over time."
 

@@ -12,7 +12,6 @@
 preprocessing
 dev
 tests
-temp
 run.R
 uploadtoshinyio.R
 secrets.yaml
@@ -20,5 +19,5 @@ rsconnect
 renv
 README.md
 Dockerfile
+.dockerignore
 manifest.json
-GAMMa_Repository_Review_and_Work_Plan.md
