@@ -1,9 +1,18 @@
 # RStudio / R session files
 .Rproj.user
 .Rhistory
+.Rapp.history
 .RData
 .Ruserdata
 *.Rproj.user
+*.Rcheck/
+
+# knitr / rmarkdown build cruft (the gap report renders into tempdir(), but
+# knitting reportTemplate.Rmd by hand in RStudio drops these next to it)
+*_cache/
+*_files/
+*.knit.md
+*.utf8.md
 
 # OS cruft
 .DS_Store
@@ -16,12 +25,23 @@ Thumbs.db
 rsconnect/
 secrets.yaml
 secrets.yaml.git
+.Renviron
+.httr-oauth
 
 # Local scratch
 temp/
 dev/loadtest/*.log
 
-# renv project library (renv.lock IS committed)
+# Raw source data for the one-off preprocessing scripts. Never committed:
+#   preprocessing/data/   GBIF Backbone Taxonomy DwC-A dump (~2.5 GB) used to
+#                         build appData/plant_taxonomy_lean.parquet
+#   preprocessing/output/ regenerable intermediates (land_detail.gpkg from
+#                         downloadWater.R); only appData/land_simple.gpkg ships
+preprocessing/data/
+preprocessing/output/
+
+# renv: renv.lock, .Rprofile, renv/activate.R and renv/.gitignore ARE committed;
+# the project library and caches are not.
 renv/library/
 renv/local/
 renv/cellar/

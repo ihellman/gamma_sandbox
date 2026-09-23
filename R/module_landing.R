@@ -6,7 +6,7 @@ landingUI <- function(id, landing_text) {
     # --- HERO SECTION ---
     div(
       class = "hero-section",
-      tags$img(class = "hero-image", src = "background_photo.jpg"),
+      tags$img(class = "hero-image", src = "gammaBanner.JPG"),
       div(class = "hero-overlay"),
       div(
         class = "hero-content",
